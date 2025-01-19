@@ -1,0 +1,3 @@
+"""
+Promptix test suite
+""" 
