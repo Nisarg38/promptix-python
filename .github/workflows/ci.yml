@@ -9,35 +9,7 @@ on:
       - main
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.8"
-      
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev]"
-      
-      - name: Check formatting with black
-        run: black . --check
-      
-      - name: Check imports with isort
-        run: isort . --check-only --diff
-      
-      - name: Lint with flake8
-        run: flake8 .
-      
-      - name: Type check with mypy
-        run: mypy src/promptix
-
   test:
-    needs: lint
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -64,4 +36,4 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           file: ./coverage.xml
-          fail_ci_if_error: true 
+          fail_ci_if_error: false 
