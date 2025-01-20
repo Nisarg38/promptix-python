@@ -85,7 +85,7 @@ def render_prompt_card(prompt: Dict):
             f"""
         <div class="prompt-card">
             <div class="prompt-title">{prompt['name']}</div>
-            <div class="prompt-description">{prompt.get('description', 'No description provided.')}</div>   
+            <div class="prompt-description">{prompt.get('description', 'No description provided.')}</div>
         """,
             unsafe_allow_html=True,
         )

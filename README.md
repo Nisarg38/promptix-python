@@ -1,24 +1,21 @@
-# Promptix
+# Promptix Library
 
-[![PyPI version](https://badge.fury.io/py/promptix.svg)](https://badge.fury.io/py/promptix)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python Versions](https://img.shields.io/pypi/pyversions/promptix.svg)](https://pypi.org/project/promptix/)
-
-A Python library for managing and using prompts with Promptix Studio integration. Promptix makes it easy to manage, version, and use prompts in your applications with a built-in web interface.
+A simple yet powerful library for managing and using prompts locally with Promptix Studio.
 
 ## Features
 
-- 🎯 **Built-in Promptix Studio** - Visual prompt management interface (access via `promptix studio`)
-- 🔄 **Version Control** - Track changes with live/draft states for each prompt
-- 🔌 **Simple Integration** - Easy-to-use Python interface
-- 📝 **Variable Substitution** - Dynamic prompts using `{{variable_name}}` syntax
-- 🏃 **Local First** - No external API dependencies
-- 🎨 **Web Interface** - Edit and manage prompts through a modern UI
+- 🔄 Version Control: Manage multiple versions of your prompts
+- 📝 Schema Validation: Ensure prompt variables are correctly used
+- 🎨 Template System: Use Jinja2 for dynamic prompt generation
+- 🚀 Studio UI: Visual interface for prompt management
+- ⚡ CLI Tools: Command-line interface for quick access
+- 🛡️ Type Safety: Built-in type checking and validation
+- 🔍 Smart Defaults: Intelligent handling of optional fields
+- 📊 Flexible Output: Support for various output formats
 
 ## Installation
 
 ```bash
-# Install from PyPI
 pip install promptix
 ```
 
@@ -37,98 +34,112 @@ This opens Promptix Studio in your default browser at `localhost:8501`.
 ```python
 from promptix import Promptix
 
-# Simple prompt with variables
+# Simple prompt with required fields
 prompt = Promptix.get_prompt(
     prompt_template="Greeting",
     user_name="John Doe"
 )
 print(prompt)  # Output: Hello John Doe! How can I help you today?
 
-# Advanced prompt with multiple variables
+# Advanced prompt with optional fields
 support_prompt = Promptix.get_prompt(
     prompt_template="CustomerSupport",
     user_name="Jane Smith",
     issue_type="password reset",
     technical_level="intermediate",
-    interaction_history="2 previous tickets about 2FA setup"
+    priority="high",  # Optional field
+    custom_data={     # Optional nested data
+        "product_version": "2.1.0",
+        "subscription_tier": "premium"
+    }
 )
 ```
 
-## Advanced Usage
+## Schema Validation
+
+Promptix provides robust schema validation with smart handling of required and optional fields:
+
+```python
+# Schema example in prompts.json
+{
+  "CustomerSupport": {
+    "schema": {
+      "required": ["user_name", "issue_type"],
+      "optional": ["priority", "custom_data"],
+      "types": {
+        "priority": ["high", "medium", "low"],
+        "custom_data": "object"
+      }
+    }
+  }
+}
+```
+
+- Required fields: Warns if missing, continues with empty string
+- Optional fields: Automatically initialized with appropriate defaults
+- Type validation: Ensures values match defined types
+- Nested fields: Proper handling of complex data structures
+
+## Advanced Features
 
 ### Version Control
 
 ```python
-# Get specific version of a prompt
+# Get specific version
 prompt_v1 = Promptix.get_prompt(
     prompt_template="CustomerSupport",
     version="v1",
     user_name="John"
 )
 
-# Get latest live version (default behavior)
+# Get latest live version (default)
 prompt_latest = Promptix.get_prompt(
     prompt_template="CustomerSupport",
     user_name="John"
 )
 ```
 
-### Error Handling
+### Dynamic Templates
 
 ```python
-try:
-    prompt = Promptix.get_prompt(
-        prompt_template="NonExistentTemplate",
-        user_name="John"
-    )
-except ValueError as e:
-    print(f"Error: {str(e)}")
+# Template with conditional logic
+template = """
+{% if priority == 'high' %}
+URGENT: Immediate attention required!
+{% endif %}
+
+User: {{user_name}}
+Issue: {{issue_type}}
+{% if custom_data.subscription_tier == 'premium' %}
+Premium Support Enabled
+{% endif %}
+"""
+```
+
+### Studio UI
+
+Launch Promptix Studio for visual prompt management:
+
+```bash
+promptix studio
 ```
 
 ## Development
 
-### Setup
-
-1. Clone the repository:
-```bash
-git clone https://github.com/promptix/promptix-python.git
-cd promptix-python
-```
-
-2. Create a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install development dependencies:
+1. Clone the repository
+2. Install development dependencies:
 ```bash
 pip install -e ".[dev]"
 ```
-
-### Running Tests
-
+3. Run tests:
 ```bash
 pytest
 ```
 
-### Code Style
-
-We use `black` for code formatting and `isort` for import sorting:
-
-```bash
-black .
-isort .
-```
-
 ## Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

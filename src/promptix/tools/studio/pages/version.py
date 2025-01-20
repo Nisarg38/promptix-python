@@ -1,11 +1,11 @@
-from typing import Dict
+from typing import Any, Dict, Optional
 
 import streamlit as st
 
 from promptix.tools.studio.data import PromptManager
 
 
-def render_version_list(prompt: Dict):
+def render_version_list(prompt: Dict[str, Any]):
     """Render the list of versions"""
     st.subheader("Versions")
 
@@ -91,12 +91,12 @@ def render_new_version():
             },
             "system_prompt": "You are a helpful AI assistant.",
         }
-        prompt_manager.add_version(prompt_id, new_version, version_data)
-
-        # Navigate to playground
-        st.session_state["version_id"] = new_version
-        st.session_state["current_page"] = "Playground"
-        st.rerun()
+        if prompt:  # Add explicit check
+            prompt_manager.add_version(prompt_id, new_version, version_data)
+            # Navigate to playground
+            st.session_state["version_id"] = new_version
+            st.session_state["current_page"] = "Playground"
+            st.rerun()
 
 
 def render_version_editor():
@@ -105,7 +105,7 @@ def render_version_editor():
 
     # Load prompt data
     prompt_manager = PromptManager()
-    prompt = prompt_manager.get_prompt(prompt_id)
+    prompt: Optional[Dict[str, Any]] = prompt_manager.get_prompt(prompt_id)
 
     if not prompt:
         st.error("Prompt not found!")

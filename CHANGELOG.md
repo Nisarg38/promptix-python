@@ -1,14 +1,34 @@
 # Changelog
 
+## [0.1.1] - 2024-01-20
+
+### Added
+- Enhanced schema validation with warning system for missing fields
+- Support for optional fields with default values
+- Improved handling of nested fields in templates
+- Added comprehensive test fixtures and test configuration
+
+### Changed
+- Schema validation now warns instead of failing for missing required fields
+- Optional fields are now initialized with appropriate default values
+- Improved test environment setup with proper fixtures handling
+
+### Fixed
+- Fixed issue with template rendering for undefined optional fields
+- Fixed handling of custom_data and nested fields
+- Fixed test environment cleanup and prompts.json handling
+
 ## [0.1.0] - 2024-01-19
 
 ### Added
-- Initial release of Promptix Library
-- Core functionality:
-  - Prompt management with versioning support
-  - Streamlit-based Studio UI for prompt management
-  - JSON-based storage system for prompts
-  - Support for multiple prompt versions with live/draft states
+- Initial release
+- Basic prompt template management
+- JSON-based prompt storage
+- Version control for prompts
+- Schema validation
+- Jinja2 template support
+- Basic CLI tools
+- Promptix Studio integration
 
 ### Features
 - **Promptix Studio**:
@@ -31,4 +51,4 @@
 
 ### Documentation
 - Basic usage examples in `examples/` directory
-- README with installation and getting started guide 
+- README with installation and getting started guide

@@ -13,7 +13,7 @@ Core Features:
 
 Usage:
 1. Manage prompts: Run 'promptix studio' in terminal
-2. Use prompts: 
+2. Use prompts:
    from promptix import Promptix
    prompt = Promptix.get_prompt("template_name", variable="value")
 """
