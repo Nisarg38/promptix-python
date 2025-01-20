@@ -21,7 +21,7 @@ def init_session_state():
 
 def render_sidebar():
     """Render the sidebar with navigation"""
-    with resources.path('promptix.studio', 'logo.webp') as logo_path:
+    with resources.path('promptix.tools.studio', 'logo.webp') as logo_path:
         logo_path_str = str(logo_path)
     
     with st.sidebar:

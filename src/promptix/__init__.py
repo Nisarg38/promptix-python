@@ -19,6 +19,7 @@ Usage:
 """
 
 from .core.base import Promptix
+from .tools.cli import main as cli_main
 
 __version__ = "0.1.0"
-__all__ = ["Promptix"]
+__all__ = ["Promptix", "cli_main"]

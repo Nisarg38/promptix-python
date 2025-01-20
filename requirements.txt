@@ -4,3 +4,4 @@ pytest-cov>=4.0.0
 pytest-mock>=3.10.0
 build>=1.0.0
 twine>=4.0.0
+Jinja2>=3.1.0

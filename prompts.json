@@ -32,7 +32,7 @@
         "created_at": "2024-03-19T13:00:00.000000"
       },
       "v3": {
-        "is_live": true,
+        "is_live": false,
         "system_message": "As a senior customer support specialist for a software company, your role is to provide exceptional support while following our company guidelines:\n\nContext Variables:\n- Customer: {{user_name}}\n- Issue Type: {{issue_type}}\n- Technical Level: {{technical_level}}\n- Previous Interactions: {{interaction_history}}\n- Product Version: {{product_version}}\n\nResponse Structure:\n1. Personalized Greeting\n2. Issue Acknowledgment\n3. Technical Solution (adapted to {{technical_level}})\n4. Preventive Tips\n5. Relevant Documentation\n6. Next Steps\n7. Follow-up Plan\n\nTone Guidelines:\n- Professional yet friendly\n- Empathetic to user frustration\n- Clear and concise\n- Proactive in preventing future issues\n\nEnsure all responses align with our SLA commitment and include appropriate escalation paths if needed.",
         "temperature": 0.5,
         "max_tokens": 2000,
@@ -44,6 +44,42 @@
         "provider": "openai",
         "last_modified": "2024-03-19T14:00:00.000000",
         "created_at": "2024-03-19T14:00:00.000000"
+      },
+      "v4": {
+        "is_live": true,
+        "system_message": "You are a customer support agent helping with a {{issue_type}} issue.\n\n{% if priority == 'high' %}URGENT: This requires immediate attention!\n{% endif %}\n\nUser: {{user_name}}\nTechnical Level: {{technical_level}}\nProduct Version: {{custom_data.product_version}}\n{% if custom_data.subscription_tier == 'premium' %}Premium Support Level\n{% endif %}\n\nPlease assist with the following issue:\n{{issue_description}}",
+        "temperature": 0.7,
+        "max_tokens": 2000,
+        "top_p": 1,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "tools": [],
+        "model": "gpt-4",
+        "provider": "openai",
+        "metadata": {
+          "created_at": "2024-01-20",
+          "author": "system",
+          "description": "Dynamic customer support template with conditional formatting"
+        },
+        "last_modified": "2024-01-20T00:00:00.000000",
+        "created_at": "2024-01-20T00:00:00.000000"
+      }
+    },
+    "schema": {
+      "required": [
+        "user_name",
+        "issue_type",
+        "issue_description",
+        "technical_level"
+      ],
+      "optional": [
+        "priority",
+        "custom_data"
+      ],
+      "types": {
+        "priority": ["high", "medium", "low"],
+        "technical_level": ["beginner", "intermediate", "advanced"],
+        "custom_data": "object"
       }
     },
     "created_at": "2024-03-19T12:00:00.000000",
@@ -66,6 +102,18 @@
         "provider": "openai",
         "last_modified": "2024-03-19T12:00:00.000000",
         "created_at": "2024-03-19T12:00:00.000000"
+      }
+    },
+    "schema": {
+      "required": [
+        "code_snippet",
+        "programming_language",
+        "review_focus",
+        "severity"
+      ],
+      "optional": [],
+      "types": {
+        "severity": ["high", "medium", "low"]
       }
     },
     "created_at": "2024-03-19T12:00:00.000000",
@@ -92,5 +140,48 @@
     },
     "created_at": "2024-03-19T12:00:00.000000",
     "last_modified": "2024-03-19T12:00:00.000000"
+  },
+  "ServiceAgent": {
+    "name": "ServiceAgent",
+    "description": "A dynamic service agent prompt that adapts based on user type, communication channel, and required services",
+    "versions": {
+      "v1": {
+        "is_live": true,
+        "system_message": "You are a helpful service agent assisting customers with their needs.\n\n{% if new_user %}\nThis is a new user who may need additional guidance and explanation of our services.\n{% else %}\nThis is a returning user who is familiar with our services.\n{% endif %}\n\n{# Communication type handling #}\n{% if communication_type == \"phone\" %}\nThis is a phone conversation. Use clear verbal communication and active listening techniques.\nPlease provide assistance in a warm and conversational manner while maintaining professionalism.\n{% elif communication_type == \"sms\" %}\nThis is an SMS conversation. Keep responses concise and use appropriate messaging etiquette.\nPlease provide assistance in a clear and concise manner while maintaining professionalism.\n{% elif communication_type == \"chat\" %}\nThis is a live chat conversation. Balance between conversational tone and efficiency.\nPlease provide assistance in a friendly and efficient manner while maintaining professionalism.\n{% endif %}\n\nService Requirements:\n{% if transportation_type %}\n- Verify customer's pickup location and destination\n- Check available transportation options\n- Confirm timing and special requirements\n{% endif %}\n\n{% if scheduling_required %}\n- Check calendar availability\n- Manage appointment scheduling\n- Send confirmation and reminders\n{% endif %}",
+        "temperature": 0.7,
+        "max_tokens": 2000,
+        "top_p": 1,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "tools": [],
+        "model": "gpt-4",
+        "provider": "openai",
+        "metadata": {
+          "created_at": "2024-03-19",
+          "author": "system",
+          "description": "Dynamic service agent template with conditional formatting based on user type and service requirements"
+        },
+        "last_modified": "2024-03-19T00:00:00.000000",
+        "created_at": "2024-03-19T00:00:00.000000"
+      }
+    },
+    "schema": {
+      "required": [
+        "communication_type"
+      ],
+      "optional": [
+        "new_user",
+        "transportation_type",
+        "scheduling_required"
+      ],
+      "types": {
+        "communication_type": ["phone", "sms", "chat"],
+        "new_user": "boolean",
+        "transportation_type": "boolean",
+        "scheduling_required": "boolean"
+      }
+    },
+    "created_at": "2024-03-19T00:00:00.000000",
+    "last_modified": "2024-03-19T00:00:00.000000"
   }
 }
