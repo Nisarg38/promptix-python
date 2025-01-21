@@ -187,4 +187,7 @@ class Promptix:
         except TemplateError as e:
             raise ValueError(f"Error rendering template for '{prompt_template}': {str(e)}")
 
+        # Convert escaped newlines (\n) to actual line breaks
+        result = result.replace("\\n", "\n")
+        
         return result
