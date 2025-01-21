@@ -18,7 +18,9 @@ def main():
         issue_type="password reset",
         technical_level="intermediate",
         interaction_history="2 previous tickets about 2FA setup",
-        product_version="2.1.0"
+        product_version="2.1.0",
+        issue_description="User is unable to reset their password after multiple attempts",
+        custom_data={"product_version": "2.1.0", "subscription_tier": "standard"}
     )
     print(support_prompt)
     print("\n" + "-"*50 + "\n")
@@ -32,7 +34,9 @@ def main():
         issue_type="password reset",
         technical_level="intermediate",
         interaction_history="2 previous tickets about 2FA setup",
-        product_version="2.1.0"
+        product_version="2.1.0",
+        issue_description="User is unable to reset their password after multiple attempts",
+        custom_data={"product_version": "2.1.0", "subscription_tier": "standard"}
     )
     print(support_prompt_v1)
     print("\n" + "-"*50 + "\n")

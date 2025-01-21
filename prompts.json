@@ -15,7 +15,18 @@
         "model": "gpt-4o",
         "provider": "openai",
         "last_modified": "2024-03-19T12:00:00.000000",
-        "created_at": "2024-03-19T12:00:00.000000"
+        "created_at": "2024-03-19T12:00:00.000000",
+        "schema": {
+          "required": [
+            "user_name",
+            "issue_type"
+          ],
+          "optional": [],
+          "types": {
+            "user_name": "string",
+            "issue_type": "string"
+          }
+        }
       },
       "v2": {
         "is_live": false,
@@ -29,10 +40,27 @@
         "model": "gpt-4",
         "provider": "openai",
         "last_modified": "2024-03-19T13:00:00.000000",
-        "created_at": "2024-03-19T13:00:00.000000"
+        "created_at": "2024-03-19T13:00:00.000000",
+        "schema": {
+          "required": [
+            "user_name",
+            "issue_type",
+            "technical_level"
+          ],
+          "optional": [],
+          "types": {
+            "user_name": "string",
+            "issue_type": "string",
+            "technical_level": [
+              "beginner",
+              "intermediate",
+              "advanced"
+            ]
+          }
+        }
       },
       "v3": {
-        "is_live": true,
+        "is_live": false,
         "system_message": "As a senior customer support specialist for a software company, your role is to provide exceptional support while following our company guidelines:\n\nContext Variables:\n- Customer: {{user_name}}\n- Issue Type: {{issue_type}}\n- Technical Level: {{technical_level}}\n- Previous Interactions: {{interaction_history}}\n- Product Version: {{product_version}}\n\nResponse Structure:\n1. Personalized Greeting\n2. Issue Acknowledgment\n3. Technical Solution (adapted to {{technical_level}})\n4. Preventive Tips\n5. Relevant Documentation\n6. Next Steps\n7. Follow-up Plan\n\nTone Guidelines:\n- Professional yet friendly\n- Empathetic to user frustration\n- Clear and concise\n- Proactive in preventing future issues\n\nEnsure all responses align with our SLA commitment and include appropriate escalation paths if needed.",
         "temperature": 0.5,
         "max_tokens": 2000,
@@ -43,7 +71,72 @@
         "model": "gpt-4",
         "provider": "openai",
         "last_modified": "2024-03-19T14:00:00.000000",
-        "created_at": "2024-03-19T14:00:00.000000"
+        "created_at": "2024-03-19T14:00:00.000000",
+        "schema": {
+          "required": [
+            "user_name",
+            "issue_type",
+            "technical_level",
+            "interaction_history",
+            "product_version"
+          ],
+          "optional": [],
+          "types": {
+            "user_name": "string",
+            "issue_type": "string",
+            "technical_level": [
+              "beginner",
+              "intermediate",
+              "advanced"
+            ],
+            "interaction_history": "string",
+            "product_version": "string"
+          }
+        }
+      },
+      "v4": {
+        "is_live": true,
+        "system_message": "You are a customer support agent helping with a {{issue_type}} issue.\n\n{% if priority == 'high' %}URGENT: This requires immediate attention!\n{% endif %}\n\nUser: {{user_name}}\nTechnical Level: {{technical_level}}\nProduct Version: {{custom_data.product_version}}\n{% if custom_data.subscription_tier == 'premium' %}Premium Support Level\n{% endif %}\n\nPlease assist with the following issue:\n{{issue_description}}",
+        "temperature": 0.7,
+        "max_tokens": 2000,
+        "top_p": 1,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "tools": [],
+        "model": "gpt-4",
+        "provider": "openai",
+        "metadata": {
+          "created_at": "2024-01-20",
+          "author": "system",
+          "description": "Dynamic customer support template with conditional formatting"
+        },
+        "last_modified": "2024-01-20T00:00:00.000000",
+        "created_at": "2024-01-20T00:00:00.000000",
+        "schema": {
+          "required": [
+            "user_name",
+            "issue_type",
+            "issue_description",
+            "technical_level"
+          ],
+          "optional": [
+            "priority",
+            "custom_data"
+          ],
+          "types": {
+            "priority": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "technical_level": [
+              "beginner",
+              "intermediate",
+              "advanced"
+            ],
+            "custom_data": "object"
+          }
+        }
       }
     },
     "created_at": "2024-03-19T12:00:00.000000",
@@ -65,7 +158,26 @@
         "model": "gpt-4o",
         "provider": "openai",
         "last_modified": "2024-03-19T12:00:00.000000",
-        "created_at": "2024-03-19T12:00:00.000000"
+        "created_at": "2024-03-19T12:00:00.000000",
+        "schema": {
+          "required": [
+            "code_snippet",
+            "programming_language",
+            "review_focus",
+            "severity"
+          ],
+          "optional": [],
+          "types": {
+            "code_snippet": "string",
+            "programming_language": "string",
+            "review_focus": "string",
+            "severity": [
+              "high",
+              "medium",
+              "low"
+            ]
+          }
+        }
       }
     },
     "created_at": "2024-03-19T12:00:00.000000",
@@ -87,10 +199,124 @@
         "model": "gpt-4o",
         "provider": "openai",
         "last_modified": "2024-03-19T12:00:00.000000",
-        "created_at": "2024-03-19T12:00:00.000000"
+        "created_at": "2024-03-19T12:00:00.000000",
+        "schema": {
+          "required": [
+            "code_snippet",
+            "programming_language",
+            "review_focus",
+            "severity"
+          ],
+          "optional": [],
+          "types": {
+            "code_snippet": "string",
+            "programming_language": "string",
+            "review_focus": "string",
+            "severity": [
+              "high",
+              "medium",
+              "low"
+            ]
+          }
+        }
       }
     },
     "created_at": "2024-03-19T12:00:00.000000",
     "last_modified": "2024-03-19T12:00:00.000000"
+  },
+  "ServiceAgent": {
+    "name": "ServiceAgent",
+    "description": "A dynamic service agent prompt that adapts based on user type, communication channel, and required services",
+    "versions": {
+      "v1": {
+        "is_live": true,
+        "system_message": "You are a helpful service agent assisting customers with their needs.\n\n{% if new_user %}\nThis is a new user who may need additional guidance and explanation of our services.\n{% else %}\nThis is a returning user who is familiar with our services.\n{% endif %}\n\n{# Communication type handling #}\n{% if communication_type == \"phone\" %}\nThis is a phone conversation. Use clear verbal communication and active listening techniques.\nPlease provide assistance in a warm and conversational manner while maintaining professionalism.\n{% elif communication_type == \"sms\" %}\nThis is an SMS conversation. Keep responses concise and use appropriate messaging etiquette.\nPlease provide assistance in a clear and concise manner while maintaining professionalism.\n{% elif communication_type == \"chat\" %}\nThis is a live chat conversation. Balance between conversational tone and efficiency.\nPlease provide assistance in a friendly and efficient manner while maintaining professionalism.\n{% endif %}\n\nService Requirements:\n{% if transportation_type %}\n- Verify customer's pickup location and destination\n- Check available transportation options\n- Confirm timing and special requirements\n{% endif %}\n\n{% if scheduling_required %}\n- Check calendar availability\n- Manage appointment scheduling\n- Send confirmation and reminders\n{% endif %}",
+        "temperature": 0.7,
+        "max_tokens": 2000,
+        "top_p": 1,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "tools": [],
+        "model": "gpt-4",
+        "provider": "openai",
+        "metadata": {
+          "created_at": "2024-03-19",
+          "author": "system",
+          "description": "Dynamic service agent template with conditional formatting based on user type and service requirements"
+        },
+        "last_modified": "2024-03-19T00:00:00.000000",
+        "created_at": "2024-03-19T00:00:00.000000",
+        "schema": {
+          "required": [
+            "communication_type"
+          ],
+          "optional": [
+            "new_user",
+            "transportation_type",
+            "scheduling_required"
+          ],
+          "types": {
+            "communication_type": [
+              "phone",
+              "sms",
+              "chat"
+            ],
+            "new_user": "boolean",
+            "transportation_type": "boolean",
+            "scheduling_required": "boolean"
+          }
+        }
+      }
+    },
+    "created_at": "2024-03-19T00:00:00.000000",
+    "last_modified": "2024-03-19T00:00:00.000000"
+  },
+  "DungeonMaster": {
+    "name": "DungeonMaster",
+    "description": "An advanced RPG game master template that generates dynamic game scenarios",
+    "versions": {
+      "v1": {
+        "is_live": true,
+        "system_message": "You are an AI Dungeon Master crafting a {{game_style}} adventure.\n\n{% if party_level < 5 %}You're guiding a party of novice adventurers through their first steps into the world of heroics.\n{% elif party_level < 10 %}Your party has some experience under their belts and can handle moderate challenges.\n{% else %}These are seasoned adventurers ready for epic challenges.\n{% endif %}\n\nParty Composition:\n{% for class in party_classes %}- {{class}}\n{% endfor %}\n\nEnvironment: {{environment}}\n{% if environment_details %}\nEnvironment Details:\n{% if environment_details.has_traps %}* This area is trapped\n{% endif %}{% if environment_details.has_crime %}* Criminal activity is present\n{% endif %}{% if environment_details.has_monsters %}* Monsters lurk in the shadows\n{% endif %}{% if environment_details.city_type %}* City Type: {{environment_details.city_type}}\n{% endif %}{% if environment_details.atmosphere %}* Atmosphere: {{environment_details.atmosphere}}\n{% endif %}{% if environment_details.terrain_type %}* Terrain: {{environment_details.terrain_type}}\n{% endif %}\n{% endif %}\n\n{% if magical_elements %}\nMagical Elements Present:\n{% for element in magical_elements %}- {{element}}\n{% endfor %}\n{% endif %}\n\n{% if custom_data and custom_data.special_conditions %}\nSpecial Conditions:\n{% for condition in custom_data.special_conditions %}- {{condition}}\n{% endfor %}\n{% endif %}\n\nQuest Type: {{quest_type}}\nDifficulty Level: {{difficulty}}\n{% if difficulty == \"hard\" %}Survival is not guaranteed.\n{% endif %}",
+        "temperature": 0.7,
+        "max_tokens": 2000,
+        "top_p": 1,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "tools": [],
+        "model": "gpt-4",
+        "provider": "openai",
+        "last_modified": "2024-03-19T00:00:00.000000",
+        "created_at": "2024-03-19T00:00:00.000000",
+        "schema": {
+          "required": [
+            "game_style",
+            "party_level",
+            "party_classes",
+            "environment",
+            "quest_type",
+            "difficulty"
+          ],
+          "optional": [
+            "environment_details",
+            "magical_elements",
+            "custom_data"
+          ],
+          "types": {
+            "game_style": ["heroic", "gritty", "epic", "mystery"],
+            "party_level": "integer",
+            "party_classes": "array",
+            "environment": ["dungeon", "city", "wilderness"],
+            "quest_type": ["combat", "diplomacy", "mystery", "exploration"],
+            "difficulty": ["easy", "medium", "hard"],
+            "environment_details": "object",
+            "magical_elements": "array",
+            "custom_data": "object"
+          }
+        }
+      }
+    },
+    "created_at": "2024-03-19T00:00:00.000000",
+    "last_modified": "2024-03-19T00:00:00.000000"
   }
 }

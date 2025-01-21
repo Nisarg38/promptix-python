@@ -11,9 +11,9 @@ def test_get_prompt_basic():
         prompt_template="CustomerSupport",
         user_name="Test User",
         issue_type="test issue",
+        issue_description="User is having trouble logging in",
         technical_level="beginner",
-        interaction_history="none",
-        product_version="1.0.0"
+        custom_data={"product_version": "1.0.0"}
     )
     assert isinstance(prompt, str)
     assert len(prompt) > 0
@@ -24,10 +24,7 @@ def test_get_prompt_specific_version():
         prompt_template="CustomerSupport",
         version="v1",
         user_name="Test User",
-        issue_type="test issue",
-        technical_level="beginner",
-        interaction_history="none",
-        product_version="1.0.0"
+        issue_type="test issue"
     )
     assert isinstance(prompt, str)
     assert len(prompt) > 0

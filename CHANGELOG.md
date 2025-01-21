@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.1.2] - 2024-03-19
+
+### Added
+- New DungeonMaster template for RPG scenario generation
+- Comprehensive test suite for complex template features
+- Support for nested object handling in templates
+- Enhanced template validation for complex data structures
+
+### Fixed
+- Fixed custom_data handling in templates
+- Improved test coverage for complex scenarios
+- Updated template validation for optional fields
+
+## [0.1.1] - 2024-01-20
+
+### Added
+- Enhanced schema validation with warning system for missing fields
+- Support for optional fields with default values
+- Improved handling of nested fields in templates
+- Added comprehensive test fixtures and test configuration
+
+### Changed
+- Schema validation now warns instead of failing for missing required fields
+- Optional fields are now initialized with appropriate default values
+- Improved test environment setup with proper fixtures handling
+
+### Fixed
+- Fixed issue with template rendering for undefined optional fields
+- Fixed handling of custom_data and nested fields
+- Fixed test environment cleanup and prompts.json handling
+
 ## [0.1.0] - 2024-01-19
 
 ### Added
