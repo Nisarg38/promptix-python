@@ -12,8 +12,10 @@ A Python library for managing and using prompts with Promptix Studio integration
 - 🔄 **Version Control** - Track changes with live/draft states for each prompt
 - 🔌 **Simple Integration** - Easy-to-use Python interface
 - 📝 **Variable Substitution** - Dynamic prompts using `{{variable_name}}` syntax
+- 🤖 **LLM Integration** - Direct integration with OpenAI and other LLM providers
 - 🏃 **Local First** - No external API dependencies
 - 🎨 **Web Interface** - Edit and manage prompts through a modern UI
+- 🔍 **Schema Validation** - Automatic validation of prompt variables and structure
 
 ## Installation
 
@@ -54,6 +56,37 @@ support_prompt = Promptix.get_prompt(
 )
 ```
 
+## OpenAI Integration
+
+Promptix provides seamless integration with OpenAI's chat models:
+
+```python
+from promptix import Promptix
+import openai
+
+client = openai.OpenAI()
+
+# Prepare model configuration with conversation memory
+memory = [
+    {"role": "user", "content": "I'm having trouble resetting my password"},
+    {"role": "assistant", "content": "I understand you're having password reset issues. Could you tell me what happens when you try?"}
+]
+
+model_config = Promptix.prepare_model_config(
+    prompt_template="CustomerSupport",
+    user_name="John Doe",
+    issue_type="password reset",
+    technical_level="intermediate",
+    interaction_history="2 previous tickets about 2FA setup",
+    issue_description="User is unable to reset their password after multiple attempts",
+    custom_data={"product_version": "2.1.0", "subscription_tier": "standard"},
+    memory=memory,
+)
+
+# Use the configuration with OpenAI
+response = client.chat.completions.create(**model_config)
+```
+
 ## Advanced Usage
 
 ### Version Control
@@ -71,6 +104,22 @@ prompt_latest = Promptix.get_prompt(
     prompt_template="CustomerSupport",
     user_name="John"
 )
+```
+
+### Schema Validation
+
+Promptix automatically validates your prompt variables against defined schemas:
+
+```python
+# Schema validation ensures correct variable types and values
+try:
+    prompt = Promptix.get_prompt(
+        prompt_template="CustomerSupport",
+        user_name="John",
+        technical_level="expert"  # Will raise error if not in ["beginner", "intermediate", "advanced"]
+    )
+except ValueError as e:
+    print(f"Validation Error: {str(e)}")
 ```
 
 ### Error Handling
