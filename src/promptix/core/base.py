@@ -97,31 +97,19 @@ class Promptix:
     
     @classmethod
     def _find_live_version(cls, versions: Dict[str, Any]) -> Optional[str]:
-        """Find the 'latest' live version based on 'last_modified' or version naming."""
-        # Filter only versions where is_live == True
-        live_versions = {k: v for k, v in versions.items() if v.get("is_live", False)}
+        """Find the live version. Only one version should be live at a time."""
+        # Find versions where is_live == True
+        live_versions = [k for k, v in versions.items() if v.get("is_live", False)]
+        
         if not live_versions:
             return None
+            
+        if len(live_versions) > 1:
+            raise ValueError(
+                f"Multiple live versions found: {live_versions}. Only one version can be live at a time."
+            )
         
-        # Strategy: pick the version with the largest "last_modified" timestamp
-        # (Alternate: pick the lexicographically largest version name, etc.)
-        # We'll parse the "last_modified" as an ISO string if possible.
-        def parse_iso(dt_str: str) -> float:
-            # Convert "YYYY-MM-DDTHH:MM:SS" into a float (timestamp) for easy comparison
-            import datetime
-            try:
-                return datetime.datetime.fromisoformat(dt_str).timestamp()
-            except Exception:
-                # fallback if parse fails
-                return 0.0
-
-        live_versions_list = list(live_versions.items())
-        live_versions_list.sort(
-            key=lambda x: parse_iso(x[1].get("last_modified", "1970-01-01T00:00:00")), 
-            reverse=True
-        )
-        # Return the key of the version with the newest last_modified
-        return live_versions_list[0][0]  # (version_key, version_data)
+        return live_versions[0]
     
     @classmethod
     def get_prompt(cls, prompt_template: str, version: Optional[str] = None, **variables) -> str:
@@ -191,3 +179,109 @@ class Promptix:
         result = result.replace("\\n", "\n")
         
         return result
+
+    
+    @classmethod
+    def prepare_model_config(cls, prompt_template: str, memory: List[Dict[str, str]], version: Optional[str] = None, **variables) -> Dict[str, Any]:
+        """Prepare a model configuration ready for OpenAI chat completion API.
+        
+        Args:
+            prompt_template (str): The name of the prompt template to use
+            memory (List[Dict[str, str]]): List of previous messages in the conversation
+            version (Optional[str]): Specific version to use (e.g. "v1"). 
+                                     If None, uses the latest live version.
+            **variables: Variable key-value pairs to fill in the prompt template
+            
+        Returns:
+            Dict[str, Any]: Configuration dictionary for OpenAI chat completion API
+            
+        Raises:
+            ValueError: If the prompt template is not found, required variables are missing, or system message is empty
+            TypeError: If a variable doesn't match the schema type or memory format is invalid
+        """
+        # Validate memory format
+        if not isinstance(memory, list):
+            raise TypeError("Memory must be a list of message dictionaries")
+        
+        for msg in memory:
+            if not isinstance(msg, dict):
+                raise TypeError("Each memory item must be a dictionary")
+            if "role" not in msg or "content" not in msg:
+                raise ValueError("Each memory item must have 'role' and 'content' keys")
+            if msg["role"] not in ["user", "assistant", "system"]:
+                raise ValueError("Message role must be 'user', 'assistant', or 'system'")
+            if not isinstance(msg["content"], str):
+                raise TypeError("Message content must be a string")
+            if not msg["content"].strip():
+                raise ValueError("Message content cannot be empty")
+
+        # Get the system message using existing get_prompt method
+        system_message = cls.get_prompt(prompt_template, version, **variables)
+        
+        if not system_message.strip():
+            raise ValueError("System message cannot be empty")
+
+        # Get the prompt configuration
+        if not cls._prompts:
+            cls._load_prompts()
+        
+        if prompt_template not in cls._prompts:
+            raise ValueError(f"Prompt template '{prompt_template}' not found in prompts.json.")
+        
+        prompt_data = cls._prompts[prompt_template]
+        versions = prompt_data.get("versions", {})
+        
+        # Determine which version to use
+        version_data = None
+        if version:
+            if version not in versions:
+                raise ValueError(f"Version '{version}' not found for prompt '{prompt_template}'.")
+            version_data = versions[version]
+        else:
+            live_version_key = cls._find_live_version(versions)
+            if not live_version_key:
+                raise ValueError(f"No live version found for prompt '{prompt_template}'.")
+            version_data = versions[live_version_key]
+        
+        # Get model configuration from version data
+        version_data = versions[live_version_key]
+        
+        # Initialize the base configuration with required parameters
+        model_config = {
+            "messages": [{"role": "system", "content": system_message}]
+        }
+        model_config["messages"].extend(memory)
+
+        # Model is required for OpenAI API
+        if "model" not in version_data:
+            raise ValueError(f"Model must be specified in the version data for prompt '{prompt_template}'")
+        model_config["model"] = version_data["model"]
+
+        # Add optional configuration parameters only if they are present and not null
+        optional_params = [
+            ("temperature", (int, float)),
+            ("max_tokens", int),
+            ("top_p", (int, float)),
+            ("frequency_penalty", (int, float)),
+            ("presence_penalty", (int, float))
+        ]
+
+        for param_name, expected_type in optional_params:
+            if param_name in version_data and version_data[param_name] is not None:
+                value = version_data[param_name]
+                if not isinstance(value, expected_type):
+                    raise ValueError(f"{param_name} must be of type {expected_type}")
+                model_config[param_name] = value
+            
+        # Add tools configuration if present and non-empty
+        if "tools" in version_data and version_data["tools"]:
+            tools = version_data["tools"]
+            if not isinstance(tools, list):
+                raise ValueError("Tools configuration must be a list")
+            model_config["tools"] = tools
+            
+            # If tools are present, also set tool_choice if specified
+            if "tool_choice" in version_data:
+                model_config["tool_choice"] = version_data["tool_choice"]
+        
+        return model_config

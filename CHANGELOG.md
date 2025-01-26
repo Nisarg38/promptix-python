@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.3] - 2024-01-26
+
+### Added
+- OpenAI integration support with prepare_model_config functionality
+- Test suite for OpenAI integration features
+- Example implementation for OpenAI chat completions
+
+### Changed
+- Enhanced model configuration preparation with better validation
+- Improved error handling for invalid memory formats
+- Updated documentation with OpenAI integration examples
+
 ## [0.1.2] - 2024-03-19
 
 ### Added

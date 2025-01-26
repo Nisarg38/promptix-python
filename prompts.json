@@ -99,7 +99,7 @@
         "system_message": "You are a customer support agent helping with a {{issue_type}} issue.\n\n{% if priority == 'high' %}URGENT: This requires immediate attention!\n{% endif %}\n\nUser: {{user_name}}\nTechnical Level: {{technical_level}}\nProduct Version: {{custom_data.product_version}}\n{% if custom_data.subscription_tier == 'premium' %}Premium Support Level\n{% endif %}\n\nPlease assist with the following issue:\n{{issue_description}}",
         "temperature": 0.7,
         "max_tokens": 2000,
-        "top_p": 1,
+        "top_p": null,
         "frequency_penalty": 0,
         "presence_penalty": 0,
         "tools": [],
