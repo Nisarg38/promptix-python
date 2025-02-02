@@ -285,3 +285,16 @@ class Promptix:
                 model_config["tool_choice"] = version_data["tool_choice"]
         
         return model_config
+
+    @staticmethod
+    def builder(prompt_template: str):
+        """Create a new PromptixBuilder instance for building model configurations.
+        
+        Args:
+            prompt_template (str): The name of the prompt template to use
+            
+        Returns:
+            PromptixBuilder: A builder instance for configuring the model
+        """
+        from .builder import PromptixBuilder
+        return PromptixBuilder(prompt_template)
