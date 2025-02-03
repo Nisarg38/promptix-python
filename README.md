@@ -3,6 +3,7 @@
 [![PyPI version](https://badge.fury.io/py/promptix.svg)](https://badge.fury.io/py/promptix)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Versions](https://img.shields.io/pypi/pyversions/promptix.svg)](https://pypi.org/project/promptix/)
+[![PyPI Downloads](https://static.pepy.tech/badge/promptix)](https://pepy.tech/projects/promptix)
 
 A Python library for managing and using prompts with Promptix Studio integration. Promptix makes it easy to manage, version, and use prompts in your applications with a built-in web interface.
 
@@ -86,6 +87,61 @@ model_config = Promptix.prepare_model_config(
 # Use the configuration with OpenAI
 response = client.chat.completions.create(**model_config)
 ```
+
+## Builder Pattern
+
+Promptix provides a fluent builder pattern interface for creating model configurations:
+
+```python
+from promptix import Promptix
+import openai
+
+client = openai.OpenAI()
+
+# Using builder pattern for CustomerSupport
+model_config = (
+    Promptix.builder("CustomerSupport")
+    .with_user_name("John Doe")
+    .with_issue_type("account_settings")
+    .with_issue_description("User cannot access account settings page")
+    .with_technical_level("intermediate")
+    .with_priority("medium")
+    .with_memory([
+        {"role": "user", "content": "I'm having trouble with my account settings"}
+    ])
+    .build()
+)
+
+response = client.chat.completions.create(**model_config)
+
+# Using builder pattern for Code Review
+code_config = (
+    Promptix.builder("CodeReview")
+    .with_code_snippet(code_snippet)
+    .with_programming_language("Python")
+    .with_review_focus("Security and SQL Injection")
+    .with_severity("high")
+    .build()
+)
+
+# Anthropic Integration
+anthropic_config = (
+    Promptix.builder("CustomerSupport")
+    .with_version("v5")
+    .with_user_name("John Doe")
+    .with_issue_type("account_settings")
+    .with_memory(memory)
+    .for_client("anthropic")
+    .build()
+)
+```
+
+The builder pattern provides:
+- Type-safe configuration building
+- Fluent interface for better code readability
+- Automatic validation of required fields
+- Support for multiple LLM providers
+- Clear separation of configuration concerns
 
 ## Advanced Usage
 

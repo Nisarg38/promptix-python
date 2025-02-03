@@ -33,12 +33,12 @@ def test_prepare_model_config_memory_validation():
         )
 
 def test_prepare_model_config_required_fields():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="missing required variables"):
         Promptix.prepare_model_config(
             prompt_template="CustomerSupport",
+            version="v3",
             memory=[],
-            user_name="Test User",
-            issue_type="invalid"
+            user_name="Test User"  # Missing other required fields
         )
 
 def test_prepare_model_config_custom_data():

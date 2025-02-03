@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.4] - 2024-02-02
+
+### Added
+- Builder pattern support for creating model configurations
+- New builder classes for CustomerSupport and CodeReview templates
+- Integration with both OpenAI and Anthropic APIs through builders
+- Comprehensive test suite for builder pattern functionality
+- Example implementations showing builder pattern usage
+
+### Changed
+- Enhanced model configuration preparation with builder pattern
+- Improved documentation with builder pattern examples
+- Added type hints and validation for builder methods
+
 ## [0.1.3] - 2024-01-26
 
 ### Added

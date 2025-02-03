@@ -96,7 +96,7 @@
       },
       "v4": {
         "is_live": true,
-        "system_message": "You are a customer support agent helping with a {{issue_type}} issue.\n\n{% if priority == 'high' %}URGENT: This requires immediate attention!\n{% endif %}\n\nUser: {{user_name}}\nTechnical Level: {{technical_level}}\nProduct Version: {{custom_data.product_version}}\n{% if custom_data.subscription_tier == 'premium' %}Premium Support Level\n{% endif %}\n\nPlease assist with the following issue:\n{{issue_description}}",
+        "system_message": "You are a customer support agent helping with a {{issue_type}} issue.\n\n{% if priority == 'high' %}URGENT: This requires immediate attention!\n{% endif %}\n\nUser: {{user_name}}\nTechnical Level: {{technical_level}}\nProduct Version: {{product_version}}\n{% if subscription_tier == 'premium' %}Premium Support Level\n{% endif %}\n\nPlease assist with the following issue:\n{{issue_description}}",
         "temperature": 0.7,
         "max_tokens": 2000,
         "top_p": null,
@@ -113,29 +113,109 @@
         "last_modified": "2024-01-20T00:00:00.000000",
         "created_at": "2024-01-20T00:00:00.000000",
         "schema": {
-          "required": [
-            "user_name",
-            "issue_type",
-            "issue_description",
-            "technical_level"
-          ],
-          "optional": [
-            "priority",
-            "custom_data"
-          ],
-          "types": {
-            "priority": [
-              "high",
-              "medium",
-              "low"
-            ],
-            "technical_level": [
-              "beginner",
-              "intermediate",
-              "advanced"
-            ],
-            "custom_data": "object"
-          }
+          "properties": {
+            "user_name": {
+              "type": "string",
+              "required": true,
+              "description": "Name of the user requesting support"
+            },
+            "issue_type": {
+              "type": "string",
+              "required": true,
+              "description": "Category or type of the issue being reported"
+            },
+            "issue_description": {
+              "type": "string",
+              "required": true,
+              "description": "Detailed description of the issue"
+            },
+            "technical_level": {
+              "type": "string",
+              "required": true,
+              "enum": ["beginner", "intermediate", "advanced"],
+              "description": "User's technical expertise level"
+            },
+            "priority": {
+              "type": "string",
+              "required": false,
+              "enum": ["high", "medium", "low"],
+              "description": "Priority level of the issue"
+            },
+            "product_version": {
+              "type": "string",
+              "required": false,
+              "description": "Version of the product being used"
+            },
+            "subscription_tier": {
+              "type": "string",
+              "required": false,
+              "enum": ["basic", "premium"],
+              "description": "User's subscription tier"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "v5": { 
+        "is_live": false,
+        "system_message": "You are a customer support agent helping with a {{issue_type}} issue.\n\n{% if priority == 'high' %}URGENT: This requires immediate attention!\n{% endif %}\n\nUser: {{user_name}}\nTechnical Level: {{technical_level}}\nProduct Version: {{product_version}}\n{% if subscription_tier == 'premium' %}Premium Support Level\n{% endif %}\n\nPlease assist with the following issue:\n{{issue_description}}",
+        "temperature": 0.7,
+        "max_tokens": 2000,
+        "top_p": null,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "tools": [],
+        "model": "claude-3-5-sonnet-20240620", 
+        "provider": "anthropic",
+        "metadata": {
+          "created_at": "2024-01-20",
+          "author": "system",
+          "description": "Dynamic customer support template with conditional formatting"
+        },
+        "last_modified": "2024-01-20T00:00:00.000000",
+        "created_at": "2024-01-20T00:00:00.000000",
+        "schema": {
+          "properties": {
+            "user_name": {
+              "type": "string",
+              "required": true,
+              "description": "Name of the user requesting support"
+            },
+            "issue_type": {
+              "type": "string",
+              "required": true,
+              "description": "Category or type of the issue being reported"
+            },
+            "issue_description": {
+              "type": "string",
+              "required": true,
+              "description": "Detailed description of the issue"
+            },
+            "technical_level": {
+              "type": "string",
+              "required": true,
+              "enum": ["beginner", "intermediate", "advanced"],
+              "description": "User's technical expertise level"
+            },
+            "priority": {
+              "type": "string",
+              "required": false,
+              "enum": ["high", "medium", "low"],
+              "description": "Priority level of the issue"
+            },
+            "product_version": {
+              "type": "string",
+              "required": false,
+              "description": "Version of the product being used"
+            },
+            "subscription_tier": {
+              "type": "string",
+              "required": false,
+              "enum": ["basic", "premium"],
+              "description": "User's subscription tier"
+            }
+          },
+          "additionalProperties": false
         }
       }
     },
@@ -160,23 +240,30 @@
         "last_modified": "2024-03-19T12:00:00.000000",
         "created_at": "2024-03-19T12:00:00.000000",
         "schema": {
-          "required": [
-            "code_snippet",
-            "programming_language",
-            "review_focus",
-            "severity"
-          ],
-          "optional": [],
-          "types": {
-            "code_snippet": "string",
-            "programming_language": "string",
-            "review_focus": "string",
-            "severity": [
-              "high",
-              "medium",
-              "low"
-            ]
-          }
+          "properties": {
+            "code_snippet": {
+              "type": "string",
+              "description": "The code to be reviewed",
+              "required": true
+            },
+            "programming_language": {
+              "type": "string",
+              "description": "The programming language of the code",
+              "required": true
+            },
+            "review_focus": {
+              "type": "string",
+              "description": "Specific areas to focus on during the review",
+              "required": true
+            },
+            "severity": {
+              "type": "string",
+              "enum": ["high", "medium", "low"],
+              "description": "The severity level of the review",
+              "required": true
+            }
+          },
+          "additionalProperties": false
         }
       }
     },
