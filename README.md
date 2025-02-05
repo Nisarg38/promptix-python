@@ -124,7 +124,13 @@ code_config = (
     .build()
 )
 
+response = client.chat.completions.create(**code_config)
+
+
 # Anthropic Integration
+
+client = Anthropic()
+
 anthropic_config = (
     Promptix.builder("CustomerSupport")
     .with_version("v5")
@@ -134,6 +140,10 @@ anthropic_config = (
     .for_client("anthropic")
     .build()
 )
+
+response = client.messages.create(**anthropic_config)
+
+
 ```
 
 The builder pattern provides:

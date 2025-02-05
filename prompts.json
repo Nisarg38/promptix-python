@@ -226,6 +226,50 @@
     "name": "CodeReview",
     "description": "A code review prompt that provides consistent and thorough code reviews",
     "versions": {
+      "v0": {
+        "is_live": false,
+        "system_message": "As a senior software engineer conducting a code review, analyze the {{code_snippet}} written in {{programming_language}}. Focus areas: 1) {{review_focus}} 2) Security best practices 3) Performance optimization. Severity: {{severity}}. Structure your response with: SUMMARY, CRITICAL ISSUES, IMPROVEMENTS, and POSITIVE ASPECTS.",
+        "temperature": 0.7,
+        "max_tokens": 2000,
+        "top_p": 1,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "tools": [],
+        "model": "gpt-4o",
+        "provider": "openai",
+        "last_modified": "2024-03-19T12:00:00.000000",
+        "created_at": "2024-03-19T12:00:00.000000",
+        "schema": {
+          "properties": {
+            "code_snippet": {
+              "type": "string",
+              "description": "The code to be reviewed",
+              "required": true
+            },
+            "programming_language": {
+              "type": "string",
+              "description": "The programming language of the code",
+              "required": true
+            },
+            "review_focus": {
+              "type": "string",
+              "description": "Specific areas to focus on during the review",
+              "required": true
+            },
+            "severity": {
+              "type": "string",
+              "enum": [
+                "high",
+                "medium",
+                "low"
+              ],
+              "description": "The severity level of the review",
+              "required": true
+            }
+          },
+          "additionalProperties": false
+        }
+      },
       "v1": {
         "is_live": true,
         "system_message": "As a senior software engineer conducting a code review, analyze the {{code_snippet}} written in {{programming_language}}. Focus areas: 1) {{review_focus}} 2) Security best practices 3) Performance optimization. Severity: {{severity}}. Structure your response with: SUMMARY, CRITICAL ISSUES, IMPROVEMENTS, and POSITIVE ASPECTS.",
@@ -234,7 +278,84 @@
         "top_p": 1,
         "frequency_penalty": 0,
         "presence_penalty": 0,
-        "tools": [],
+        "tools": {
+          "default": {
+            "analyze_code": {
+              "description": "Analyzes code structure and patterns",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "Code to analyze"
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "Programming language"
+                  }
+                },
+                "required": ["code", "language"]
+              }
+            }
+          },
+          "vehicle_selection": {
+            "analyze_code": {
+              "description": "Analyzes vehicle-specific code patterns",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "Code to analyze"
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "Programming language"
+                  },
+                  "vehicle_type": {
+                    "type": "string",
+                    "description": "Type of vehicle"
+                  }
+                },
+                "required": ["code", "language", "vehicle_type"]
+              }
+            }
+          }
+        },
+        "functions": {
+          "default": {
+            "analyze": {
+              "description": "Analyzes code quality",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "Code to analyze"
+                  }
+                }
+              }
+            }
+          },
+          "vehicle_selection": {
+            "analyze_vehicle": {
+              "description": "Analyzes vehicle-specific code",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "Code to analyze"
+                  },
+                  "vehicle_type": {
+                    "type": "string",
+                    "description": "Type of vehicle"
+                  }
+                }
+              }
+            }
+          }
+        },
         "model": "gpt-4o",
         "provider": "openai",
         "last_modified": "2024-03-19T12:00:00.000000",

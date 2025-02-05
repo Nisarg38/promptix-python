@@ -35,16 +35,33 @@ class OpenAIAdapter(ModelAdapter):
                     raise ValueError(f"{param_name} must be of type {expected_type}")
                 model_config[param_name] = value
         
-        # Add tools configuration if present and non-empty
-        if "tools" in version_data and version_data["tools"]:
-            tools = version_data["tools"]
-            if not isinstance(tools, list):
-                raise ValueError("Tools configuration must be a list")
-            model_config["tools"] = tools
-            
-            # If tools are present, also set tool_choice if specified
-            if "tool_choice" in version_data:
-                model_config["tool_choice"] = version_data["tool_choice"]
+        # Handle tools and functions
+        if "tools" in model_config:
+            tools = model_config["tools"]
+            if isinstance(tools, dict):
+                # Convert dict to list format expected by OpenAI
+                tools_list = []
+                for tool_name, tool_config in tools.items():
+                    tools_list.append({
+                        "type": "function",
+                        "function": {
+                            "name": tool_name,
+                            **tool_config
+                        }
+                    })
+                model_config["tools"] = tools_list
+        
+        if "functions" in model_config:
+            functions = model_config["functions"]
+            if isinstance(functions, dict):
+                # Convert dict to list format expected by OpenAI
+                functions_list = []
+                for func_name, func_config in functions.items():
+                    functions_list.append({
+                        "name": func_name,
+                        **func_config
+                    })
+                model_config["functions"] = functions_list
         
         return model_config
 
@@ -76,6 +93,42 @@ class AnthropicAdapter(ModelAdapter):
                     raise ValueError(f"{param_name} must be of type {expected_type}")
                 anthropic_config[param_name] = value
         
+        # Handle tools and functions for Anthropic
+        if "tools" in model_config:
+            tools = model_config["tools"]
+            if isinstance(tools, dict):
+                # Convert to Anthropic's tool format
+                tools_list = []
+                for tool_name, tool_config in tools.items():
+                    tool_spec = {
+                        "type": "function",
+                        "function": {
+                            "name": tool_name,
+                            **tool_config
+                        }
+                    }
+                    tools_list.append(tool_spec)
+                anthropic_config["tools"] = tools_list
+
+        # Note: Anthropic currently doesn't support separate functions,
+        # so we'll convert functions to tools if they exist
+        if "functions" in model_config:
+            functions = model_config["functions"]
+            if isinstance(functions, dict):
+                if "tools" not in anthropic_config:
+                    anthropic_config["tools"] = []
+                
+                # Convert functions to tools format
+                for func_name, func_config in functions.items():
+                    tool_spec = {
+                        "type": "function",
+                        "function": {
+                            "name": func_name,
+                            **func_config
+                        }
+                    }
+                    anthropic_config["tools"].append(tool_spec)
+        
         # Add messages to config
         anthropic_config["messages"] = model_config["messages"]
         
@@ -96,7 +149,7 @@ class AnthropicAdapter(ModelAdapter):
                     "content": msg["content"]
                 })
         
-        # If there's a system message, prepend it to the first user message or add it as a user message
+        # If there's a system message, prepend it to the first user message
         if system_content:
             if anthropic_messages and anthropic_messages[0]["role"] == "user":
                 anthropic_messages[0]["content"] = f"{system_content}\n\n{anthropic_messages[0]['content']}"
@@ -123,6 +176,10 @@ class PromptixBuilder:
         self._data = {}          # Holds all variables
         self._memory = []        # Conversation history
         self._client = "openai"  # Default client
+        
+        # New additions for tools and functions
+        self._selected_tool = "default"
+        self._selected_function = "default"
         
         # Ensure prompts are loaded
         if not Promptix._prompts:
@@ -234,6 +291,28 @@ class PromptixBuilder:
         
         return self
     
+    def with_tool(self, tool_type: Optional[str] = None):
+        """Select which tool configuration to use."""
+        if tool_type:
+            # Validate tool exists in prompts configuration
+            tools_config = self.version_data.get("tools", {})
+            if tool_type in tools_config:
+                self._selected_tool = tool_type
+            else:
+                raise ValueError(f"Tool type '{tool_type}' not found in configuration")
+        return self
+
+    def with_function(self, function_type: Optional[str] = None):
+        """Select which function configuration to use."""
+        if function_type:
+            # Validate function exists in prompts configuration
+            functions_config = self.version_data.get("functions", {})
+            if function_type in functions_config:
+                self._selected_function = function_type
+            else:
+                raise ValueError(f"Function type '{function_type}' not found in configuration")
+        return self
+
     def build(self) -> Dict[str, Any]:
         """Build the final configuration using the appropriate adapter."""
         # Validate all required fields are present and have correct types
@@ -257,6 +336,17 @@ class PromptixBuilder:
         if "model" not in self.version_data:
             raise ValueError(f"Model must be specified in the prompt version data for '{self.prompt_template}'")
         model_config["model"] = self.version_data["model"]
+        
+        # Add tools and functions if they exist in version data
+        if "tools" in self.version_data:
+            tools_config = self.version_data["tools"].get(self._selected_tool, {})
+            if tools_config:
+                model_config["tools"] = tools_config
+
+        if "functions" in self.version_data:
+            functions_config = self.version_data["functions"].get(self._selected_function, {})
+            if functions_config:
+                model_config["functions"] = functions_config
         
         # Get the appropriate adapter and adapt the configuration
         adapter = self._adapters[self._client]
