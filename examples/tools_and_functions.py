@@ -11,86 +11,99 @@ def main():
     # Example 1: Basic usage with default tools
     print("Example 1: Basic usage with default tools")
     code_snippet = """
-    def calculate_speed(distance: float, time: float) -> float:
-        return distance / time
+    def process_user_input(user_input: str) -> str:
+        # Process the input without any validation
+        result = user_input.strip().lower()
+        return f"Processed: {result}"
     """
     
     config = (
         Promptix.builder("CodeReview")
         .with_code_snippet(code_snippet)
         .with_programming_language("Python")
-        .with_review_focus("Security and SQL Injection")
+        .with_review_focus("Security and Input Validation")
         .with_severity("high")
         .build()
     )
     print_config(config)
 
-    # Example 2: Using vehicle-specific tools
-    print("Example 2: Using vehicle-specific tools")
-    vehicle_code = """
-    class CarEngine:
-        def __init__(self, fuel_type: str):
-            self.fuel_type = fuel_type
-            
-        def start(self):
-            if self.fuel_type not in ['gasoline', 'diesel']:
-                raise ValueError('Invalid fuel type')
-            return f'Starting {self.fuel_type} engine'
+    # Example 2: Using complexity analyzer
+    print("Example 2: Using complexity analyzer")
+    complex_code = """
+    def calculate_metrics(data: List[Dict[str, Any]], threshold: float = 0.5) -> Dict[str, float]:
+        results = {}
+        for item in data:
+            if item.get('value', 0) > threshold:
+                for metric in item.get('metrics', []):
+                    if metric['type'] not in results:
+                        results[metric['type']] = 0
+                    results[metric['type']] += metric['value'] * item['weight']
+        return {k: round(v, 2) for k, v in results.items()}
     """
     
     config = (
         Promptix.builder("CodeReview")
-        .with_code_snippet(vehicle_code)
+        .with_code_snippet(complex_code)
         .with_programming_language("Python")
-        .with_review_focus("Vehicle Safety")
+        .with_review_focus("Performance")
         .with_severity("high")
-        .with_tool("vehicle_selection")  # Enable vehicle-specific tools
+        .with_tool("complexity_analyzer")  # Enable complexity analysis
         .build()
     )
     print_config(config)
 
-    # Example 3: Using both vehicle-specific tools and functions
-    print("Example 3: Using both vehicle-specific tools and functions")
+    # Example 3: Using both style checker and benchmark function
+    print("Example 3: Using style checker and benchmark function")
     config = (
         Promptix.builder("CodeReview")
-        .with_code_snippet(vehicle_code)
+        .with_code_snippet(complex_code)
         .with_programming_language("Python")
-        .with_review_focus("Vehicle Safety")
-        .with_severity("high")
-        .with_tool("vehicle_selection")
-        .with_function("vehicle_selection")
+        .with_review_focus("Code Quality")
+        .with_severity("medium")
+        .with_tool("style_checker")
+        .with_function("benchmark_code")
         .build()
     )
     print_config(config)
 
-    # Example 4: Using Anthropic with tools
-    print("Example 4: Using Anthropic with tools")
+    # Example 4: Using Anthropic with dependency scanner
+    print("Example 4: Using Anthropic with dependency scanner")
+    requirements_code = """
+    from fastapi import FastAPI, Depends
+    from sqlalchemy import create_engine
+    import pandas as pd
+    import numpy as np
+    
+    app = FastAPI()
+    """
+    
     config = (
         Promptix.builder("CodeReview")
-        .with_code_snippet(vehicle_code)
+        .with_code_snippet(requirements_code)
         .with_programming_language("Python")
-        .with_review_focus("Vehicle Safety")
-        .with_severity("high")
-        .with_tool("vehicle_selection")
-        .for_client("anthropic")  # Switch to Anthropic
+        .with_review_focus("Dependencies")
+        .with_severity("medium")
+        .with_tool("dependency_scanner")
+        .for_client("anthropic")
         .build()
     )
     print_config(config)
 
-    # Example 5: Conversation with memory and tools
-    print("Example 5: Conversation with memory and tools")
+    # Example 5: Conversation with memory and multiple tools
+    print("Example 5: Conversation with memory and multiple tools")
     conversation_memory = [
-        {"role": "user", "content": "Can you review this vehicle code?"},
-        {"role": "assistant", "content": "I'll analyze the code for vehicle safety."}
+        {"role": "user", "content": "Can you review this API endpoint code?"},
+        {"role": "assistant", "content": "I'll analyze the code for security and performance issues."}
     ]
     
     config = (
         Promptix.builder("CodeReview")
-        .with_code_snippet(vehicle_code)
+        .with_code_snippet(requirements_code)
         .with_programming_language("Python")
-        .with_review_focus("Vehicle Safety")
+        .with_review_focus("Security")
         .with_severity("high")
-        .with_tool("vehicle_selection")
+        .with_tool("complexity_analyzer")
+        .with_tool("dependency_scanner")
         .with_memory(conversation_memory)
         .build()
     )

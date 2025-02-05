@@ -280,8 +280,8 @@
         "presence_penalty": 0,
         "tools": {
           "default": {
-            "analyze_code": {
-              "description": "Analyzes code structure and patterns",
+            "basic_analyzer": {
+              "description": "Basic code analysis tool",
               "parameters": {
                 "type": "object",
                 "properties": {
@@ -298,9 +298,9 @@
               }
             }
           },
-          "vehicle_selection": {
-            "analyze_code": {
-              "description": "Analyzes vehicle-specific code patterns",
+          "complexity_analyzer": {
+            "analyze_complexity": {
+              "description": "Analyzes code complexity and performance patterns",
               "parameters": {
                 "type": "object",
                 "properties": {
@@ -312,12 +312,59 @@
                     "type": "string",
                     "description": "Programming language"
                   },
-                  "vehicle_type": {
-                    "type": "string",
-                    "description": "Type of vehicle"
+                  "metrics": {
+                    "type": "array",
+                    "description": "Complexity metrics to analyze",
+                    "items": {
+                      "type": "string",
+                      "enum": ["cyclomatic", "cognitive", "halstead"]
+                    }
                   }
                 },
-                "required": ["code", "language", "vehicle_type"]
+                "required": ["code", "language"]
+              }
+            }
+          },
+          "style_checker": {
+            "check_style": {
+              "description": "Analyzes code style and formatting",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "Code to analyze"
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "Programming language"
+                  },
+                  "style_guide": {
+                    "type": "string",
+                    "description": "Style guide to follow",
+                    "enum": ["pep8", "google", "microsoft"]
+                  }
+                },
+                "required": ["code", "language"]
+              }
+            }
+          },
+          "dependency_scanner": {
+            "scan_dependencies": {
+              "description": "Analyzes code dependencies for security and compatibility",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "Code to analyze"
+                  },
+                  "requirements": {
+                    "type": "string",
+                    "description": "Dependencies file content"
+                  }
+                },
+                "required": ["code"]
               }
             }
           }
@@ -325,7 +372,7 @@
         "functions": {
           "default": {
             "analyze": {
-              "description": "Analyzes code quality",
+              "description": "Basic code analysis function",
               "parameters": {
                 "type": "object",
                 "properties": {
@@ -337,19 +384,19 @@
               }
             }
           },
-          "vehicle_selection": {
-            "analyze_vehicle": {
-              "description": "Analyzes vehicle-specific code",
+          "benchmark_code": {
+            "run_benchmark": {
+              "description": "Runs performance benchmarks on code",
               "parameters": {
                 "type": "object",
                 "properties": {
                   "code": {
                     "type": "string",
-                    "description": "Code to analyze"
+                    "description": "Code to benchmark"
                   },
-                  "vehicle_type": {
-                    "type": "string",
-                    "description": "Type of vehicle"
+                  "iterations": {
+                    "type": "integer",
+                    "description": "Number of iterations to run"
                   }
                 }
               }

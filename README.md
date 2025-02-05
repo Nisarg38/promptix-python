@@ -93,6 +93,7 @@ response = client.chat.completions.create(**model_config)
 Promptix provides a fluent builder pattern interface for creating model configurations:
 
 ```python
+# OpenAI Integration
 from promptix import Promptix
 import openai
 
@@ -128,6 +129,8 @@ response = client.chat.completions.create(**code_config)
 
 
 # Anthropic Integration
+from promptix import Promptix
+import anthropic
 
 client = Anthropic()
 
@@ -152,6 +155,73 @@ The builder pattern provides:
 - Automatic validation of required fields
 - Support for multiple LLM providers
 - Clear separation of configuration concerns
+
+## Tools and Functions Support
+
+Promptix supports adding tools and functions to your LLM configurations, making it easy to enable specific capabilities for different use cases:
+
+```python
+# OpenAI Integration
+from promptix import Promptix
+import openai
+
+client = openai.OpenAI()
+
+# Tools with conversation memory
+conversation_memory = [
+    {"role": "user", "content": "Can you review this API endpoint code?"},
+    {"role": "assistant", "content": "I'll analyze the code for security and performance issues."}
+]
+
+# Using both tools and functions for comprehensive review
+config = (
+    Promptix.builder("CodeReview")
+    .with_code_snippet(code)
+    .with_programming_language("Python")
+    .with_review_focus("Performance")
+    .with_tool("complexity_analyzer")  # Tool for code complexity analysis
+    .with_function("benchmark_code")   # Function to run performance tests
+    .with_memory(conversation_memory)
+    .build()
+)
+
+response = client.chat.completions.create(**config)
+
+# Using tools with different LLM providers
+from promptix import Promptix
+import anthropic
+
+client = Anthropic()
+
+# Tools with conversation memory
+conversation_memory = [
+    {"role": "user", "content": "Can you review this API endpoint code?"},
+    {"role": "assistant", "content": "I'll analyze the code for security and performance issues."}
+]
+
+anthropic_config = (
+    Promptix.builder("CodeReview")
+    .with_code_snippet(code)
+    .with_review_focus("Best Practices")
+    .with_tool("style_checker")        # Tool for code style analysis
+    .with_tool("dependency_scanner")   # Tool for dependency analysis
+    .for_client("anthropic")          # Switch to Anthropic
+    .with_memory(conversation_memory)
+    .build()
+)
+
+
+response = client.messages.create(**anthropic_config)
+
+```
+
+Key features of Tools and Functions support:
+- 🛠 **Specialized Tools** - Enable specific analysis capabilities like security scanning and performance testing
+- 🔄 **Function Integration** - Add custom functions for enhanced code analysis
+- 🤝 **Multi-Provider Support** - Tools work across different LLM providers
+- 🧠 **Memory Compatible** - Use tools alongside conversation memory
+- ⚠️ **Validation** - Automatic validation of tool and function configurations
+- 🔌 **Extensible** - Easy to add new tools and functions for your specific review needs
 
 ## Advanced Usage
 
