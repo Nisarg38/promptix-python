@@ -1,7 +1,0 @@
-1. include custom tools and function based on the boolean in builder.
-
-2. Prompts.json validation to make sure no one broke the json with editing. 
-
-3. Improve DB studio 
-
-4. Imrpove docs + blogs + linkedin post 
