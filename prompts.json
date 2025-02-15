@@ -60,39 +60,14 @@
         }
       },
       "v3": {
-        "is_live": false,
-        "system_message": "As a senior customer support specialist for a software company, your role is to provide exceptional support while following our company guidelines:\n\nContext Variables:\n- Customer: {{user_name}}\n- Issue Type: {{issue_type}}\n- Technical Level: {{technical_level}}\n- Previous Interactions: {{interaction_history}}\n- Product Version: {{product_version}}\n\nResponse Structure:\n1. Personalized Greeting\n2. Issue Acknowledgment\n3. Technical Solution (adapted to {{technical_level}})\n4. Preventive Tips\n5. Relevant Documentation\n6. Next Steps\n7. Follow-up Plan\n\nTone Guidelines:\n- Professional yet friendly\n- Empathetic to user frustration\n- Clear and concise\n- Proactive in preventing future issues\n\nEnsure all responses align with our SLA commitment and include appropriate escalation paths if needed.",
-        "temperature": 0.5,
-        "max_tokens": 2000,
-        "top_p": 1,
-        "frequency_penalty": 0.1,
-        "presence_penalty": 0.1,
-        "tools": [],
-        "model": "gpt-4",
-        "provider": "openai",
-        "last_modified": "2024-03-19T14:00:00.000000",
-        "created_at": "2024-03-19T14:00:00.000000",
-        "schema": {
-          "required": [
-            "user_name",
-            "issue_type",
-            "technical_level",
-            "interaction_history",
-            "product_version"
-          ],
-          "optional": [],
-          "types": {
-            "user_name": "string",
-            "issue_type": "string",
-            "technical_level": [
-              "beginner",
-              "intermediate",
-              "advanced"
-            ],
-            "interaction_history": "string",
-            "product_version": "string"
-          }
-        }
+        "config": {
+          "model": "gpt-4",
+          "temperature": 0.7,
+          "max_tokens": 1024,
+          "top_p": 1.0
+        },
+        "system_prompt": "You are a helpful AI assistant.",
+        "created_at": "2025-02-15T15:33:26.103405"
       },
       "v4": {
         "is_live": true,
@@ -132,13 +107,21 @@
             "technical_level": {
               "type": "string",
               "required": true,
-              "enum": ["beginner", "intermediate", "advanced"],
+              "enum": [
+                "beginner",
+                "intermediate",
+                "advanced"
+              ],
               "description": "User's technical expertise level"
             },
             "priority": {
               "type": "string",
               "required": false,
-              "enum": ["high", "medium", "low"],
+              "enum": [
+                "high",
+                "medium",
+                "low"
+              ],
               "description": "Priority level of the issue"
             },
             "product_version": {
@@ -149,14 +132,17 @@
             "subscription_tier": {
               "type": "string",
               "required": false,
-              "enum": ["basic", "premium"],
+              "enum": [
+                "basic",
+                "premium"
+              ],
               "description": "User's subscription tier"
             }
           },
           "additionalProperties": false
         }
       },
-      "v5": { 
+      "v5": {
         "is_live": false,
         "system_message": "You are a customer support agent helping with a {{issue_type}} issue.\n\n{% if priority == 'high' %}URGENT: This requires immediate attention!\n{% endif %}\n\nUser: {{user_name}}\nTechnical Level: {{technical_level}}\nProduct Version: {{product_version}}\n{% if subscription_tier == 'premium' %}Premium Support Level\n{% endif %}\n\nPlease assist with the following issue:\n{{issue_description}}",
         "temperature": 0.7,
@@ -165,7 +151,7 @@
         "frequency_penalty": 0,
         "presence_penalty": 0,
         "tools": [],
-        "model": "claude-3-5-sonnet-20241022", 
+        "model": "claude-3-5-sonnet-20241022",
         "provider": "anthropic",
         "metadata": {
           "created_at": "2024-01-20",
@@ -194,13 +180,21 @@
             "technical_level": {
               "type": "string",
               "required": true,
-              "enum": ["beginner", "intermediate", "advanced"],
+              "enum": [
+                "beginner",
+                "intermediate",
+                "advanced"
+              ],
               "description": "User's technical expertise level"
             },
             "priority": {
               "type": "string",
               "required": false,
-              "enum": ["high", "medium", "low"],
+              "enum": [
+                "high",
+                "medium",
+                "low"
+              ],
               "description": "Priority level of the issue"
             },
             "product_version": {
@@ -211,7 +205,10 @@
             "subscription_tier": {
               "type": "string",
               "required": false,
-              "enum": ["basic", "premium"],
+              "enum": [
+                "basic",
+                "premium"
+              ],
               "description": "User's subscription tier"
             }
           },
@@ -220,7 +217,7 @@
       }
     },
     "created_at": "2024-03-19T12:00:00.000000",
-    "last_modified": "2024-03-19T14:00:00.000000"
+    "last_modified": "2025-02-15T15:33:26.103812"
   },
   "CodeReview": {
     "name": "CodeReview",
@@ -294,7 +291,10 @@
                     "description": "Programming language"
                   }
                 },
-                "required": ["code", "language"]
+                "required": [
+                  "code",
+                  "language"
+                ]
               }
             },
             "analyze": {
@@ -329,11 +329,18 @@
                     "description": "Complexity metrics to analyze",
                     "items": {
                       "type": "string",
-                      "enum": ["cyclomatic", "cognitive", "halstead"]
+                      "enum": [
+                        "cyclomatic",
+                        "cognitive",
+                        "halstead"
+                      ]
                     }
                   }
                 },
-                "required": ["code", "language"]
+                "required": [
+                  "code",
+                  "language"
+                ]
               }
             }
           },
@@ -354,10 +361,17 @@
                   "style_guide": {
                     "type": "string",
                     "description": "Style guide to follow",
-                    "enum": ["pep8", "google", "microsoft"]
+                    "enum": [
+                      "pep8",
+                      "google",
+                      "microsoft"
+                    ]
                   }
                 },
-                "required": ["code", "language"]
+                "required": [
+                  "code",
+                  "language"
+                ]
               }
             }
           },
@@ -376,7 +390,9 @@
                     "description": "Dependencies file content"
                   }
                 },
-                "required": ["code"]
+                "required": [
+                  "code"
+                ]
               }
             }
           },
@@ -422,7 +438,11 @@
             },
             "severity": {
               "type": "string",
-              "enum": ["high", "medium", "low"],
+              "enum": [
+                "high",
+                "medium",
+                "low"
+              ],
               "description": "The severity level of the review",
               "required": true
             }
@@ -554,12 +574,30 @@
             "custom_data"
           ],
           "types": {
-            "game_style": ["heroic", "gritty", "epic", "mystery"],
+            "game_style": [
+              "heroic",
+              "gritty",
+              "epic",
+              "mystery"
+            ],
             "party_level": "integer",
             "party_classes": "array",
-            "environment": ["dungeon", "city", "wilderness"],
-            "quest_type": ["combat", "diplomacy", "mystery", "exploration"],
-            "difficulty": ["easy", "medium", "hard"],
+            "environment": [
+              "dungeon",
+              "city",
+              "wilderness"
+            ],
+            "quest_type": [
+              "combat",
+              "diplomacy",
+              "mystery",
+              "exploration"
+            ],
+            "difficulty": [
+              "easy",
+              "medium",
+              "hard"
+            ],
             "environment_details": "object",
             "magical_elements": "array",
             "custom_data": "object"
