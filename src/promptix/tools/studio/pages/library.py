@@ -1,6 +1,6 @@
 import streamlit as st
 from typing import Optional, Dict, Any
-from promptix.core.prompt_manager import PromptManager
+from promptix.tools.studio.data import PromptManager
 
 def render_prompt_list():
     """Render the list of all prompts"""
@@ -134,5 +134,5 @@ def render_prompt_library():
     if st.session_state["library_view"] == "list":
         render_prompt_list()
     elif st.session_state["library_view"] == "version":
-        from promptix.studio.pages.version import render_version_editor
+        from promptix.tools.studio.pages.version import render_version_editor
         render_version_editor() 

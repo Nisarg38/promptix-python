@@ -1,6 +1,6 @@
 import streamlit as st
 from typing import Optional, Dict, Any
-from promptix.core.prompt_manager import PromptManager  
+from promptix.tools.studio.data import PromptManager  
 
 def render_recent_prompts():
     """Render the recent prompts section"""
