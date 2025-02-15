@@ -1,21 +1,42 @@
 import json
 from pathlib import Path
 from typing import Dict, Any
+from .loaders import PromptLoaderFactory
 
 class PromptManager:
     """Manages prompts from local storage."""
     
-    def __init__(self):
+    DEFAULT_FORMAT = '.yaml'  # Change default to YAML
+    
+    def __init__(self, format: str = None):
         self.prompts: Dict[str, Any] = {}
+        self.format = format or self.DEFAULT_FORMAT
         self._load_prompts()
+    
+    def _get_prompt_file(self) -> Path:
+        # Try YAML first (default), then JSON
+        yaml_file = Path("prompts.yaml")
+        yml_file = Path("prompts.yml")
+        json_file = Path("prompts.json")
+        
+        if yaml_file.exists():
+            return yaml_file
+        elif yml_file.exists():
+            return yml_file
+        elif json_file.exists():
+            return json_file
+        else:
+            # Create new file with preferred format
+            default_file = Path(f"prompts{self.format}")
+            default_file.touch()
+            return default_file
     
     def _load_prompts(self) -> None:
         """Load prompts from local prompts.json file."""
         try:
-            prompts_file = Path("prompts.json")
-            if prompts_file.exists():
-                with open(prompts_file, 'r') as f:
-                    self.prompts = json.load(f)
+            prompt_file = self._get_prompt_file()
+            loader = PromptLoaderFactory.get_loader(prompt_file)
+            self.prompts = loader.load(prompt_file)
         except Exception as e:
             raise ValueError(f"Failed to load prompts: {str(e)}")
     
@@ -48,14 +69,12 @@ class PromptManager:
     def save_prompts(self) -> None:
         """Save prompts to local prompts.json file."""
         try:
-            prompts_file = Path("prompts.json")
-            
-            # Always format prompts before saving
-            formatted_prompts = {}
-            for prompt_id, prompt_data in self.prompts.items():
-                formatted_prompts[prompt_id] = self._format_prompt_for_storage(prompt_data)
-            
-            with open(prompts_file, 'w', encoding='utf-8') as f:
-                json.dump(formatted_prompts, f, indent=2, ensure_ascii=False)
+            prompt_file = self._get_prompt_file()
+            loader = PromptLoaderFactory.get_loader(prompt_file)
+            formatted_prompts = {
+                prompt_id: self._format_prompt_for_storage(prompt_data)
+                for prompt_id, prompt_data in self.prompts.items()
+            }
+            loader.save(formatted_prompts, prompt_file)
         except Exception as e:
             raise ValueError(f"Failed to save prompts: {str(e)}") 

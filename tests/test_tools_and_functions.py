@@ -78,15 +78,12 @@ def test_multiple_tools():
         .with_review_focus("Code Quality")
         .with_severity("medium")
         .with_tool("style_checker")
-        .with_function("benchmark_code")
         .build()
     )
     
     assert "functions" in config or "tools" in config
     tools = config.get("tools", [])
-    functions = config.get("functions", [])
-    assert any("style" in str(t).lower() for t in tools + functions)
-    assert any("benchmark" in str(t).lower() for t in tools + functions)
+    assert any("style" in str(t).lower() for t in tools)
 
 def test_anthropic_config():
     # Test Example 4: Using Anthropic with dependency scanner

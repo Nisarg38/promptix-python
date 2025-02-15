@@ -15,7 +15,7 @@ def basic_builder_example() -> None:
     try:
         client = openai.OpenAI()  # Will automatically use OPENAI_API_KEY from environment
 
-        memory= [
+        memory = [
             {"role": "user", "content": "I'm having trouble with my account settings"},
         ]
 
@@ -27,6 +27,7 @@ def basic_builder_example() -> None:
             .with_issue_description("User cannot access account settings page after recent update")
             .with_technical_level("intermediate")
             .with_priority("medium")
+            .with_product_version("2.0.1")
             .with_memory(memory)
             .build()
         )
@@ -49,7 +50,7 @@ def advanced_builder_example() -> None:
     try:
         client = openai.OpenAI()
 
-        memory= [
+        memory = [
             {"role": "user", "content": "Can you review this code for security issues?"},
         ]
 
@@ -73,7 +74,7 @@ def advanced_builder_example() -> None:
         print("\n\n")        
 
         response = client.chat.completions.create(**model_config)
-        print("Advanced Example Response:", response.choices[0].message.content)
+        print("Advanced Example Response:", response.choices[0].message)
     except Exception as e:
         print(f"Error in advanced builder example: {str(e)}")
 
@@ -87,7 +88,7 @@ def anthropic_builder_example() -> None:
     try:
         client = anthropic.Anthropic()  # Will automatically use ANTHROPIC_API_KEY from environment
 
-        memory= [
+        memory = [
             {"role": "user", "content": "I'm having trouble with my account settings"},
         ]
 
@@ -99,6 +100,7 @@ def anthropic_builder_example() -> None:
             .with_issue_description("User cannot access account settings page after recent update")
             .with_technical_level("intermediate")
             .with_priority("medium")
+            .with_product_version("2.0.1")
             .with_memory(memory)
             .for_client("anthropic")
             .build()

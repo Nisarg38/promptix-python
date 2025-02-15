@@ -10,7 +10,11 @@ class Promptix:
     """Main class for managing and using prompts with schema validation and template rendering."""
     
     _prompts: Dict[str, Any] = {}
-    _jinja_env = Environment(loader=BaseLoader())
+    _jinja_env = Environment(
+        loader=BaseLoader(),
+        trim_blocks=True,
+        lstrip_blocks=True
+    )
     _logger = setup_logging()
     
     @classmethod

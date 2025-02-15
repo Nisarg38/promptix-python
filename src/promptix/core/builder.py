@@ -1,165 +1,8 @@
 from typing import Any, Dict, List, Optional, Union
-from abc import ABC, abstractmethod
 from .base import Promptix
-
-class ModelAdapter(ABC):
-    """Base adapter class for different model providers."""
-    
-    @abstractmethod
-    def adapt_config(self, model_config: Dict[str, Any], version_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Adapt the configuration for specific provider."""
-        pass
-
-    @abstractmethod
-    def adapt_messages(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
-        """Adapt message format for specific provider."""
-        pass
-
-class OpenAIAdapter(ModelAdapter):
-    """Adapter for OpenAI's API."""
-    
-    def adapt_config(self, model_config: Dict[str, Any], version_data: Dict[str, Any]) -> Dict[str, Any]:
-        # Add optional configuration parameters if present
-        optional_params = [
-            ("temperature", (int, float)),
-            ("max_tokens", int),
-            ("top_p", (int, float)),
-            ("frequency_penalty", (int, float)),
-            ("presence_penalty", (int, float))
-        ]
-
-        for param_name, expected_type in optional_params:
-            if param_name in version_data and version_data[param_name] is not None:
-                value = version_data[param_name]
-                if not isinstance(value, expected_type):
-                    raise ValueError(f"{param_name} must be of type {expected_type}")
-                model_config[param_name] = value
-        
-        # Handle tools and functions
-        if "tools" in model_config:
-            tools = model_config["tools"]
-            if isinstance(tools, dict):
-                # Convert dict to list format expected by OpenAI
-                tools_list = []
-                for tool_name, tool_config in tools.items():
-                    tools_list.append({
-                        "type": "function",
-                        "function": {
-                            "name": tool_name,
-                            **tool_config
-                        }
-                    })
-                model_config["tools"] = tools_list
-        
-        if "functions" in model_config:
-            functions = model_config["functions"]
-            if isinstance(functions, dict):
-                # Convert dict to list format expected by OpenAI
-                functions_list = []
-                for func_name, func_config in functions.items():
-                    functions_list.append({
-                        "name": func_name,
-                        **func_config
-                    })
-                model_config["functions"] = functions_list
-        
-        return model_config
-
-    def adapt_messages(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
-        # OpenAI uses messages as is
-        return messages
-
-class AnthropicAdapter(ModelAdapter):
-    """Adapter for Anthropic's API."""
-    
-    def adapt_config(self, model_config: Dict[str, Any], version_data: Dict[str, Any]) -> Dict[str, Any]:
-        # Initialize Anthropic-specific config
-        anthropic_config = {}
-        
-        # Use the model directly from version_data
-        anthropic_config["model"] = version_data["model"]
-        
-        # Map supported parameters
-        supported_params = [
-            ("temperature", (int, float)),
-            ("max_tokens", int),
-            ("top_p", (int, float))
-        ]
-
-        for param_name, expected_type in supported_params:
-            if param_name in version_data and version_data[param_name] is not None:
-                value = version_data[param_name]
-                if not isinstance(value, expected_type):
-                    raise ValueError(f"{param_name} must be of type {expected_type}")
-                anthropic_config[param_name] = value
-        
-        # Handle tools and functions for Anthropic
-        if "tools" in model_config:
-            tools = model_config["tools"]
-            if isinstance(tools, dict):
-                # Convert to Anthropic's tool format
-                tools_list = []
-                for tool_name, tool_config in tools.items():
-                    tool_spec = {
-                        "type": "function",
-                        "function": {
-                            "name": tool_name,
-                            **tool_config
-                        }
-                    }
-                    tools_list.append(tool_spec)
-                anthropic_config["tools"] = tools_list
-
-        # Note: Anthropic currently doesn't support separate functions,
-        # so we'll convert functions to tools if they exist
-        if "functions" in model_config:
-            functions = model_config["functions"]
-            if isinstance(functions, dict):
-                if "tools" not in anthropic_config:
-                    anthropic_config["tools"] = []
-                
-                # Convert functions to tools format
-                for func_name, func_config in functions.items():
-                    tool_spec = {
-                        "type": "function",
-                        "function": {
-                            "name": func_name,
-                            **func_config
-                        }
-                    }
-                    anthropic_config["tools"].append(tool_spec)
-        
-        # Add messages to config
-        anthropic_config["messages"] = model_config["messages"]
-        
-        return anthropic_config
-
-    def adapt_messages(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
-        anthropic_messages = []
-        system_content = None
-        
-        # Extract system message and convert other messages
-        for msg in messages:
-            role = msg["role"]
-            if role == "system":
-                system_content = msg["content"]
-            elif role in ["assistant", "user"]:
-                anthropic_messages.append({
-                    "role": role,
-                    "content": msg["content"]
-                })
-        
-        # If there's a system message, prepend it to the first user message
-        if system_content:
-            if anthropic_messages and anthropic_messages[0]["role"] == "user":
-                anthropic_messages[0]["content"] = f"{system_content}\n\n{anthropic_messages[0]['content']}"
-            else:
-                anthropic_messages.insert(0, {
-                    "role": "user",
-                    "content": system_content
-                })
-        
-        return anthropic_messages
+from .adapters.openai import OpenAIAdapter
+from .adapters.anthropic import AnthropicAdapter
+from .adapters._base import ModelAdapter
 
 class PromptixBuilder:
     """Builder class for creating model configurations."""
@@ -177,9 +20,8 @@ class PromptixBuilder:
         self._memory = []        # Conversation history
         self._client = "openai"  # Default client
         
-        # New additions for tools and functions
+        # Tool selection
         self._selected_tool = "default"
-        self._selected_function = "default"
         
         # Ensure prompts are loaded
         if not Promptix._prompts:
@@ -302,17 +144,6 @@ class PromptixBuilder:
                 raise ValueError(f"Tool type '{tool_type}' not found in configuration")
         return self
 
-    def with_function(self, function_type: Optional[str] = None):
-        """Select which function configuration to use."""
-        if function_type:
-            # Validate function exists in prompts configuration
-            functions_config = self.version_data.get("functions", {})
-            if function_type in functions_config:
-                self._selected_function = function_type
-            else:
-                raise ValueError(f"Function type '{function_type}' not found in configuration")
-        return self
-
     def build(self) -> Dict[str, Any]:
         """Build the final configuration using the appropriate adapter."""
         # Validate all required fields are present and have correct types
@@ -329,28 +160,37 @@ class PromptixBuilder:
             raise ValueError(f"Error generating system message: {str(e)}")
         
         # Initialize the base configuration
-        model_config = {"messages": [{"role": "system", "content": system_message}]}
-        model_config["messages"].extend(self._memory)
+        model_config = {}
         
         # Set the model from version data
         if "model" not in self.version_data:
             raise ValueError(f"Model must be specified in the prompt version data for '{self.prompt_template}'")
         model_config["model"] = self.version_data["model"]
         
-        # Add tools and functions if they exist in version data
-        if "tools" in self.version_data:
-            tools_config = self.version_data["tools"].get(self._selected_tool, {})
-            if tools_config:
-                model_config["tools"] = tools_config
+        # Handle system message differently for different providers
+        if self._client == "anthropic":
+            model_config["system"] = system_message
+            model_config["messages"] = self._memory
 
-        if "functions" in self.version_data:
-            functions_config = self.version_data["functions"].get(self._selected_function, {})
-            if functions_config:
-                model_config["functions"] = functions_config
+        # if self._client == "openai":
+        else:
+            # For OpenAI and others, include system message in messages array
+            model_config["messages"] = [{"role": "system", "content": system_message}]
+            model_config["messages"].extend(self._memory)
+        
+        # Add tools if they exist in version data
+        if "tools" in self.version_data:
+            if isinstance(self.version_data["tools"], dict):
+                tools_config = self.version_data["tools"].get(self._selected_tool, {})
+                if tools_config:
+                    model_config["tools"] = tools_config
+            elif isinstance(self.version_data["tools"], list):
+                model_config["tools"] = self.version_data["tools"]
+            else:
+                raise ValueError("Tools must be either a dictionary or a list")
         
         # Get the appropriate adapter and adapt the configuration
         adapter = self._adapters[self._client]
         model_config = adapter.adapt_config(model_config, self.version_data)
-        model_config["messages"] = adapter.adapt_messages(model_config["messages"])
         
         return model_config 

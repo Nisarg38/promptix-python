@@ -165,7 +165,7 @@
         "frequency_penalty": 0,
         "presence_penalty": 0,
         "tools": [],
-        "model": "claude-3-5-sonnet-20240620", 
+        "model": "claude-3-5-sonnet-20241022", 
         "provider": "anthropic",
         "metadata": {
           "created_at": "2024-01-20",
@@ -296,6 +296,18 @@
                 },
                 "required": ["code", "language"]
               }
+            },
+            "analyze": {
+              "description": "Basic code analysis function",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "Code to analyze"
+                  }
+                }
+              }
             }
           },
           "complexity_analyzer": {
@@ -367,24 +379,8 @@
                 "required": ["code"]
               }
             }
-          }
-        },
-        "functions": {
-          "default": {
-            "analyze": {
-              "description": "Basic code analysis function",
-              "parameters": {
-                "type": "object",
-                "properties": {
-                  "code": {
-                    "type": "string",
-                    "description": "Code to analyze"
-                  }
-                }
-              }
-            }
           },
-          "benchmark_code": {
+          "benchmark": {
             "run_benchmark": {
               "description": "Runs performance benchmarks on code",
               "parameters": {
