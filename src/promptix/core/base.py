@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, List, Union
 from jinja2 import BaseLoader, Environment, TemplateError
 from ..enhancements.logging import setup_logging
+from .storage.loaders import PromptLoaderFactory
 
 
 class Promptix:
@@ -19,14 +20,25 @@ class Promptix:
     
     @classmethod
     def _load_prompts(cls) -> None:
-        """Load prompts from local prompts.json file."""
+        """Load prompts from local prompts file (yaml/yml/json)."""
         try:
-            prompts_file = Path("prompts.json")
-            if prompts_file.exists():
-                with open(prompts_file, 'r', encoding='utf-8') as f:
-                    cls._prompts = json.load(f)
+            # Try YAML first, then JSON
+            yaml_file = Path("prompts.yaml")
+            yml_file = Path("prompts.yml")
+            json_file = Path("prompts.json")
+            
+            if yaml_file.exists():
+                prompt_file = yaml_file
+            elif yml_file.exists():
+                prompt_file = yml_file
+            elif json_file.exists():
+                prompt_file = json_file
             else:
-                cls._logger.warning("No prompts.json file found; _prompts will be empty.")
+                cls._logger.warning("No prompts file found (tried prompts.yaml, prompts.yml, prompts.json); _prompts will be empty.")
+                return
+                
+            loader = PromptLoaderFactory.get_loader(prompt_file)
+            cls._prompts = loader.load(prompt_file)
         except Exception as e:
             raise ValueError(f"Failed to load prompts: {str(e)}")
     
@@ -136,7 +148,7 @@ class Promptix:
             cls._load_prompts()
         
         if prompt_template not in cls._prompts:
-            raise ValueError(f"Prompt template '{prompt_template}' not found in prompts.json.")
+            raise ValueError(f"Prompt template '{prompt_template}' not found in prompts configuration.")
         
         prompt_data = cls._prompts[prompt_template]
         versions = prompt_data.get("versions", {})
@@ -230,7 +242,7 @@ class Promptix:
             cls._load_prompts()
         
         if prompt_template not in cls._prompts:
-            raise ValueError(f"Prompt template '{prompt_template}' not found in prompts.json.")
+            raise ValueError(f"Prompt template '{prompt_template}' not found in prompts configuration.")
         
         prompt_data = cls._prompts[prompt_template]
         versions = prompt_data.get("versions", {})
