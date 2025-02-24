@@ -47,7 +47,7 @@ def main():
         .with_programming_language("Python")
         .with_review_focus("Performance")
         .with_severity("high")
-        .with_tool("complexity_analyzer")  # Enable complexity analysis
+        .with_tool("complexity_analyzer")  # Enable complexity analysis 
         .build()
     )
     print_config(config)

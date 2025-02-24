@@ -74,7 +74,7 @@ def advanced_builder_example() -> None:
         print("\n\n")        
 
         response = client.chat.completions.create(**model_config)
-        print("Advanced Example Response:", response.choices[0].message)
+        print("Advanced Example Response:", response.choices[0].message.content)
     except Exception as e:
         print(f"Error in advanced builder example: {str(e)}")
 

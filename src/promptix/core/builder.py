@@ -163,9 +163,9 @@ class PromptixBuilder:
         model_config = {}
         
         # Set the model from version data
-        if "model" not in self.version_data:
-            raise ValueError(f"Model must be specified in the prompt version data for '{self.prompt_template}'")
-        model_config["model"] = self.version_data["model"]
+        if "model" not in self.version_data.get("config", {}):
+            raise ValueError(f"Model must be specified in the prompt version data config for '{self.prompt_template}'")
+        model_config["model"] = self.version_data["config"]["model"]
         
         # Handle system message differently for different providers
         if self._client == "anthropic":

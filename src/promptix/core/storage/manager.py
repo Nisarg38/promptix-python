@@ -57,12 +57,12 @@ class PromptManager:
         # Process each version's system_message
         if "versions" in formatted_data:
             for version in formatted_data["versions"].values():
-                if "system_message" in version:
+                if "config" in version and "system_instruction" in version["config"]:
                     # Convert multiline to single line with \n
-                    message = version["system_message"]
+                    message = version["config"]["system_instruction"]
                     if isinstance(message, str):
                         lines = [line for line in message.strip().split("\n")]
-                        version["system_message"] = "\\n".join(lines)
+                        version["config"]["system_instruction"] = "\\n".join(lines)
         
         return formatted_data
 

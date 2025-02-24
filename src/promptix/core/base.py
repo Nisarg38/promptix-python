@@ -174,10 +174,10 @@ class Promptix:
         if not version_data:
             raise ValueError(f"No valid version data found for prompt '{prompt_template}'.")
         
-        template_text = version_data.get("system_message")
+        template_text = version_data.get("config", {}).get("system_instruction")
         if not template_text:
             raise ValueError(
-                f"Version data for '{prompt_template}' does not contain 'system_message'."
+                f"Version data for '{prompt_template}' does not contain 'config.system_instruction'."
             )
         
         # --- 2) Validate variables against schema ---
@@ -259,19 +259,19 @@ class Promptix:
                 raise ValueError(f"No live version found for prompt '{prompt_template}'.")
             version_data = versions[live_version_key]
         
-        # Get model configuration from version data
-        version_data = versions[live_version_key]
-        
         # Initialize the base configuration with required parameters
         model_config = {
             "messages": [{"role": "system", "content": system_message}]
         }
         model_config["messages"].extend(memory)
 
+        # Get configuration from version data
+        config = version_data.get("config", {})
+        
         # Model is required for OpenAI API
-        if "model" not in version_data:
-            raise ValueError(f"Model must be specified in the version data for prompt '{prompt_template}'")
-        model_config["model"] = version_data["model"]
+        if "model" not in config:
+            raise ValueError(f"Model must be specified in the version data config for prompt '{prompt_template}'")
+        model_config["model"] = config["model"]
 
         # Add optional configuration parameters only if they are present and not null
         optional_params = [
@@ -283,22 +283,22 @@ class Promptix:
         ]
 
         for param_name, expected_type in optional_params:
-            if param_name in version_data and version_data[param_name] is not None:
-                value = version_data[param_name]
+            if param_name in config and config[param_name] is not None:
+                value = config[param_name]
                 if not isinstance(value, expected_type):
                     raise ValueError(f"{param_name} must be of type {expected_type}")
                 model_config[param_name] = value
             
         # Add tools configuration if present and non-empty
-        if "tools" in version_data and version_data["tools"]:
-            tools = version_data["tools"]
+        if "tools" in config and config["tools"]:
+            tools = config["tools"]
             if not isinstance(tools, list):
                 raise ValueError("Tools configuration must be a list")
             model_config["tools"] = tools
             
             # If tools are present, also set tool_choice if specified
-            if "tool_choice" in version_data:
-                model_config["tool_choice"] = version_data["tool_choice"]
+            if "tool_choice" in config:
+                model_config["tool_choice"] = config["tool_choice"]
         
         return model_config
 

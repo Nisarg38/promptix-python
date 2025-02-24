@@ -8,8 +8,10 @@ class AnthropicAdapter(ModelAdapter):
         # Initialize Anthropic-specific config
         anthropic_config = {}
         
-        # Use the model directly from version_data
-        anthropic_config["model"] = version_data["model"]
+        # Use the model from version_data config
+        anthropic_config["model"] = version_data.get("config", {}).get("model")
+        if not anthropic_config["model"]:
+            raise ValueError("Model must be specified in the version data config")
         
         # Map supported parameters with Anthropic-specific names
         param_mapping = {
@@ -18,9 +20,10 @@ class AnthropicAdapter(ModelAdapter):
             "top_p": "top_p"
         }
 
+        config = version_data.get("config", {})
         for source_param, target_param in param_mapping.items():
-            if source_param in version_data and version_data[source_param] is not None:
-                value = version_data[source_param]
+            if source_param in config and config[source_param] is not None:
+                value = config[source_param]
                 if isinstance(value, (int, float)):
                     anthropic_config[target_param] = value
         
