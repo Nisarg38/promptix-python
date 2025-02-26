@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 from ._base import ModelAdapter
 
 class AnthropicAdapter(ModelAdapter):
@@ -74,4 +74,53 @@ class AnthropicAdapter(ModelAdapter):
                     "content": content
                 })
         
-        return anthropic_messages 
+        return anthropic_messages
+
+    def process_tools(self, tools_data: Union[Dict, List]) -> List[Dict[str, Any]]:
+        """Convert tools data to Anthropic's format.
+        
+        Anthropic uses a different format for tools compared to OpenAI:
+        - Name and description are at the top level
+        - Parameters are under "input_schema" instead of "parameters"
+        """
+        anthropic_tools = []
+        
+        # Handle if tools_data is a dictionary of tool_name -> tool_config
+        if isinstance(tools_data, dict):
+            for tool_name, tool_config in tools_data.items():
+                # Create an Anthropic-compatible tool
+                anthropic_tool = {
+                    "name": tool_name,
+                    "description": tool_config.get("description", "")
+                }
+                
+                # Extract parameters from tool_config
+                parameters = tool_config.get("parameters", {})
+                if parameters:
+                    # Anthropic uses "input_schema" instead of "parameters"
+                    anthropic_tool["input_schema"] = parameters
+                
+                anthropic_tools.append(anthropic_tool)
+        
+        # Handle if tools_data is already a list (possibly from OpenAI format)
+        elif isinstance(tools_data, list):
+            for tool in tools_data:
+                # Handle OpenAI-style function tools
+                if isinstance(tool, dict) and tool.get("type") == "function" and "function" in tool:
+                    function = tool["function"]
+                    anthropic_tool = {
+                        "name": function.get("name", ""),
+                        "description": function.get("description", "")
+                    }
+                    
+                    # Convert parameters to input_schema
+                    if "parameters" in function:
+                        anthropic_tool["input_schema"] = function["parameters"]
+                    
+                    anthropic_tools.append(anthropic_tool)
+                # Handle already formatted Anthropic tools
+                elif isinstance(tool, dict) and "name" in tool:
+                    # Already in Anthropic format, just add it
+                    anthropic_tools.append(tool)
+        
+        return anthropic_tools 

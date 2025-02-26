@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 class ModelAdapter(ABC):
     """Base adapter class for different model providers."""
@@ -12,4 +12,9 @@ class ModelAdapter(ABC):
     @abstractmethod
     def adapt_messages(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
         """Adapt message format for specific provider."""
+        pass
+
+    @abstractmethod
+    def process_tools(self, tools_data: Union[Dict, List]) -> List[Dict[str, Any]]:
+        """Process tools data into the appropriate format for the specific adapter."""
         pass 

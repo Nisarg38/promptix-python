@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 from ._base import ModelAdapter
 
 class OpenAIAdapter(ModelAdapter):
@@ -51,3 +51,26 @@ class OpenAIAdapter(ModelAdapter):
     def adapt_messages(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
         # OpenAI's message format is already our base format
         return messages 
+
+    def process_tools(self, tools_data: Union[Dict, List]) -> List[Dict[str, Any]]:
+        """Convert tools data to OpenAI function format."""
+        formatted_tools = []
+        if isinstance(tools_data, dict):
+            # If template returns a dict of tool configurations
+            for tool_name, tool_config in tools_data.items():
+                formatted_tools.append({
+                    "type": "function",
+                    "function": {
+                        "name": tool_name,
+                        **tool_config
+                    }
+                })
+        elif isinstance(tools_data, list):
+            # If template returns a list of tool configurations
+            for tool_config in tools_data:
+                if isinstance(tool_config, dict) and "name" in tool_config:
+                    formatted_tools.append({
+                        "type": "function",
+                        "function": tool_config
+                    })
+        return formatted_tools 

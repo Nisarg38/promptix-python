@@ -60,14 +60,14 @@ def main():
         .with_programming_language("Python")
         .with_review_focus("Code Quality")
         .with_severity("medium")
-        .with_tool("style_checker")
-        .with_function("benchmark_code")
+        # .with_tool("style_checker")
+        # .with_function("benchmark_code")
         .build()
     )
     print_config(config)
 
-    # Example 4: Using Anthropic with dependency scanner
-    print("Example 4: Using Anthropic with dependency scanner")
+    # Example 4.1: Using Anthropic with Complexity Analyzer - Should fail as provider is anthropic
+    print("Example 4.1: Using Anthropic with Complexity Analyzer - Should fail as provider is anthropic")
     requirements_code = """
     from fastapi import FastAPI, Depends
     from sqlalchemy import create_engine
@@ -83,7 +83,32 @@ def main():
         .with_programming_language("Python")
         .with_review_focus("Dependencies")
         .with_severity("medium")
-        .with_tool("dependency_scanner")
+        .with_tool("complexity_analyzer")
+        .for_client("anthropic")
+        .build()
+    )
+    print_config(config)
+
+
+    # Example 4.2: Using Anthropic with Complexity Analyzer
+    print("Example 4.2: Using Anthropic with Complexity Analyzer - Should pass as using correct version")
+    requirements_code = """
+    from fastapi import FastAPI, Depends
+    from sqlalchemy import create_engine
+    import pandas as pd
+    import numpy as np
+    
+    app = FastAPI()
+    """
+    
+    config = (
+        Promptix.builder("CodeReview")
+        .with_version("v2")
+        .with_code_snippet(requirements_code)
+        .with_programming_language("Python")
+        .with_review_focus("Dependencies")
+        .with_severity("medium")
+        .with_tool("complexity_analyzer")
         .for_client("anthropic")
         .build()
     )
@@ -103,7 +128,7 @@ def main():
         .with_review_focus("Security")
         .with_severity("high")
         .with_tool("complexity_analyzer")
-        .with_tool("dependency_scanner")
+        # .with_tool("dependency_scanner")
         .with_memory(conversation_memory)
         .build()
     )
@@ -118,7 +143,7 @@ def main():
             .with_programming_language("Python")
             .with_review_focus("Security")
             .with_severity("high")
-            .with_tool("invalid_tool")  # This should raise an error
+            # .with_tool("invalid_tool")  # This should raise an error
             .build()
         )
     except ValueError as e:
