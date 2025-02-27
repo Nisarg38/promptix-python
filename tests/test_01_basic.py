@@ -8,12 +8,9 @@ from promptix import Promptix
 def test_get_prompt_basic():
     """Test basic prompt retrieval with default version."""
     prompt = Promptix.get_prompt(
-        prompt_template="CustomerSupport",
+        prompt_template="SimpleChat",
         user_name="Test User",
-        issue_type="test issue",
-        issue_description="User is having trouble logging in",
-        technical_level="beginner",
-        custom_data={"product_version": "1.0.0"}
+        assistant_name="Promptix Assistant"
     )
     assert isinstance(prompt, str)
     assert len(prompt) > 0
@@ -21,10 +18,10 @@ def test_get_prompt_basic():
 def test_get_prompt_specific_version():
     """Test prompt retrieval with specific version."""
     prompt = Promptix.get_prompt(
-        prompt_template="CustomerSupport",
+        prompt_template="SimpleChat",
         version="v1",
         user_name="Test User",
-        issue_type="test issue"
+        assistant_name="Promptix Assistant"
     )
     assert isinstance(prompt, str)
     assert len(prompt) > 0
@@ -44,11 +41,10 @@ def test_get_prompt_code_review():
         return a + b
     '''
     prompt = Promptix.get_prompt(
-        prompt_template="CodeReview",
+        prompt_template="CodeReviewer",
         code_snippet=code_snippet,
         programming_language="Python",
-        review_focus="code quality",
-        severity="low"
+        review_focus="code quality"
     )
     assert isinstance(prompt, str)
     assert len(prompt) > 0 

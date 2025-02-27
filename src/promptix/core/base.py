@@ -4,25 +4,41 @@ from pathlib import Path
 from typing import Any, Dict, Optional, List, Union
 from jinja2 import BaseLoader, Environment, TemplateError
 from ..enhancements.logging import setup_logging
+from .storage.loaders import PromptLoaderFactory
 
 
 class Promptix:
     """Main class for managing and using prompts with schema validation and template rendering."""
     
     _prompts: Dict[str, Any] = {}
-    _jinja_env = Environment(loader=BaseLoader())
+    _jinja_env = Environment(
+        loader=BaseLoader(),
+        trim_blocks=True,
+        lstrip_blocks=True
+    )
     _logger = setup_logging()
     
     @classmethod
     def _load_prompts(cls) -> None:
-        """Load prompts from local prompts.json file."""
+        """Load prompts from local prompts file (yaml/yml/json)."""
         try:
-            prompts_file = Path("prompts.json")
-            if prompts_file.exists():
-                with open(prompts_file, 'r', encoding='utf-8') as f:
-                    cls._prompts = json.load(f)
+            # Try YAML first, then JSON
+            yaml_file = Path("prompts.yaml")
+            yml_file = Path("prompts.yml")
+            json_file = Path("prompts.json")
+            
+            if yaml_file.exists():
+                prompt_file = yaml_file
+            elif yml_file.exists():
+                prompt_file = yml_file
+            elif json_file.exists():
+                prompt_file = json_file
             else:
-                cls._logger.warning("No prompts.json file found; _prompts will be empty.")
+                cls._logger.warning("No prompts file found (tried prompts.yaml, prompts.yml, prompts.json); _prompts will be empty.")
+                return
+                
+            loader = PromptLoaderFactory.get_loader(prompt_file)
+            cls._prompts = loader.load(prompt_file)
         except Exception as e:
             raise ValueError(f"Failed to load prompts: {str(e)}")
     
@@ -132,7 +148,7 @@ class Promptix:
             cls._load_prompts()
         
         if prompt_template not in cls._prompts:
-            raise ValueError(f"Prompt template '{prompt_template}' not found in prompts.json.")
+            raise ValueError(f"Prompt template '{prompt_template}' not found in prompts configuration.")
         
         prompt_data = cls._prompts[prompt_template]
         versions = prompt_data.get("versions", {})
@@ -158,10 +174,10 @@ class Promptix:
         if not version_data:
             raise ValueError(f"No valid version data found for prompt '{prompt_template}'.")
         
-        template_text = version_data.get("system_message")
+        template_text = version_data.get("config", {}).get("system_instruction")
         if not template_text:
             raise ValueError(
-                f"Version data for '{prompt_template}' does not contain 'system_message'."
+                f"Version data for '{prompt_template}' does not contain 'config.system_instruction'."
             )
         
         # --- 2) Validate variables against schema ---
@@ -226,7 +242,7 @@ class Promptix:
             cls._load_prompts()
         
         if prompt_template not in cls._prompts:
-            raise ValueError(f"Prompt template '{prompt_template}' not found in prompts.json.")
+            raise ValueError(f"Prompt template '{prompt_template}' not found in prompts configuration.")
         
         prompt_data = cls._prompts[prompt_template]
         versions = prompt_data.get("versions", {})
@@ -243,19 +259,19 @@ class Promptix:
                 raise ValueError(f"No live version found for prompt '{prompt_template}'.")
             version_data = versions[live_version_key]
         
-        # Get model configuration from version data
-        version_data = versions[live_version_key]
-        
         # Initialize the base configuration with required parameters
         model_config = {
             "messages": [{"role": "system", "content": system_message}]
         }
         model_config["messages"].extend(memory)
 
+        # Get configuration from version data
+        config = version_data.get("config", {})
+        
         # Model is required for OpenAI API
-        if "model" not in version_data:
-            raise ValueError(f"Model must be specified in the version data for prompt '{prompt_template}'")
-        model_config["model"] = version_data["model"]
+        if "model" not in config:
+            raise ValueError(f"Model must be specified in the version data config for prompt '{prompt_template}'")
+        model_config["model"] = config["model"]
 
         # Add optional configuration parameters only if they are present and not null
         optional_params = [
@@ -267,22 +283,22 @@ class Promptix:
         ]
 
         for param_name, expected_type in optional_params:
-            if param_name in version_data and version_data[param_name] is not None:
-                value = version_data[param_name]
+            if param_name in config and config[param_name] is not None:
+                value = config[param_name]
                 if not isinstance(value, expected_type):
                     raise ValueError(f"{param_name} must be of type {expected_type}")
                 model_config[param_name] = value
             
         # Add tools configuration if present and non-empty
-        if "tools" in version_data and version_data["tools"]:
-            tools = version_data["tools"]
+        if "tools" in config and config["tools"]:
+            tools = config["tools"]
             if not isinstance(tools, list):
                 raise ValueError("Tools configuration must be a list")
             model_config["tools"] = tools
             
             # If tools are present, also set tool_choice if specified
-            if "tool_choice" in version_data:
-                model_config["tool_choice"] = version_data["tool_choice"]
+            if "tool_choice" in config:
+                model_config["tool_choice"] = config["tool_choice"]
         
         return model_config
 

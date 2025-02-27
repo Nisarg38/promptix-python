@@ -6,8 +6,22 @@ Ensures that the `openai` CLI command is routed through the `promptix` package.
 import sys
 import os
 import subprocess
+import socket
+import argparse
 from openai.cli import main as openai_main
 from ..core.config import Config
+
+def is_port_in_use(port):
+    """Check if a port is in use."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
+
+def find_available_port(start_port, max_attempts=10):
+    """Find an available port starting from start_port."""
+    for port in range(start_port, start_port + max_attempts):
+        if not is_port_in_use(port):
+            return port
+    return None
 
 def launch_studio(port=8501):
     """Launch the Promptix Studio server using Streamlit."""
@@ -18,6 +32,16 @@ def launch_studio(port=8501):
         sys.exit(1)
     
     try:
+        # Find an available port if the requested one is in use
+        if is_port_in_use(port):
+            new_port = find_available_port(port)
+            if new_port is None:
+                print(f"\nError: Could not find an available port after trying {port} through {port+9}\n", 
+                      file=sys.stderr)
+                sys.exit(1)
+            print(f"\nPort {port} is in use. Trying port {new_port}...")
+            port = new_port
+
         print(f"\nLaunching Promptix Studio on port {port}...\n")
         subprocess.run(
             ["streamlit", "run", app_path, "--server.port", str(port)],
@@ -41,14 +65,24 @@ def main():
     """
     try:
         if len(sys.argv) > 1 and sys.argv[1] == "studio":
-            # Handle studio command
-            port = 8501
-            if len(sys.argv) > 2 and sys.argv[2].startswith("--port="):
-                try:
-                    port = int(sys.argv[2].split("=")[1])
-                except ValueError:
-                    print("\nInvalid port number. Using default port 8501.\n", file=sys.stderr)
-            launch_studio(port)
+            # Create parser for studio command
+            parser = argparse.ArgumentParser(
+                prog="promptix studio",
+                description="Launch Promptix Studio web interface",
+                usage="promptix studio [-p PORT] [--port PORT]"
+            )
+            parser.add_argument(
+                "-p", "--port",
+                type=int,
+                default=8501,
+                help="Port to run the studio on (default: 8501)"
+            )
+            
+            # Remove 'studio' from sys.argv to parse remaining args
+            sys.argv.pop(1)
+            args = parser.parse_args(sys.argv[1:])
+            
+            launch_studio(args.port)
         else:
             # Validate configuration for OpenAI commands
             Config.validate()

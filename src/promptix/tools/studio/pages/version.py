@@ -1,6 +1,6 @@
 import streamlit as st
 from typing import Optional, Dict, Any
-from promptix.core.prompt_manager import PromptManager
+from promptix.tools.studio.data import PromptManager  
 
 def render_version_list(prompt: Dict):
     """Render the list of versions"""

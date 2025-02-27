@@ -1,164 +1,180 @@
-# Promptix
+# Promptix 🧩
 
 [![PyPI version](https://badge.fury.io/py/promptix.svg)](https://badge.fury.io/py/promptix)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Versions](https://img.shields.io/pypi/pyversions/promptix.svg)](https://pypi.org/project/promptix/)
 [![PyPI Downloads](https://static.pepy.tech/badge/promptix)](https://pepy.tech/projects/promptix)
 
-A Python library for managing and using prompts with Promptix Studio integration. Promptix makes it easy to manage, version, and use prompts in your applications with a built-in web interface.
+**Promptix** is a powerful, local-first prompt management system that brings **version control**, **dynamic templating**, and a **visual studio interface** to your LLM workflows.
 
-## Features
+## 🌟 Why Promptix?
 
-- 🎯 **Built-in Promptix Studio** - Visual prompt management interface (access via `promptix studio`)
-- 🔄 **Version Control** - Track changes with live/draft states for each prompt
-- 🔌 **Simple Integration** - Easy-to-use Python interface
-- 📝 **Variable Substitution** - Dynamic prompts using `{{variable_name}}` syntax
-- 🤖 **LLM Integration** - Direct integration with OpenAI and other LLM providers
-- 🏃 **Local First** - No external API dependencies
-- 🎨 **Web Interface** - Edit and manage prompts through a modern UI
-- 🔍 **Schema Validation** - Automatic validation of prompt variables and structure
+Managing prompts across multiple applications, models, and use cases can quickly become chaotic. Promptix brings order to this chaos:
 
-## Installation
+- **No more prompt spaghetti** in your codebase
+- **Version and test prompts** with live/draft states
+- **Dynamically customize prompts** based on context variables
+- **Edit and manage** through a friendly UI with Promptix Studio
+- **Seamlessly integrate** with OpenAI, Anthropic, and other providers
 
-```bash
-# Install from PyPI
-pip install promptix
+## ✨ Key Features
+
+### 🎯 Dynamic Prompt Generation
+Create versatile prompts with Promptix's templating system, allowing for context-aware adjustments:
+
+```python
+support_prompt = Promptix.get_prompt(
+    prompt_template="CustomerSupport",
+    # These variables dynamically modify the prompt
+    department="Billing",
+    customer_tier="Premium",
+    issue_type="refund request",
+    agent_name="Alex"
+)
 ```
 
-## Quick Start
+### 🔄 Version Control Built-in
+Keep track of prompt iterations and test new versions without breaking production:
 
-1. Launch Promptix Studio to manage your prompts:
+```python
+# Get the latest live version (for production)
+live_prompt = Promptix.get_prompt("CustomerSupport")
+
+# Test a new draft version in development
+draft_prompt = Promptix.get_prompt(
+    prompt_template="CustomerSupport", 
+    version="v2"
+)
+```
+
+### 🎨 Promptix Studio
+Manage prompts through a clean web interface by simply running:
 
 ```bash
 promptix studio
 ```
 
-This opens Promptix Studio in your default browser at `localhost:8501`.
-
-2. Use prompts in your code:
-
-```python
-from promptix import Promptix
-
-# Simple prompt with variables
-prompt = Promptix.get_prompt(
-    prompt_template="Greeting",
-    user_name="John Doe"
-)
-print(prompt)  # Output: Hello John Doe! How can I help you today?
-
-# Advanced prompt with multiple variables
-support_prompt = Promptix.get_prompt(
-    prompt_template="CustomerSupport",
-    user_name="Jane Smith",
-    issue_type="password reset",
-    technical_level="intermediate",
-    interaction_history="2 previous tickets about 2FA setup"
-)
-```
-
-## OpenAI Integration
-
-Promptix provides seamless integration with OpenAI's chat models:
+### 🛠️ Fluent Builder API
+Create sophisticated prompt configurations with an intuitive builder pattern:
 
 ```python
-from promptix import Promptix
-import openai
-
-client = openai.OpenAI()
-
-# Prepare model configuration with conversation memory
-memory = [
-    {"role": "user", "content": "I'm having trouble resetting my password"},
-    {"role": "assistant", "content": "I understand you're having password reset issues. Could you tell me what happens when you try?"}
-]
-
-model_config = Promptix.prepare_model_config(
-    prompt_template="CustomerSupport",
-    user_name="John Doe",
-    issue_type="password reset",
-    technical_level="intermediate",
-    interaction_history="2 previous tickets about 2FA setup",
-    issue_description="User is unable to reset their password after multiple attempts",
-    custom_data={"product_version": "2.1.0", "subscription_tier": "standard"},
-    memory=memory,
-)
-
-# Use the configuration with OpenAI
-response = client.chat.completions.create(**model_config)
-```
-
-## Builder Pattern
-
-Promptix provides a fluent builder pattern interface for creating model configurations:
-
-```python
-from promptix import Promptix
-import openai
-
-client = openai.OpenAI()
-
-# Using builder pattern for CustomerSupport
-model_config = (
+config = (
     Promptix.builder("CustomerSupport")
-    .with_user_name("John Doe")
-    .with_issue_type("account_settings")
-    .with_issue_description("User cannot access account settings page")
-    .with_technical_level("intermediate")
-    .with_priority("medium")
-    .with_memory([
-        {"role": "user", "content": "I'm having trouble with my account settings"}
-    ])
+    .with_customer_name("Jane Doe")
+    .with_department("Technical Support")
+    .with_priority("high")
+    .with_tool("ticket_history")  # Enable specific tools
+    .with_tool_parameter("ticket_history", "max_tickets", 5)
+    .with_memory(conversation_history)
     .build()
 )
+```
 
-response = client.chat.completions.create(**model_config)
+### 🤖 Multi-Provider Support
+Send your prompts to any LLM provider while maintaining a consistent interface:
 
-# Using builder pattern for Code Review
-code_config = (
-    Promptix.builder("CodeReview")
-    .with_code_snippet(code_snippet)
-    .with_programming_language("Python")
-    .with_review_focus("Security and SQL Injection")
-    .with_severity("high")
-    .build()
-)
+```python
+# OpenAI integration
+openai_config = Promptix.builder("AgentPrompt").build()
+openai_response = openai_client.chat.completions.create(**openai_config)
 
-# Anthropic Integration
+# Anthropic integration
 anthropic_config = (
-    Promptix.builder("CustomerSupport")
-    .with_version("v5")
-    .with_user_name("John Doe")
-    .with_issue_type("account_settings")
-    .with_memory(memory)
+    Promptix.builder("AgentPrompt")
     .for_client("anthropic")
     .build()
 )
+anthropic_response = anthropic_client.messages.create(**anthropic_config)
 ```
 
-The builder pattern provides:
-- Type-safe configuration building
-- Fluent interface for better code readability
-- Automatic validation of required fields
-- Support for multiple LLM providers
-- Clear separation of configuration concerns
-
-## Advanced Usage
-
-### Version Control
+### 🧠 Context-Aware Prompting
+Adapt prompts based on dynamic conditions to create truly intelligent interactions:
 
 ```python
-# Get specific version of a prompt
-prompt_v1 = Promptix.get_prompt(
+# Prompt adapts based on user context
+prompt = Promptix.get_prompt(
     prompt_template="CustomerSupport",
-    version="v1",
-    user_name="John"
+    customer_history_length="long" if customer.interactions > 5 else "short",
+    sentiment="frustrated" if sentiment_score < 0.3 else "neutral",
+    technical_level=customer.technical_proficiency
+)
+```
+
+## 🚀 Getting Started
+
+### Installation
+
+```bash
+pip install promptix
+```
+
+### Quick Start
+
+1. **Launch Promptix Studio**:
+```bash
+promptix studio
+```
+
+2. **Create your first prompt template** in the Studio UI or in your YAML file.
+
+3. **Use the prompt in your code**:
+```python
+from promptix import Promptix
+
+# Basic usage
+greeting = Promptix.get_prompt(
+    prompt_template="Greeting",
+    user_name="Alex"
 )
 
-# Get latest live version (default behavior)
-prompt_latest = Promptix.get_prompt(
+# With OpenAI
+from openai import OpenAI
+client = OpenAI()
+
+model_config = Promptix.prepare_model_config(
     prompt_template="CustomerSupport",
-    user_name="John"
+    customer_name="Jordan Smith",
+    issue="billing question"
+)
+
+response = client.chat.completions.create(**model_config)
+```
+
+## 📊 Real-World Use Cases
+
+### Customer Service
+Create dynamic support agent prompts that adapt based on:
+- Department-specific knowledge and protocols
+- Customer tier and history
+- Issue type and severity
+- Agent experience level
+
+### Phone Agents
+Develop sophisticated call handling prompts that:
+- Adjust tone and approach based on customer sentiment
+- Incorporate relevant customer information
+- Follow department-specific scripts and procedures
+- Enable different tools based on the scenario
+
+### Content Creation
+Generate consistent but customizable content with prompts that:
+- Adapt to different content formats and channels
+- Maintain brand voice while allowing flexibility
+- Include relevant reference materials based on topic
+
+## 🧪 Advanced Usage
+
+### Custom Tools Configuration
+
+```python
+# Configure specialized tools for different scenarios
+security_review_config = (
+    Promptix.builder("CodeReviewer")
+    .with_code_snippet(code)
+    .with_review_focus("security")
+    .with_tool("vulnerability_scanner")
+    .with_tool("dependency_checker")
+    .build()
 )
 ```
 
@@ -167,73 +183,27 @@ prompt_latest = Promptix.get_prompt(
 Promptix automatically validates your prompt variables against defined schemas:
 
 ```python
-# Schema validation ensures correct variable types and values
 try:
+    # Will raise error if technical_level isn't one of the allowed values
     prompt = Promptix.get_prompt(
-        prompt_template="CustomerSupport",
-        user_name="John",
-        technical_level="expert"  # Will raise error if not in ["beginner", "intermediate", "advanced"]
+        prompt_template="TechnicalSupport",
+        technical_level="expert"  # Must be in ["beginner", "intermediate", "advanced"]
     )
 except ValueError as e:
     print(f"Validation Error: {str(e)}")
 ```
 
-### Error Handling
+## 🤝 Contributing
 
-```python
-try:
-    prompt = Promptix.get_prompt(
-        prompt_template="NonExistentTemplate",
-        user_name="John"
-    )
-except ValueError as e:
-    print(f"Error: {str(e)}")
-```
+Promptix is a new project aiming to solve real problems in prompt engineering. Your contributions and feedback are highly valued!
 
-## Development
+1. Star the repository to show support
+2. Open issues for bugs or feature requests
+3. Submit pull requests for improvements
+4. Share your experience using Promptix
 
-### Setup
+I'm creating these projects to solve problems I face as a developer, and I'd greatly appreciate your support and feedback!
 
-1. Clone the repository:
-```bash
-git clone https://github.com/promptix/promptix-python.git
-cd promptix-python
-```
-
-2. Create a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install development dependencies:
-```bash
-pip install -e ".[dev]"
-```
-
-### Running Tests
-
-```bash
-pytest
-```
-
-### Code Style
-
-We use `black` for code formatting and `isort` for import sorting:
-
-```bash
-black .
-isort .
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 

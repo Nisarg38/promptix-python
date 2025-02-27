@@ -1,292 +1,140 @@
 {
-  "CustomerSupport": {
-    "name": "CustomerSupport",
-    "description": "A customer support prompt that helps generate consistent support responses",
+  "SimpleChat": {
+    "name": "SimpleChat",
+    "description": "A basic chat prompt demonstrating essential Promptix functionality",
     "versions": {
       "v1": {
-        "is_live": false,
-        "system_message": "You are a helpful customer support agent for a software company. When responding to {{user_name}}'s inquiry about {{issue_type}}, maintain a professional and friendly tone. Focus on providing clear, step-by-step solutions.",
-        "temperature": 0.7,
-        "max_tokens": 1000,
-        "top_p": 1,
-        "frequency_penalty": 0,
-        "presence_penalty": 0,
-        "tools": [],
-        "model": "gpt-4o",
-        "provider": "openai",
-        "last_modified": "2024-03-19T12:00:00.000000",
-        "created_at": "2024-03-19T12:00:00.000000",
+        "is_live": true,
+        "config": {
+          "system_instruction": "You are a helpful AI assistant named {{assistant_name}}. Your goal is to provide clear and concise answers to {{user_name}}'s questions.",
+          "temperature": 0.7,
+          "max_tokens": 1000,
+          "top_p": 1,
+          "frequency_penalty": 0,
+          "presence_penalty": 0,
+          "model": "gpt-4o",
+          "provider": "openai"
+        },
+        "metadata": {
+          "created_at": "2024-03-01",
+          "author": "Promptix Team",
+          "last_modified": "2024-03-01",
+          "last_modified_by": "Promptix Team"
+        },
         "schema": {
           "required": [
             "user_name",
-            "issue_type"
+            "assistant_name"
           ],
           "optional": [],
-          "types": {
-            "user_name": "string",
-            "issue_type": "string"
-          }
+          "properties": {
+            "user_name": {"type": "string"},
+            "assistant_name": {"type": "string"}
+          },
+          "additionalProperties": false
         }
       },
       "v2": {
         "is_live": false,
-        "system_message": "You are an experienced customer support specialist for a software company. When addressing {{user_name}}'s {{issue_type}} issue, follow these guidelines:\n1. Begin with a warm greeting\n2. Acknowledge the specific issue\n3. Provide step-by-step solutions\n4. Include relevant documentation links\n5. End with a follow-up invitation\n\nTailor your response based on user's technical level: {{technical_level}}",
-        "temperature": 0.7,
-        "max_tokens": 1500,
-        "top_p": 1,
-        "frequency_penalty": 0,
-        "presence_penalty": 0,
-        "tools": [],
-        "model": "gpt-4",
-        "provider": "openai",
-        "last_modified": "2024-03-19T13:00:00.000000",
-        "created_at": "2024-03-19T13:00:00.000000",
+        "config": {
+          "system_instruction": "You are {{assistant_name}}, an AI assistant with a {{personality_type}} personality. Your goal is to help {{user_name}} with their questions in a way that matches your personality type.",
+          "temperature": 0.7,
+          "max_tokens": 1000,
+          "top_p": 1,
+          "model": "gpt-4o",
+          "provider": "openai"
+        },
+        "metadata": {
+          "created_at": "2024-03-02",
+          "author": "Promptix Team",
+          "last_modified": "2024-03-02",
+          "last_modified_by": "Promptix Team"
+        },
         "schema": {
           "required": [
             "user_name",
-            "issue_type",
-            "technical_level"
+            "assistant_name",
+            "personality_type"
           ],
           "optional": [],
-          "types": {
-            "user_name": "string",
-            "issue_type": "string",
-            "technical_level": [
-              "beginner",
-              "intermediate",
-              "advanced"
-            ]
-          }
-        }
-      },
-      "v3": {
-        "is_live": false,
-        "system_message": "As a senior customer support specialist for a software company, your role is to provide exceptional support while following our company guidelines:\n\nContext Variables:\n- Customer: {{user_name}}\n- Issue Type: {{issue_type}}\n- Technical Level: {{technical_level}}\n- Previous Interactions: {{interaction_history}}\n- Product Version: {{product_version}}\n\nResponse Structure:\n1. Personalized Greeting\n2. Issue Acknowledgment\n3. Technical Solution (adapted to {{technical_level}})\n4. Preventive Tips\n5. Relevant Documentation\n6. Next Steps\n7. Follow-up Plan\n\nTone Guidelines:\n- Professional yet friendly\n- Empathetic to user frustration\n- Clear and concise\n- Proactive in preventing future issues\n\nEnsure all responses align with our SLA commitment and include appropriate escalation paths if needed.",
-        "temperature": 0.5,
-        "max_tokens": 2000,
-        "top_p": 1,
-        "frequency_penalty": 0.1,
-        "presence_penalty": 0.1,
-        "tools": [],
-        "model": "gpt-4",
-        "provider": "openai",
-        "last_modified": "2024-03-19T14:00:00.000000",
-        "created_at": "2024-03-19T14:00:00.000000",
-        "schema": {
-          "required": [
-            "user_name",
-            "issue_type",
-            "technical_level",
-            "interaction_history",
-            "product_version"
-          ],
-          "optional": [],
-          "types": {
-            "user_name": "string",
-            "issue_type": "string",
-            "technical_level": [
-              "beginner",
-              "intermediate",
-              "advanced"
-            ],
-            "interaction_history": "string",
-            "product_version": "string"
-          }
-        }
-      },
-      "v4": {
-        "is_live": true,
-        "system_message": "You are a customer support agent helping with a {{issue_type}} issue.\n\n{% if priority == 'high' %}URGENT: This requires immediate attention!\n{% endif %}\n\nUser: {{user_name}}\nTechnical Level: {{technical_level}}\nProduct Version: {{product_version}}\n{% if subscription_tier == 'premium' %}Premium Support Level\n{% endif %}\n\nPlease assist with the following issue:\n{{issue_description}}",
-        "temperature": 0.7,
-        "max_tokens": 2000,
-        "top_p": null,
-        "frequency_penalty": 0,
-        "presence_penalty": 0,
-        "tools": [],
-        "model": "gpt-4",
-        "provider": "openai",
-        "metadata": {
-          "created_at": "2024-01-20",
-          "author": "system",
-          "description": "Dynamic customer support template with conditional formatting"
-        },
-        "last_modified": "2024-01-20T00:00:00.000000",
-        "created_at": "2024-01-20T00:00:00.000000",
-        "schema": {
           "properties": {
-            "user_name": {
+            "user_name": {"type": "string"},
+            "assistant_name": {"type": "string"},
+            "personality_type": {
               "type": "string",
-              "required": true,
-              "description": "Name of the user requesting support"
-            },
-            "issue_type": {
-              "type": "string",
-              "required": true,
-              "description": "Category or type of the issue being reported"
-            },
-            "issue_description": {
-              "type": "string",
-              "required": true,
-              "description": "Detailed description of the issue"
-            },
-            "technical_level": {
-              "type": "string",
-              "required": true,
-              "enum": ["beginner", "intermediate", "advanced"],
-              "description": "User's technical expertise level"
-            },
-            "priority": {
-              "type": "string",
-              "required": false,
-              "enum": ["high", "medium", "low"],
-              "description": "Priority level of the issue"
-            },
-            "product_version": {
-              "type": "string",
-              "required": false,
-              "description": "Version of the product being used"
-            },
-            "subscription_tier": {
-              "type": "string",
-              "required": false,
-              "enum": ["basic", "premium"],
-              "description": "User's subscription tier"
-            }
-          },
-          "additionalProperties": false
-        }
-      },
-      "v5": { 
-        "is_live": false,
-        "system_message": "You are a customer support agent helping with a {{issue_type}} issue.\n\n{% if priority == 'high' %}URGENT: This requires immediate attention!\n{% endif %}\n\nUser: {{user_name}}\nTechnical Level: {{technical_level}}\nProduct Version: {{product_version}}\n{% if subscription_tier == 'premium' %}Premium Support Level\n{% endif %}\n\nPlease assist with the following issue:\n{{issue_description}}",
-        "temperature": 0.7,
-        "max_tokens": 2000,
-        "top_p": null,
-        "frequency_penalty": 0,
-        "presence_penalty": 0,
-        "tools": [],
-        "model": "claude-3-5-sonnet-20240620", 
-        "provider": "anthropic",
-        "metadata": {
-          "created_at": "2024-01-20",
-          "author": "system",
-          "description": "Dynamic customer support template with conditional formatting"
-        },
-        "last_modified": "2024-01-20T00:00:00.000000",
-        "created_at": "2024-01-20T00:00:00.000000",
-        "schema": {
-          "properties": {
-            "user_name": {
-              "type": "string",
-              "required": true,
-              "description": "Name of the user requesting support"
-            },
-            "issue_type": {
-              "type": "string",
-              "required": true,
-              "description": "Category or type of the issue being reported"
-            },
-            "issue_description": {
-              "type": "string",
-              "required": true,
-              "description": "Detailed description of the issue"
-            },
-            "technical_level": {
-              "type": "string",
-              "required": true,
-              "enum": ["beginner", "intermediate", "advanced"],
-              "description": "User's technical expertise level"
-            },
-            "priority": {
-              "type": "string",
-              "required": false,
-              "enum": ["high", "medium", "low"],
-              "description": "Priority level of the issue"
-            },
-            "product_version": {
-              "type": "string",
-              "required": false,
-              "description": "Version of the product being used"
-            },
-            "subscription_tier": {
-              "type": "string",
-              "required": false,
-              "enum": ["basic", "premium"],
-              "description": "User's subscription tier"
+              "enum": [
+                "friendly",
+                "professional",
+                "humorous",
+                "concise"
+              ]
             }
           },
           "additionalProperties": false
         }
       }
-    },
-    "created_at": "2024-03-19T12:00:00.000000",
-    "last_modified": "2024-03-19T14:00:00.000000"
+    }
   },
-  "CodeReview": {
-    "name": "CodeReview",
-    "description": "A code review prompt that provides consistent and thorough code reviews",
+  "CodeReviewer": {
+    "name": "CodeReviewer",
+    "description": "A prompt for reviewing code and providing feedback",
     "versions": {
       "v1": {
         "is_live": true,
-        "system_message": "As a senior software engineer conducting a code review, analyze the {{code_snippet}} written in {{programming_language}}. Focus areas: 1) {{review_focus}} 2) Security best practices 3) Performance optimization. Severity: {{severity}}. Structure your response with: SUMMARY, CRITICAL ISSUES, IMPROVEMENTS, and POSITIVE ASPECTS.",
-        "temperature": 0.7,
-        "max_tokens": 2000,
-        "top_p": 1,
-        "frequency_penalty": 0,
-        "presence_penalty": 0,
-        "tools": [],
-        "model": "gpt-4o",
-        "provider": "openai",
-        "last_modified": "2024-03-19T12:00:00.000000",
-        "created_at": "2024-03-19T12:00:00.000000",
+        "config": {
+          "system_instruction": "You are a code review assistant specialized in {{programming_language}}. Please review the following code snippet and provide feedback on {{review_focus}}:\n\n```{{programming_language}}\n{{code_snippet}}\n```",
+          "temperature": 0.3,
+          "max_tokens": 1500,
+          "top_p": 1,
+          "model": "gpt-4o",
+          "provider": "openai"
+        },
+        "metadata": {
+          "created_at": "2024-03-01",
+          "author": "Promptix Team",
+          "last_modified": "2024-03-01",
+          "last_modified_by": "Promptix Team"
+        },
         "schema": {
+          "required": [
+            "code_snippet",
+            "programming_language",
+            "review_focus"
+          ],
+          "optional": [],
           "properties": {
-            "code_snippet": {
-              "type": "string",
-              "description": "The code to be reviewed",
-              "required": true
-            },
-            "programming_language": {
-              "type": "string",
-              "description": "The programming language of the code",
-              "required": true
-            },
-            "review_focus": {
-              "type": "string",
-              "description": "Specific areas to focus on during the review",
-              "required": true
-            },
-            "severity": {
-              "type": "string",
-              "enum": ["high", "medium", "low"],
-              "description": "The severity level of the review",
-              "required": true
-            }
+            "code_snippet": {"type": "string"},
+            "programming_language": {"type": "string"},
+            "review_focus": {"type": "string"}
           },
           "additionalProperties": false
         }
-      }
-    },
-    "created_at": "2024-03-19T12:00:00.000000",
-    "last_modified": "2024-03-19T12:00:00.000000"
-  },
-  "Test 2": {
-    "name": "Test 2",
-    "description": "A basic test prompt",
-    "versions": {
-      "v1": {
-        "is_live": true,
-        "system_message": "As a senior software engineer conducting a code review, analyze the {{code_snippet}} written in {{programming_language}}. Focus areas: 1) {{review_focus}} 2) Security best practices 3) Performance optimization. Severity: {{severity}}. Structure your response with: SUMMARY, CRITICAL ISSUES, IMPROVEMENTS, and POSITIVE ASPECTS.",
-        "temperature": 0.7,
-        "max_tokens": 2000,
-        "top_p": 1,
-        "frequency_penalty": 0,
-        "presence_penalty": 0,
-        "tools": [],
-        "model": "gpt-4o",
-        "provider": "openai",
-        "last_modified": "2024-03-19T12:00:00.000000",
-        "created_at": "2024-03-19T12:00:00.000000",
+      },
+      "v2": {
+        "is_live": false,
+        "config": {
+          "system_instruction": "You are a code review assistant specialized in {{programming_language}}. Review the following code with a {{severity}} level of scrutiny, focusing on {{review_focus}}:\n\n```{{programming_language}}\n{{code_snippet}}\n```\n\nProvide your feedback organized into sections: 'Summary', 'Critical Issues', 'Improvements', and 'Positives'.",
+          "temperature": 0.3,
+          "max_tokens": 1500,
+          "top_p": 1,
+          "model": "claude-3-5-sonnet-20241022",
+          "provider": "anthropic"
+        },
+        "tools_config": {
+          "tools_template": "{% raw %}{% set combined_tools = [] %}{% for tool_name, tool_config in tools.items() %}{% if use_%s|replace({'%s': tool_name}) %}{% set combined_tools = combined_tools + [{'name': tool_name, 'description': tool_config.description, 'parameters': tool_config.parameters}] %}{% endif %}{% endfor %}{{ combined_tools | tojson }}{% endraw %}",
+          "tools": {
+            "complexity_analyzer": {
+              "description": "Analyzes code complexity",
+              "parameters": {}
+            }
+          }
+        },
+        "metadata": {
+          "created_at": "2024-03-02",
+          "author": "Promptix Team",
+          "last_modified": "2024-03-02",
+          "last_modified_by": "Promptix Team"
+        },
         "schema": {
           "required": [
             "code_snippet",
@@ -295,115 +143,132 @@
             "severity"
           ],
           "optional": [],
-          "types": {
-            "code_snippet": "string",
-            "programming_language": "string",
-            "review_focus": "string",
-            "severity": [
-              "high",
-              "medium",
-              "low"
-            ]
-          }
+          "properties": {
+            "code_snippet": {"type": "string"},
+            "programming_language": {"type": "string"},
+            "review_focus": {"type": "string"},
+            "severity": {"type": "string", "enum": ["low", "medium", "high"]}
+          },
+          "additionalProperties": false
         }
       }
-    },
-    "created_at": "2024-03-19T12:00:00.000000",
-    "last_modified": "2024-03-19T12:00:00.000000"
+    }
   },
-  "ServiceAgent": {
-    "name": "ServiceAgent",
-    "description": "A dynamic service agent prompt that adapts based on user type, communication channel, and required services",
+  "TemplateDemo": {
+    "name": "TemplateDemo",
+    "description": "A prompt demonstrating conditional logic and template features",
     "versions": {
       "v1": {
         "is_live": true,
-        "system_message": "You are a helpful service agent assisting customers with their needs.\n\n{% if new_user %}\nThis is a new user who may need additional guidance and explanation of our services.\n{% else %}\nThis is a returning user who is familiar with our services.\n{% endif %}\n\n{# Communication type handling #}\n{% if communication_type == \"phone\" %}\nThis is a phone conversation. Use clear verbal communication and active listening techniques.\nPlease provide assistance in a warm and conversational manner while maintaining professionalism.\n{% elif communication_type == \"sms\" %}\nThis is an SMS conversation. Keep responses concise and use appropriate messaging etiquette.\nPlease provide assistance in a clear and concise manner while maintaining professionalism.\n{% elif communication_type == \"chat\" %}\nThis is a live chat conversation. Balance between conversational tone and efficiency.\nPlease provide assistance in a friendly and efficient manner while maintaining professionalism.\n{% endif %}\n\nService Requirements:\n{% if transportation_type %}\n- Verify customer's pickup location and destination\n- Check available transportation options\n- Confirm timing and special requirements\n{% endif %}\n\n{% if scheduling_required %}\n- Check calendar availability\n- Manage appointment scheduling\n- Send confirmation and reminders\n{% endif %}",
-        "temperature": 0.7,
-        "max_tokens": 2000,
-        "top_p": 1,
-        "frequency_penalty": 0,
-        "presence_penalty": 0,
-        "tools": [],
-        "model": "gpt-4",
-        "provider": "openai",
-        "metadata": {
-          "created_at": "2024-03-19",
-          "author": "system",
-          "description": "Dynamic service agent template with conditional formatting based on user type and service requirements"
+        "config": {
+          "system_instruction": "You are creating a {{content_type}} about {{theme}}.\n\n{% if difficulty == 'beginner' %}\nKeep it simple and accessible for beginners.\n{% elif difficulty == 'intermediate' %}\nInclude some advanced concepts but explain them clearly.\n{% else %}\nDon't hold back on technical details and advanced concepts.\n{% endif %}\n\n{% if elements|length > 0 %}\nBe sure to include the following elements:\n{% for element in elements %}\n- {{element}}\n{% endfor %}\n{% endif %}",
+          "temperature": 0.7,
+          "max_tokens": 1500,
+          "top_p": 1,
+          "model": "gpt-4o",
+          "provider": "openai"
         },
-        "last_modified": "2024-03-19T00:00:00.000000",
-        "created_at": "2024-03-19T00:00:00.000000",
+        "metadata": {
+          "created_at": "2024-03-01",
+          "author": "Promptix Team",
+          "last_modified": "2024-03-01",
+          "last_modified_by": "Promptix Team"
+        },
         "schema": {
           "required": [
-            "communication_type"
-          ],
-          "optional": [
-            "new_user",
-            "transportation_type",
-            "scheduling_required"
-          ],
-          "types": {
-            "communication_type": [
-              "phone",
-              "sms",
-              "chat"
-            ],
-            "new_user": "boolean",
-            "transportation_type": "boolean",
-            "scheduling_required": "boolean"
-          }
-        }
-      }
-    },
-    "created_at": "2024-03-19T00:00:00.000000",
-    "last_modified": "2024-03-19T00:00:00.000000"
-  },
-  "DungeonMaster": {
-    "name": "DungeonMaster",
-    "description": "An advanced RPG game master template that generates dynamic game scenarios",
-    "versions": {
-      "v1": {
-        "is_live": true,
-        "system_message": "You are an AI Dungeon Master crafting a {{game_style}} adventure.\n\n{% if party_level < 5 %}You're guiding a party of novice adventurers through their first steps into the world of heroics.\n{% elif party_level < 10 %}Your party has some experience under their belts and can handle moderate challenges.\n{% else %}These are seasoned adventurers ready for epic challenges.\n{% endif %}\n\nParty Composition:\n{% for class in party_classes %}- {{class}}\n{% endfor %}\n\nEnvironment: {{environment}}\n{% if environment_details %}\nEnvironment Details:\n{% if environment_details.has_traps %}* This area is trapped\n{% endif %}{% if environment_details.has_crime %}* Criminal activity is present\n{% endif %}{% if environment_details.has_monsters %}* Monsters lurk in the shadows\n{% endif %}{% if environment_details.city_type %}* City Type: {{environment_details.city_type}}\n{% endif %}{% if environment_details.atmosphere %}* Atmosphere: {{environment_details.atmosphere}}\n{% endif %}{% if environment_details.terrain_type %}* Terrain: {{environment_details.terrain_type}}\n{% endif %}\n{% endif %}\n\n{% if magical_elements %}\nMagical Elements Present:\n{% for element in magical_elements %}- {{element}}\n{% endfor %}\n{% endif %}\n\n{% if custom_data and custom_data.special_conditions %}\nSpecial Conditions:\n{% for condition in custom_data.special_conditions %}- {{condition}}\n{% endfor %}\n{% endif %}\n\nQuest Type: {{quest_type}}\nDifficulty Level: {{difficulty}}\n{% if difficulty == \"hard\" %}Survival is not guaranteed.\n{% endif %}",
-        "temperature": 0.7,
-        "max_tokens": 2000,
-        "top_p": 1,
-        "frequency_penalty": 0,
-        "presence_penalty": 0,
-        "tools": [],
-        "model": "gpt-4",
-        "provider": "openai",
-        "last_modified": "2024-03-19T00:00:00.000000",
-        "created_at": "2024-03-19T00:00:00.000000",
-        "schema": {
-          "required": [
-            "game_style",
-            "party_level",
-            "party_classes",
-            "environment",
-            "quest_type",
+            "content_type",
+            "theme",
             "difficulty"
           ],
           "optional": [
-            "environment_details",
-            "magical_elements",
-            "custom_data"
+            "elements"
           ],
-          "types": {
-            "game_style": ["heroic", "gritty", "epic", "mystery"],
-            "party_level": "integer",
-            "party_classes": "array",
-            "environment": ["dungeon", "city", "wilderness"],
-            "quest_type": ["combat", "diplomacy", "mystery", "exploration"],
-            "difficulty": ["easy", "medium", "hard"],
-            "environment_details": "object",
-            "magical_elements": "array",
-            "custom_data": "object"
-          }
+          "properties": {
+            "content_type": {"type": "string"},
+            "theme": {"type": "string"},
+            "difficulty": {"type": "string", "enum": ["beginner", "intermediate", "advanced"]},
+            "elements": {"type": "array"}
+          },
+          "additionalProperties": false
         }
       }
-    },
-    "created_at": "2024-03-19T00:00:00.000000",
-    "last_modified": "2024-03-19T00:00:00.000000"
+    }
+  },
+  "ComplexCodeReviewer": {
+    "name": "ComplexCodeReviewer",
+    "description": "A prompt for reviewing complex code and providing feedback",
+    "versions": {
+      "v1": {
+        "is_live": true,
+        "config": {
+          "system_instruction": "You are a code review assistant with active tools: {{active_tools}}. Specialized in {{programming_language}}. Review the code with {{severity}} scrutiny focusing on {{review_focus}}:\n\n```{{programming_language}}\n{{code_snippet}}\n```\n\nProvide feedback in: 'Summary', 'Critical Issues', 'Improvements', 'Positives'.",
+          "temperature": 0.3,
+          "max_tokens": 1500,
+          "top_p": 1,
+          "model": "gpt-4o",
+          "provider": "openai"
+        },
+        "tools_config": {
+        "tools_template": "{% raw %}{% set combined_tools = [] %}{% for tool_name, tool_config in tools.items() %}{% if use_%s|replace({'%s': tool_name}) %}{% set combined_tools = combined_tools + [{'name': tool_name, 'description': tool_config.description, 'parameters': tool_config.parameters}] %}{% endif %}{% endfor %}{{ combined_tools | tojson }}{% endraw %}",
+        "tools": {
+            "complexity_analyzer": {
+              "description": "Analyzes code complexity metrics (cyclomatic, cognitive)",
+              "parameters": {
+                "thresholds": {"type": "object", "default": {"cyclomatic": 10, "cognitive": 7}}
+              }
+            },
+            "security_scanner": {
+              "description": "Checks for common vulnerabilities and exposure points",
+              "parameters": {
+                "cwe_list": {"type": "array", "default": ["CWE-78", "CWE-89"]}
+              }
+            },
+            "style_checker": {
+              "description": "Enforces coding style guidelines",
+              "parameters": {
+                "standard": {"type": "string", "enum": ["pep8", "google", "pylint"], "default": "pep8"}
+              }
+            },
+            "test_coverage": {
+              "description": "Analyzes test coverage and quality",
+              "parameters": {
+                "coverage_threshold": {"type": "number", "default": 80}
+              }
+            }
+          }
+        },
+        "metadata": {
+          "created_at": "2024-03-01",
+          "author": "Promptix Team",
+          "last_modified": "2024-03-01",
+          "last_modified_by": "Promptix Team"
+        },
+        "schema": {
+          "required": [
+            "code_snippet",
+            "programming_language",
+            "review_focus",
+            "severity"
+          ],
+          "optional": [
+            "use_complexity_analyzer",
+            "use_security_scanner", 
+            "use_style_checker",
+            "use_test_coverage"
+          ],
+          "properties": {
+            "code_snippet": {"type": "string"},
+            "programming_language": {"type": "string"},
+            "review_focus": {"type": "string"},
+            "severity": {"type": "string", "enum": ["low", "medium", "high"]},
+            "use_complexity_analyzer": {"type": "boolean", "default": true},
+            "use_security_scanner": {"type": "boolean", "default": true},
+            "use_style_checker": {"type": "boolean", "default": true},
+            "use_test_coverage": {"type": "boolean", "default": true}
+          },
+          "additionalProperties": false
+        }
+      }
+    }
   }
 }

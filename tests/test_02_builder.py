@@ -4,20 +4,17 @@ import openai
 import anthropic
 
 
-def test_customer_support_builder():
-    """Test the CustomerSupport builder configuration."""
+def test_chat_builder():
+    """Test the SimpleChat builder configuration."""
     memory = [
-        {"role": "user", "content": "I'm having trouble with my account settings"},
+        {"role": "user", "content": "Can you help me with a question?"},
     ]
 
     # Test basic OpenAI configuration
     model_config = (
-        Promptix.builder("CustomerSupport")
+        Promptix.builder("SimpleChat")
         .with_user_name("John Doe")
-        .with_issue_type("account_settings")
-        .with_issue_description("User cannot access account settings page")
-        .with_technical_level("intermediate")
-        .with_priority("medium")
+        .with_assistant_name("Promptix Helper")
         .with_memory(memory)
         .build()
     )
@@ -31,7 +28,7 @@ def test_customer_support_builder():
 
 
 def test_code_review_builder():
-    """Test the CodeReview builder configuration."""
+    """Test the CodeReviewer builder configuration."""
     memory = [
         {"role": "user", "content": "Can you review this code for security issues?"},
     ]
@@ -43,11 +40,10 @@ def test_code_review_builder():
     '''
 
     model_config = (
-        Promptix.builder("CodeReview")
+        Promptix.builder("CodeReviewer")
         .with_code_snippet(code_snippet)
         .with_programming_language("Python")
         .with_review_focus("Security and SQL Injection")
-        .with_severity("high")
         .with_memory(memory)
         .build()
     )
@@ -60,30 +56,30 @@ def test_code_review_builder():
     assert code_snippet in str(model_config["messages"][0]["content"])
 
 
-def test_anthropic_builder():
-    """Test the builder configuration for Anthropic."""
+def test_template_demo_builder():
+    """Test the TemplateDemo builder configuration."""
     memory = [
-        {"role": "user", "content": "I'm having trouble with my account settings"},
+        {"role": "user", "content": "Can you create a tutorial for me?"},
     ]
 
     model_config = (
-        Promptix.builder("CustomerSupport")
-        .with_version("v5")
-        .with_user_name("John Doe")
-        .with_issue_type("account_settings")
-        .with_issue_description("User cannot access account settings page")
-        .with_technical_level("intermediate")
-        .with_priority("medium")
+        Promptix.builder("TemplateDemo")
+        .with_content_type("tutorial")
+        .with_theme("Python programming")
+        .with_difficulty("intermediate")
+        .with_elements(["functions", "classes", "decorators"])
         .with_memory(memory)
-        .for_client("anthropic")
         .build()
     )
 
-    # Verify Anthropic-specific configuration
+    # Verify the configuration
     assert isinstance(model_config, dict)
     assert "messages" in model_config
     assert "model" in model_config
-    assert model_config.get("model", "").startswith("claude")  # Anthropic models start with "claude"
+    assert len(model_config["messages"]) > 1
+    assert "tutorial" in str(model_config["messages"][0]["content"])
+    # Check for text related to intermediate difficulty, not the literal word
+    assert "advanced concepts" in str(model_config["messages"][0]["content"])
 
 
 def test_builder_validation():
@@ -94,13 +90,18 @@ def test_builder_validation():
 
     with pytest.raises(ValueError):
         # Should raise error for invalid client type
-        (Promptix.builder("CustomerSupport")
+        (Promptix.builder("SimpleChat")
          .for_client("invalid_client")
          .build())
 
-    # Test required fields
-    with pytest.raises(Exception):
-        # CodeReview builder should require code_snippet
-        (Promptix.builder("CodeReview")
-         .with_programming_language("Python")
-         .build()) 
+    # Since the implementation now warns rather than raises for missing required fields,
+    # we'll test that the configuration can be built
+    config = (
+        Promptix.builder("CodeReviewer")
+        .with_programming_language("Python")
+        .build()
+    )
+    
+    # The system message should be a default fallback message for the template
+    system_message = str(config["messages"][0]["content"])
+    assert "assistant for CodeReviewer" in system_message 

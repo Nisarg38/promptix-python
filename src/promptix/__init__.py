@@ -16,6 +16,9 @@ Usage:
 2. Use prompts: 
    from promptix import Promptix
    prompt = Promptix.get_prompt("template_name", variable="value")
+   
+   # Or use the builder pattern:
+   config = Promptix.builder("template_name").with_variable("value").build()
 """
 
 from .core.base import Promptix

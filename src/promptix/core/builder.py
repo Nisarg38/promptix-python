@@ -1,112 +1,9 @@
 from typing import Any, Dict, List, Optional, Union
-from abc import ABC, abstractmethod
 from .base import Promptix
-
-class ModelAdapter(ABC):
-    """Base adapter class for different model providers."""
-    
-    @abstractmethod
-    def adapt_config(self, model_config: Dict[str, Any], version_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Adapt the configuration for specific provider."""
-        pass
-
-    @abstractmethod
-    def adapt_messages(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
-        """Adapt message format for specific provider."""
-        pass
-
-class OpenAIAdapter(ModelAdapter):
-    """Adapter for OpenAI's API."""
-    
-    def adapt_config(self, model_config: Dict[str, Any], version_data: Dict[str, Any]) -> Dict[str, Any]:
-        # Add optional configuration parameters if present
-        optional_params = [
-            ("temperature", (int, float)),
-            ("max_tokens", int),
-            ("top_p", (int, float)),
-            ("frequency_penalty", (int, float)),
-            ("presence_penalty", (int, float))
-        ]
-
-        for param_name, expected_type in optional_params:
-            if param_name in version_data and version_data[param_name] is not None:
-                value = version_data[param_name]
-                if not isinstance(value, expected_type):
-                    raise ValueError(f"{param_name} must be of type {expected_type}")
-                model_config[param_name] = value
-        
-        # Add tools configuration if present and non-empty
-        if "tools" in version_data and version_data["tools"]:
-            tools = version_data["tools"]
-            if not isinstance(tools, list):
-                raise ValueError("Tools configuration must be a list")
-            model_config["tools"] = tools
-            
-            # If tools are present, also set tool_choice if specified
-            if "tool_choice" in version_data:
-                model_config["tool_choice"] = version_data["tool_choice"]
-        
-        return model_config
-
-    def adapt_messages(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
-        # OpenAI uses messages as is
-        return messages
-
-class AnthropicAdapter(ModelAdapter):
-    """Adapter for Anthropic's API."""
-    
-    def adapt_config(self, model_config: Dict[str, Any], version_data: Dict[str, Any]) -> Dict[str, Any]:
-        # Initialize Anthropic-specific config
-        anthropic_config = {}
-        
-        # Use the model directly from version_data
-        anthropic_config["model"] = version_data["model"]
-        
-        # Map supported parameters
-        supported_params = [
-            ("temperature", (int, float)),
-            ("max_tokens", int),
-            ("top_p", (int, float))
-        ]
-
-        for param_name, expected_type in supported_params:
-            if param_name in version_data and version_data[param_name] is not None:
-                value = version_data[param_name]
-                if not isinstance(value, expected_type):
-                    raise ValueError(f"{param_name} must be of type {expected_type}")
-                anthropic_config[param_name] = value
-        
-        # Add messages to config
-        anthropic_config["messages"] = model_config["messages"]
-        
-        return anthropic_config
-
-    def adapt_messages(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
-        anthropic_messages = []
-        system_content = None
-        
-        # Extract system message and convert other messages
-        for msg in messages:
-            role = msg["role"]
-            if role == "system":
-                system_content = msg["content"]
-            elif role in ["assistant", "user"]:
-                anthropic_messages.append({
-                    "role": role,
-                    "content": msg["content"]
-                })
-        
-        # If there's a system message, prepend it to the first user message or add it as a user message
-        if system_content:
-            if anthropic_messages and anthropic_messages[0]["role"] == "user":
-                anthropic_messages[0]["content"] = f"{system_content}\n\n{anthropic_messages[0]['content']}"
-            else:
-                anthropic_messages.insert(0, {
-                    "role": "user",
-                    "content": system_content
-                })
-        
-        return anthropic_messages
+from .adapters.openai import OpenAIAdapter
+from .adapters.anthropic import AnthropicAdapter
+from .adapters._base import ModelAdapter
+from ..enhancements.logging import setup_logging
 
 class PromptixBuilder:
     """Builder class for creating model configurations."""
@@ -116,6 +13,9 @@ class PromptixBuilder:
         "openai": OpenAIAdapter(),
         "anthropic": AnthropicAdapter()
     }
+    
+    # Setup logger
+    _logger = setup_logging()
     
     def __init__(self, prompt_template: str):
         self.prompt_template = prompt_template
@@ -208,8 +108,27 @@ class PromptixBuilder:
     
     def for_client(self, client: str):
         """Set the client to use for building the configuration."""
+        # First check if we have an adapter for this client
         if client not in self._adapters:
             raise ValueError(f"Unsupported client: {client}. Available clients: {list(self._adapters.keys())}")
+        
+        # Check if the prompt version supports this client
+        provider = self.version_data.get("provider", "").lower()
+        config_provider = self.version_data.get("config", {}).get("provider", "").lower()
+        
+        # Use either provider field - some prompts use top-level provider, others put it in config
+        effective_provider = provider or config_provider
+        
+        # If a provider is specified and doesn't match the requested client, issue a warning
+        if effective_provider and effective_provider != client:
+            warning_msg = (
+                f"Client '{client}' may not be fully compatible with this prompt version. "
+                f"This prompt version is configured for '{effective_provider}'. "
+                f"Some features may not work as expected. "
+                f"Consider using a prompt version designed for {client} or use the compatible client."
+            )
+            self._logger.warning(warning_msg)
+        
         self._client = client
         return self
     
@@ -234,33 +153,234 @@ class PromptixBuilder:
         
         return self
     
+    def with_tool(self, tool_name: str, *args, **kwargs) -> "PromptixBuilder":
+        """Activate a tool by name.
+        
+        Args:
+            tool_name: Name of the tool to activate
+            
+        Returns:
+            Self for method chaining
+        """
+        # Validate tool exists in prompts configuration
+        tools_config = self.version_data.get("tools_config", {})
+        tools = tools_config.get("tools", {})
+        
+        if tool_name in tools:
+            # Store tool activation as a template variable
+            tool_var = f"use_{tool_name}"
+            self._data[tool_var] = True
+        else:
+            available_tools = list(tools.keys()) if tools else []
+            warning_msg = (
+                f"Tool type '{tool_name}' not found in configuration. "
+                f"Available tools: {available_tools}. "
+                f"This tool will be ignored."
+            )
+            self._logger.warning(warning_msg)
+                
+        return self
+        
+    def with_tool_parameter(self, tool_name: str, param_name: str, param_value: Any) -> "PromptixBuilder":
+        """Set a parameter value for a specific tool.
+        
+        Args:
+            tool_name: Name of the tool to configure
+            param_name: Name of the parameter to set
+            param_value: Value to set for the parameter
+            
+        Returns:
+            Self for method chaining
+        """
+        # Validate tool exists
+        tools_config = self.version_data.get("tools_config", {})
+        tools = tools_config.get("tools", {})
+        
+        if tool_name not in tools:
+            available_tools = list(tools.keys()) if tools else []
+            warning_msg = (
+                f"Tool '{tool_name}' not found in configuration. "
+                f"Available tools: {available_tools}. "
+                f"Parameter will be ignored."
+            )
+            self._logger.warning(warning_msg)
+            return self
+            
+        # Make sure the tool is activated
+        tool_var = f"use_{tool_name}"
+        if tool_var not in self._data or not self._data[tool_var]:
+            self._data[tool_var] = True
+            
+        # Store parameter in a dedicated location
+        param_key = f"tool_params_{tool_name}"
+        if param_key not in self._data:
+            self._data[param_key] = {}
+            
+        self._data[param_key][param_name] = param_value
+        return self
+        
+    def enable_tools(self, *tool_names: str) -> "PromptixBuilder":
+        """Enable multiple tools at once.
+        
+        Args:
+            *tool_names: Names of tools to enable
+            
+        Returns:
+            Self for method chaining
+        """
+        for tool_name in tool_names:
+            self.with_tool(tool_name)
+        return self
+        
+    def disable_tools(self, *tool_names: str) -> "PromptixBuilder":
+        """Disable specific tools.
+        
+        Args:
+            *tool_names: Names of tools to disable
+            
+        Returns:
+            Self for method chaining
+        """
+        for tool_name in tool_names:
+            tool_var = f"use_{tool_name}"
+            self._data[tool_var] = False
+        return self
+        
+    def disable_all_tools(self) -> "PromptixBuilder":
+        """Disable all available tools.
+        
+        Returns:
+            Self for method chaining
+        """
+        tools_config = self.version_data.get("tools_config", {})
+        tools = tools_config.get("tools", {})
+        
+        for tool_name in tools.keys():
+            tool_var = f"use_{tool_name}"
+            self._data[tool_var] = False
+            
+        return self
+
+    def _process_tools_template(self) -> List[Dict[str, Any]]:
+        """Process the tools template and return the configured tools."""
+        tools_config = self.version_data.get("tools_config", {})
+        available_tools = tools_config.get("tools", {})
+        
+        if not tools_config or not available_tools:
+            return []
+
+        # Get the selected tools
+        selected_tools = {}
+        
+        # Check which tools are activated (either with or without the "use_" prefix)
+        for tool_name in available_tools.keys():
+            prefixed_name = f"use_{tool_name}"
+            # Check if tool is activated directly or with "use_" prefix
+            if (tool_name in self._data and self._data[tool_name]) or \
+               (prefixed_name in self._data and self._data[prefixed_name]):
+                selected_tools[tool_name] = available_tools[tool_name]
+        
+        # If no tools selected, return empty list
+        if not selected_tools:
+            return []
+            
+        try:
+            # Convert to the format expected by the adapter
+            adapter = self._adapters[self._client]
+            return adapter.process_tools(selected_tools)
+            
+        except Exception as e:
+            # Log the error with detailed information
+            import traceback
+            error_details = traceback.format_exc()
+            self._logger.warning(f"Error processing tools: {str(e)}\nDetails: {error_details}")
+            return []  # Return empty list on error
+
     def build(self) -> Dict[str, Any]:
         """Build the final configuration using the appropriate adapter."""
         # Validate all required fields are present and have correct types
+        missing_fields = []
         for field, props in self.properties.items():
             if props.get("required", False):
                 if field not in self._data:
-                    raise ValueError(f"Required field '{field}' is missing")
-                self._validate_type(field, self._data[field])
+                    missing_fields.append(field)
+                    warning_msg = f"Required field '{field}' is missing from prompt parameters"
+                    self._logger.warning(warning_msg)
+                else:
+                    try:
+                        self._validate_type(field, self._data[field])
+                    except (TypeError, ValueError) as e:
+                        self._logger.warning(str(e))
+        
+        # Only raise an error if ALL required fields are missing
+        if missing_fields and len(missing_fields) == len([f for f, p in self.properties.items() if p.get("required", False)]):
+            raise ValueError(f"All required fields are missing: {missing_fields}")
 
         try:
             # Generate the system message using the existing logic
             system_message = Promptix.get_prompt(self.prompt_template, self.custom_version, **self._data)
         except Exception as e:
-            raise ValueError(f"Error generating system message: {str(e)}")
+            self._logger.warning(f"Error generating system message: {str(e)}")
+            # Provide a fallback basic message when template rendering fails
+            system_message = f"You are an AI assistant for {self.prompt_template}."
         
         # Initialize the base configuration
-        model_config = {"messages": [{"role": "system", "content": system_message}]}
-        model_config["messages"].extend(self._memory)
+        model_config = {}
         
         # Set the model from version data
-        if "model" not in self.version_data:
-            raise ValueError(f"Model must be specified in the prompt version data for '{self.prompt_template}'")
-        model_config["model"] = self.version_data["model"]
+        if "model" not in self.version_data.get("config", {}):
+            raise ValueError(f"Model must be specified in the prompt version data config for '{self.prompt_template}'")
+        model_config["model"] = self.version_data["config"]["model"]
+        
+        # Handle system message differently for different providers
+        if self._client == "anthropic":
+            model_config["system"] = system_message
+            model_config["messages"] = self._memory
+        else:
+            # For OpenAI and others, include system message in messages array
+            model_config["messages"] = [{"role": "system", "content": system_message}]
+            model_config["messages"].extend(self._memory)
+        
+        # Process tools configuration
+        try:
+            tools = self._process_tools_template()
+            if tools:
+                model_config["tools"] = tools
+        except Exception as e:
+            self._logger.warning(f"Error processing tools: {str(e)}")
         
         # Get the appropriate adapter and adapt the configuration
         adapter = self._adapters[self._client]
-        model_config = adapter.adapt_config(model_config, self.version_data)
-        model_config["messages"] = adapter.adapt_messages(model_config["messages"])
+        try:
+            model_config = adapter.adapt_config(model_config, self.version_data)
+        except Exception as e:
+            self._logger.warning(f"Error adapting configuration for client {self._client}: {str(e)}")
         
-        return model_config 
+        return model_config
+
+    def debug_tools(self) -> Dict[str, Any]:
+        """Debug method to inspect the tools configuration.
+        
+        Returns:
+            Dict containing tools configuration information for debugging.
+        """
+        tools_config = self.version_data.get("tools_config", {})
+        tools = tools_config.get("tools", {})
+        tools_template = tools_config.get("tools_template") if tools_config else None
+        
+        # Create context for template rendering (same as in _process_tools_template)
+        template_context = {
+            "tools_config": tools_config,
+            "tools": tools,
+            **self._data  # All variables including tool activation flags
+        }
+        
+        # Return debug information
+        return {
+            "has_tools_config": bool(tools_config),
+            "has_tools": bool(tools),
+            "has_tools_template": bool(tools_template),
+            "available_tools": list(tools.keys()) if tools else [],
+            "template_context_keys": list(template_context.keys()),
+            "tool_activation_flags": {k: v for k, v in self._data.items() if k.startswith("use_")}
+        } 
