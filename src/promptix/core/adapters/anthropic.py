@@ -37,20 +37,40 @@ class AnthropicAdapter(ModelAdapter):
         if "tools" in model_config and model_config["tools"]:
             tools = model_config["tools"]
             if isinstance(tools, dict):
-                # Convert to Anthropic's tool format
+                # Convert to Anthropic's tool format with tool parameters
                 tools_list = []
                 for tool_name, tool_config in tools.items():
+                    # Check for custom tool parameters
+                    tool_params = model_config.get(f"tool_params_{tool_name}", {})
+                    
+                    # Create base tool definition
                     tool_spec = {
-                        "type": "function",
-                        "function": {
-                            "name": tool_name,
-                            **tool_config
-                        }
+                        "name": tool_name,
+                        "description": tool_config.get("description", "")
                     }
+                    
+                    # Handle input schema (parameters)
+                    if "parameters" in tool_config:
+                        input_schema = tool_config["parameters"].copy()
+                        
+                        # Apply custom parameters if present
+                        if tool_params and "properties" in input_schema:
+                            for param_name, param_value in tool_params.items():
+                                if param_name in input_schema["properties"]:
+                                    input_schema["properties"][param_name]["default"] = param_value
+                        
+                        tool_spec["input_schema"] = input_schema
+                    
                     tools_list.append(tool_spec)
+                
                 anthropic_config["tools"] = tools_list
             elif isinstance(tools, list):
                 anthropic_config["tools"] = tools
+        
+        # Clean up temporary tool parameter entries
+        for key in list(model_config.keys()):
+            if key.startswith("tool_params_"):
+                del anthropic_config[key]
         
         return anthropic_config
 
@@ -77,17 +97,17 @@ class AnthropicAdapter(ModelAdapter):
         return anthropic_messages
 
     def process_tools(self, tools_data: Union[Dict, List]) -> List[Dict[str, Any]]:
-        """Convert tools data to Anthropic's format.
-        
-        Anthropic uses a different format for tools compared to OpenAI:
-        - Name and description are at the top level
-        - Parameters are under "input_schema" instead of "parameters"
-        """
+        """Convert tools data to Anthropic's format with support for custom parameters."""
         anthropic_tools = []
         
         # Handle if tools_data is a dictionary of tool_name -> tool_config
         if isinstance(tools_data, dict):
             for tool_name, tool_config in tools_data.items():
+                # Extract tool parameters if present
+                tool_params = {}
+                if "params" in tool_config:
+                    tool_params = tool_config.pop("params")
+                
                 # Create an Anthropic-compatible tool
                 anthropic_tool = {
                     "name": tool_name,
@@ -97,12 +117,21 @@ class AnthropicAdapter(ModelAdapter):
                 # Extract parameters from tool_config
                 parameters = tool_config.get("parameters", {})
                 if parameters:
+                    # Make a copy to avoid modifying the original
+                    input_schema = parameters.copy()
+                    
+                    # Apply custom parameters if present
+                    if tool_params and "properties" in input_schema:
+                        for param_name, param_value in tool_params.items():
+                            if param_name in input_schema["properties"]:
+                                input_schema["properties"][param_name]["default"] = param_value
+                    
                     # Anthropic uses "input_schema" instead of "parameters"
-                    anthropic_tool["input_schema"] = parameters
+                    anthropic_tool["input_schema"] = input_schema
                 
                 anthropic_tools.append(anthropic_tool)
         
-        # Handle if tools_data is already a list (possibly from OpenAI format)
+        # Handle if tools_data is already a list
         elif isinstance(tools_data, list):
             for tool in tools_data:
                 # Handle OpenAI-style function tools

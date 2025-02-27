@@ -153,26 +153,112 @@ class PromptixBuilder:
         
         return self
     
-    def with_tool(self, tool_type: Optional[str] = None):
-        """Add a tool to the configuration by setting it in template variables."""
-        if tool_type:
-            # Validate tool exists in prompts configuration
-            tools_config = self.version_data.get("tools_config", {})
-            tools = tools_config.get("tools", {})
+    def with_tool(self, tool_name: str, *args, **kwargs) -> "PromptixBuilder":
+        """Activate a tool by name.
+        
+        Args:
+            tool_name: Name of the tool to activate
             
-            if tool_type in tools:
-                # Store tool activation as a template variable
-                tool_var = f"use_{tool_type}"
-                self._data[tool_var] = True
-            else:
-                available_tools = list(tools.keys()) if tools else []
-                warning_msg = (
-                    f"Tool type '{tool_type}' not found in configuration. "
-                    f"Available tools: {available_tools}. "
-                    f"This tool will be ignored."
-                )
-                self._logger.warning(warning_msg)
+        Returns:
+            Self for method chaining
+        """
+        # Validate tool exists in prompts configuration
+        tools_config = self.version_data.get("tools_config", {})
+        tools = tools_config.get("tools", {})
+        
+        if tool_name in tools:
+            # Store tool activation as a template variable
+            tool_var = f"use_{tool_name}"
+            self._data[tool_var] = True
+        else:
+            available_tools = list(tools.keys()) if tools else []
+            warning_msg = (
+                f"Tool type '{tool_name}' not found in configuration. "
+                f"Available tools: {available_tools}. "
+                f"This tool will be ignored."
+            )
+            self._logger.warning(warning_msg)
                 
+        return self
+        
+    def with_tool_parameter(self, tool_name: str, param_name: str, param_value: Any) -> "PromptixBuilder":
+        """Set a parameter value for a specific tool.
+        
+        Args:
+            tool_name: Name of the tool to configure
+            param_name: Name of the parameter to set
+            param_value: Value to set for the parameter
+            
+        Returns:
+            Self for method chaining
+        """
+        # Validate tool exists
+        tools_config = self.version_data.get("tools_config", {})
+        tools = tools_config.get("tools", {})
+        
+        if tool_name not in tools:
+            available_tools = list(tools.keys()) if tools else []
+            warning_msg = (
+                f"Tool '{tool_name}' not found in configuration. "
+                f"Available tools: {available_tools}. "
+                f"Parameter will be ignored."
+            )
+            self._logger.warning(warning_msg)
+            return self
+            
+        # Make sure the tool is activated
+        tool_var = f"use_{tool_name}"
+        if tool_var not in self._data or not self._data[tool_var]:
+            self._data[tool_var] = True
+            
+        # Store parameter in a dedicated location
+        param_key = f"tool_params_{tool_name}"
+        if param_key not in self._data:
+            self._data[param_key] = {}
+            
+        self._data[param_key][param_name] = param_value
+        return self
+        
+    def enable_tools(self, *tool_names: str) -> "PromptixBuilder":
+        """Enable multiple tools at once.
+        
+        Args:
+            *tool_names: Names of tools to enable
+            
+        Returns:
+            Self for method chaining
+        """
+        for tool_name in tool_names:
+            self.with_tool(tool_name)
+        return self
+        
+    def disable_tools(self, *tool_names: str) -> "PromptixBuilder":
+        """Disable specific tools.
+        
+        Args:
+            *tool_names: Names of tools to disable
+            
+        Returns:
+            Self for method chaining
+        """
+        for tool_name in tool_names:
+            tool_var = f"use_{tool_name}"
+            self._data[tool_var] = False
+        return self
+        
+    def disable_all_tools(self) -> "PromptixBuilder":
+        """Disable all available tools.
+        
+        Returns:
+            Self for method chaining
+        """
+        tools_config = self.version_data.get("tools_config", {})
+        tools = tools_config.get("tools", {})
+        
+        for tool_name in tools.keys():
+            tool_var = f"use_{tool_name}"
+            self._data[tool_var] = False
+            
         return self
 
     def _process_tools_template(self) -> List[Dict[str, Any]]:
