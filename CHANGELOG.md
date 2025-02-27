@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.5] - 2024-05-15
+
+### Added
+- Improved documentation for builder patterns
+- Enhanced error messaging for template validation
+- Additional examples in README.md
+
+### Changed
+- Refined API interface for better developer experience
+- Optimized template rendering for better performance
+
 ## [0.1.4] - 2024-02-02
 
 ### Added
