@@ -75,7 +75,7 @@ class PromptManager:
                     }
                 config = version_data['config']
                 # Log verification of important fields
-                print(f"Saving version {version_id} with model: {config.get('model')} and provider: {config.get('provider')}")
+                # print(f"Saving version {version_id} with model: {config.get('model')} and provider: {config.get('provider')}")
                 
                 # Ensure specific fields are preserved
                 if 'model' not in config or config['model'] is None:
@@ -93,9 +93,10 @@ class PromptManager:
                 for version_id, version_data in saved_versions.items():
                     if 'config' in version_data:
                         config = version_data['config']
-                        print(f"Verified saved version {version_id}: model={config.get('model')}, provider={config.get('provider')}")
+                        # print(f"Verified saved version {version_id}: model={config.get('model')}, provider={config.get('provider')}")
                     else:
                         print(f"Warning: No config found in saved version {version_id}")
+                        pass
         except Exception as e:
             print(f"Error in save_prompt: {str(e)}")
             print(traceback.format_exc())
@@ -184,7 +185,8 @@ class PromptManager:
             # Debug logging
             print(f"Adding version {version} to prompt {prompt_id}")
             if 'config' in content:
-                print(f"Incoming config: model={content['config'].get('model')}, provider={content['config'].get('provider')}")
+                # print(f"Incoming config: model={content['config'].get('model')}, provider={content['config'].get('provider')}")
+                pass
             else:
                 print("No config provided in content")
                     
@@ -254,7 +256,7 @@ class PromptManager:
             saved_prompt = self.get_prompt(prompt_id)
             if saved_prompt and version in saved_prompt.get('versions', {}):
                 saved_config = saved_prompt['versions'][version]['config']
-                print(f"Verified saved version config: model={saved_config.get('model')}, provider={saved_config.get('provider')}")
+                # print(f"Verified saved version config: model={saved_config.get('model')}, provider={saved_config.get('provider')}")
             
             return True
         except Exception as e:

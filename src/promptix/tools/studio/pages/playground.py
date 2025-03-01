@@ -4,6 +4,7 @@ from typing import Optional, Dict, Any, List
 from promptix.tools.studio.data import PromptManager
 import traceback
 from datetime import datetime
+import re
 
 def render_model_config(config: Dict[str, Any] = None):
     """Render model configuration section"""
@@ -121,7 +122,8 @@ def render_system_prompt(system_instruction: str = "You are a helpful AI assista
     st.markdown("### Available Variables")
     
     if not schema_properties:
-        st.info("No Dynamic variable creating for system instruction")
+        # st.info("Not Required: No Dynamic variable available, please add some variables to the schema.")
+        st.info("✨ Define variables in the Schema tab to make your system instruction dynamic! (Not Required)")
     else:
         # Create horizontal display of variables
         var_items = []
@@ -521,33 +523,336 @@ def render_schema_editor(schema: Dict[str, Any] = None):
         "additionalProperties": st.session_state.schema_additional_props
     }
 
+# Helper function to normalize template format
+def normalize_template(template_str):
+    """Normalize template format by removing extra whitespace and newlines"""
+    # Remove extra whitespace and newlines between Jinja2 tags
+    normalized = template_str
+    # Replace multiple newlines with a single space
+    normalized = re.sub(r'\n+', ' ', normalized)
+    # Remove spaces between Jinja2 tags
+    normalized = re.sub(r'%}\s+{%', '%}{%', normalized)
+    # Remove spaces between Jinja2 tags and content
+    normalized = re.sub(r'%}\s+([^{])', r'%}\1', normalized)
+    normalized = re.sub(r'([^}])\s+{%', r'\1{%', normalized)
+    return normalized
+    
+# Helper function to format template for display
+def format_template_for_display(template_str):
+    """Format a Jinja2 template for better readability in the editor"""
+    # Add line breaks after opening tags
+    formatted = template_str
+    
+    # Add line breaks after opening and closing tags
+    formatted = re.sub(r'({%\s*raw\s*%})', r'\1\n', formatted)
+    formatted = re.sub(r'({%\s*endraw\s*%})', r'\n\1', formatted)
+    
+    # Add line breaks and indentation for control structures
+    formatted = re.sub(r'({%\s*set\s+[^%]+%})', r'\1\n', formatted)
+    formatted = re.sub(r'({%\s*for\s+[^%]+%})', r'\1\n    ', formatted)
+    formatted = re.sub(r'({%\s*if\s+[^%]+%})', r'\1\n        ', formatted)
+    formatted = re.sub(r'({%\s*endif\s*%})', r'\n    \1', formatted)
+    formatted = re.sub(r'({%\s*endfor\s*%})', r'\n\1', formatted)
+    
+    # Add line breaks for expressions
+    formatted = re.sub(r'({{[^}]+}})', r'\1', formatted)
+    
+    return formatted
+    
 def render_tools_config(tools_config: Dict[str, Any] = None):
     """Render tools configuration section"""
-    st.subheader("Tools Configuration")
     
     if not tools_config:
         tools_config = {
             "tools_template": "{% raw %}{% set combined_tools = [] %}{% for tool_name, tool_config in tools.items() %}{% if use_%s|replace({'%s': tool_name}) %}{% set combined_tools = combined_tools + [{'name': tool_name, 'description': tool_config.description, 'parameters': tool_config.parameters}] %}{% endif %}{% endfor %}{{ combined_tools | tojson }}{% endraw %}",
             "tools": {}
         }
+
+    # Add "How to Use" expander with information about tools
+    with st.expander("How to Use", expanded=False):
+        st.markdown("""
+        ### How Tools Work
+        
+        🛠️ **Tools** allow your prompt to define specific actions the AI can take outside of just generating text.
+        
+        📝 **Not required**: You can create prompts without any tools for simple text generation use cases.
+        
+        ⚙️ **Tool structure**:
+        - **Name**: A unique identifier for the tool (e.g., `web_search`, `calculator`)
+        - **Description**: Explains what the tool does to help the AI understand when to use it
+        - **Parameters**: The inputs the tool requires, specified as a JSON Schema
+        
+        💡 **Example**: A `web_search` tool might have a `query` parameter for what to search for.
+        
+        🧩 **Advanced usage**: Tools are particularly useful for building assistants that can perform specific actions or retrieve information.
+        """)
     
-    # Simple tools editor
-    st.info("Tools configuration is available as JSON")
+    # Create tabs for different editing modes
+    tools_tab1, tools_tab2 = st.tabs(["Tools List", "Tools Template"])
     
-    # Allow direct JSON editing
-    tools_json = st.text_area(
-        "Tools Configuration JSON",
-        value=json.dumps(tools_config, indent=2),
-        height=300,
-        key="tools_json_editor"
-    )
+    with tools_tab1:
+        st.markdown("### Tools Definition")
+        
+        # Get current tools and ensure pending_tools exists in session state
+        tools = tools_config.get("tools", {})
+        if "pending_tools" not in st.session_state:
+            st.session_state.pending_tools = {}
+        
+        # Add a note about saving
+        if st.session_state.pending_tools:
+            st.warning("⚠️ You have unsaved tool changes. Click 'Save All Changes' at the top of the page to save them.")
+        
+        # Display existing tools
+        st.markdown("#### Available Tools")
+        
+        # Combine existing and pending tools for display
+        combined_tools = {}
+        
+        # Add existing tools
+        for tool_name, tool_data in tools.items():
+            combined_tools[tool_name] = {
+                **tool_data,
+                "status": "existing"
+            }
+        
+        # Apply pending changes
+        for tool_name, tool_data in st.session_state.pending_tools.items():
+            if tool_data.get("status") == "deleted":
+                if tool_name in combined_tools:
+                    del combined_tools[tool_name]
+            else:
+                combined_tools[tool_name] = tool_data
+        
+        # Display tools as a simple list with expansion panels
+        if combined_tools:
+            for tool_name, tool_data in combined_tools.items():
+                # Determine status badge
+                status_badge = ""
+                if tool_data.get("status") == "new":
+                    status_badge = "🆕 "
+                elif tool_data.get("status") == "modified":
+                    status_badge = "✏️ "
+                
+                with st.expander(f"{status_badge}{tool_name}", expanded=False):
+                    # Show basic info
+                    st.text(f"Description: {tool_data.get('description', '')}")
+                    
+                    # Show parameters as formatted JSON
+                    st.markdown("**Parameters:**")
+                    st.code(json.dumps(tool_data.get("parameters", {}), indent=2), language="json")
+                    
+                    # Edit and delete buttons
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button("Edit", key=f"edit_{tool_name}", use_container_width=True):
+                            # Store the original tool data
+                            st.session_state["editing_tool"] = tool_name
+                            st.session_state["editing_tool_data"] = tool_data
+                    with col2:
+                        if st.button("Delete", key=f"delete_{tool_name}", use_container_width=True):
+                            # Mark for deletion
+                            st.session_state.pending_tools[tool_name] = {"status": "deleted"}
+                            st.success(f"Tool '{tool_name}' marked for deletion. Will be removed when you save changes.")
+                            st.rerun()
+        else:
+            st.info("No tools defined yet. Add your first tool below.")
+        
+        # Add a separator
+        st.markdown("---")
+        
+        # Add new tool or edit existing
+        if "editing_tool" in st.session_state:
+            # We're editing an existing tool
+            tool_name = st.session_state["editing_tool"]
+            tool_data = st.session_state["editing_tool_data"]
+            st.markdown(f"#### Editing Tool: {tool_name}")
+        else:
+            # We're adding a new tool
+            st.markdown("#### Add New Tool")
+            
+            # Display success message if a tool was just added successfully
+            if st.session_state.get("tool_add_success", False):
+                st.success("All changes saved successfully!")
+                # Reset the flag after displaying
+                st.session_state["tool_add_success"] = False
+                
+            tool_name = ""
+            tool_data = {"description": "", "parameters": {"type": "object", "properties": {}, "required": []}}
+        
+        # Tool name field (readonly if editing)
+        if "editing_tool" in st.session_state:
+            st.text_input("Tool Name", value=tool_name, disabled=True)
+        else:
+            # Check if we should clear the tool inputs
+            default_name = "" if st.session_state.get("clear_tool_inputs", False) else None
+            tool_name = st.text_input("Tool Name", value=default_name, placeholder="e.g., web_search, calculator")
+        
+        # Description field
+        default_desc = "" if st.session_state.get("clear_tool_inputs", False) else tool_data.get("description", "")
+        tool_description = st.text_input(
+            "Description", 
+            value=default_desc,
+            placeholder="Brief description of what this tool does"
+        )
+        
+        # Example template
+        with st.expander("💡 Tool JSON Example", expanded=False):
+            st.markdown("""
+            Here's a simple example of a web search tool:
+            ```json
+            {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "description": "The search query to look up"
+                },
+                "num_results": {
+                  "type": "integer",
+                  "description": "Number of results to return",
+                  "default": 5
+                }
+              },
+              "required": ["query"]
+            }
+            ```
+            
+            And here's a weather tool:
+            ```json
+            {
+              "type": "object",
+              "properties": {
+                "location": {
+                  "type": "string",
+                  "description": "City and state, or zip code"
+                },
+                "units": {
+                  "type": "string",
+                  "enum": ["celsius", "fahrenheit"],
+                  "description": "Temperature units",
+                  "default": "celsius"
+                }
+              },
+              "required": ["location"]
+            }
+            ```
+            """)
+        
+        # JSON editor for parameters
+        st.markdown("##### Parameters (JSON Schema)")
+        default_params = {"type": "object", "properties": {}, "required": []} if st.session_state.get("clear_tool_inputs", False) else tool_data.get("parameters", {"type": "object", "properties": {}, "required": []})
+        param_json = json.dumps(default_params, indent=2)
+        
+        # Use a unique key for the text area that changes when clear_tool_inputs is true
+        text_area_key = "params_json_editor_cleared" if st.session_state.get("clear_tool_inputs", False) else "params_json_editor"
+        
+        edited_params = st.text_area(
+            "Parameters JSON Schema",
+            value=param_json,
+            height=300,
+            key=text_area_key,
+            help="Define the parameters this tool accepts using JSON Schema format"
+        )
+        
+        # Reset clear_tool_inputs flag after using it
+        if st.session_state.get("clear_tool_inputs", False):
+            st.session_state["clear_tool_inputs"] = False
+        
+        # Save/Update button
+        col1, col2 = st.columns(2)
+        with col1:
+            save_label = "Update Tool" if "editing_tool" in st.session_state else "Add Tool"
+            if st.button(save_label, key="save_tool_btn", use_container_width=True):
+                if not tool_name and "editing_tool" not in st.session_state:
+                    st.error("Tool name is required")
+                else:
+                    try:
+                        # Parse parameters JSON
+                        params = json.loads(edited_params)
+                        
+                        # Use existing name if editing
+                        if "editing_tool" in st.session_state:
+                            current_tool_name = st.session_state["editing_tool"]
+                        else:
+                            current_tool_name = tool_name.strip()
+                        
+                        # Add to pending tools
+                        is_existing = current_tool_name in tools and "editing_tool" in st.session_state
+                        st.session_state.pending_tools[current_tool_name] = {
+                            "description": tool_description,
+                            "parameters": params,
+                            "status": "modified" if is_existing else "new"
+                        }
+                        
+                        success_msg = f"Tool '{current_tool_name}' updated." if is_existing else f"Tool '{current_tool_name}' added."
+                        st.success(f"{success_msg} Changes will be applied when you save all changes.")
+                        
+                        # Set flag to show success message under "Add New Tool" on next render
+                        st.session_state["tool_add_success"] = True
+                        
+                        # Clear editing state
+                        if "editing_tool" in st.session_state:
+                            del st.session_state["editing_tool"]
+                            del st.session_state["editing_tool_data"]
+                        
+                        st.rerun()
+                    except json.JSONDecodeError as e:
+                        st.error(f"Invalid JSON: {str(e)}")
+        
+        with col2:
+            if "editing_tool" in st.session_state:
+                if st.button("Cancel Editing", key="cancel_edit_btn", use_container_width=True):
+                    del st.session_state["editing_tool"]
+                    del st.session_state["editing_tool_data"]
+                    st.rerun()
     
-    try:
-        tools_config = json.loads(tools_json)
-    except json.JSONDecodeError:
-        st.error("Invalid JSON. Changes will not be saved.")
+    with tools_tab2:
+        st.markdown("### Tools Template")
+        st.info("The template defines how tools are rendered in the final prompt. Most users should not need to modify this.")
+        
+        # Get current template
+        original_template = tools_config.get("tools_template", "")
+        display_template = format_template_for_display(original_template)
+        
+        # Use text_area with monospace styling
+        st.markdown("<div class='jinja-editor'>", unsafe_allow_html=True)
+        edited_template = st.text_area(
+            "Template",
+            value=display_template,
+            height=400,
+            key="tools_template_editor"
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Determine if the template was edited
+        if edited_template != display_template:
+            # User has edited the template, use their version but normalize it
+            template_text = normalize_template(edited_template)
+        else:
+            # No edits, use the original
+            template_text = original_template
     
-    return tools_config
+    # Process pending tool changes
+    final_tools = dict(tools)  # Make a copy of existing tools
+    
+    # Process pending tools
+    if "pending_tools" in st.session_state:
+        for tool_name, tool_data in st.session_state.pending_tools.items():
+            if tool_data.get("status") == "deleted":
+                # Remove from final tools if it exists
+                if tool_name in final_tools:
+                    del final_tools[tool_name]
+            elif tool_data.get("status") in ["new", "modified"]:
+                # Add or update tool
+                final_tools[tool_name] = {
+                    "description": tool_data.get("description", ""),
+                    "parameters": tool_data.get("parameters", {})
+                }
+    
+    return {
+        "tools_template": template_text,
+        "tools": final_tools
+    }
 
 def render_playground():
     """Main playground render function"""
@@ -599,6 +904,11 @@ def render_playground():
                                   use_container_width=True,
                                   type="primary")  # Type primary gives it a different color (usually blue)
         
+        # Display success message below the buttons if save was successful
+        if st.session_state.get("save_success", False):
+            st.success("All changes saved successfully!")
+            # Reset the flag after displaying
+            st.session_state["save_success"] = False
         
         # Get version data
         version_data = prompt["versions"].get(version_id, {})
@@ -617,7 +927,7 @@ def render_playground():
         
         # Configuration tabs - reduced from 5 to 4 tabs by removing the Test tab
         tab1, tab2, tab3, tab4 = st.tabs([
-            "Model Config", "System Instruction", "Schema", "Tools"
+            "Model Config", "System Instruction", "Schema", "Tools Configuration"
         ])
         
         # Process each tab
@@ -665,7 +975,7 @@ def render_playground():
                 }
                 
                 # Debug information
-                st.info(f"Saving with model: {config.get('model')} and provider: {config.get('provider')}")
+                # st.info(f"Saving with model: {config.get('model')} and provider: {config.get('provider')}")
                 st.session_state["debug_updated_config"] = updated_version['config']
                 
                 # Preserve existing metadata or create new
@@ -694,6 +1004,13 @@ def render_playground():
                 # Reset schema_changes flag
                 st.session_state.schema_changes = False
                 
+                # Clear pending tools after saving
+                if "pending_tools" in st.session_state:
+                    st.session_state.pending_tools = {}
+                
+                # Set a flag to clear tool input fields on next render
+                st.session_state["clear_tool_inputs"] = True
+                
                 # Clear form input fields by resetting session state
                 for key in list(st.session_state.keys()):
                     if key.startswith("new_var_"):
@@ -704,9 +1021,11 @@ def render_playground():
                 if saved_prompt and version_id in saved_prompt.get('versions', {}):
                     saved_config = saved_prompt['versions'][version_id]['config']
                     st.session_state["debug_saved_config"] = saved_config
-                    st.info(f"Saved successfully with model: {saved_config.get('model')} and provider: {saved_config.get('provider')}")
-                
-                st.success("All changes saved successfully!")
+                    # st.info(f"Saved successfully with model: {saved_config.get('model')} and provider: {saved_config.get('provider')}")
+
+                    # Set success flag in session state instead of showing success message
+                    st.session_state["save_success"] = True
+                    st.rerun()  # Rerun to show the success message
             except Exception as e:
                 st.error(f"Error saving changes: {str(e)}")
                 st.error(traceback.format_exc())
