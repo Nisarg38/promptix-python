@@ -296,8 +296,16 @@ class PromptixBuilder:
             self._logger.warning(f"Error processing tools: {str(e)}\nDetails: {error_details}")
             return []  # Return empty list on error
 
-    def build(self) -> Dict[str, Any]:
-        """Build the final configuration using the appropriate adapter."""
+    def build(self, system_only: bool = False) -> Union[Dict[str, Any], str]:
+        """Build the final configuration using the appropriate adapter.
+        
+        Args:
+            system_only: If True, returns only the system instruction string instead of the full model config.
+            
+        Returns:
+            Either the full model configuration dictionary or just the system instruction string,
+            depending on the value of system_only.
+        """
         # Validate all required fields are present and have correct types
         missing_fields = []
         for field, props in self.properties.items():
@@ -324,6 +332,10 @@ class PromptixBuilder:
             # Provide a fallback basic message when template rendering fails
             system_message = f"You are an AI assistant for {self.prompt_template}."
         
+        # If system_only is True, just return the system message
+        if system_only:
+            return system_message
+            
         # Initialize the base configuration
         model_config = {}
         
@@ -358,6 +370,16 @@ class PromptixBuilder:
         
         return model_config
 
+    def system_instruction(self) -> str:
+        """Get only the system instruction/prompt as a string.
+        
+        This is a convenient shorthand for build(system_only=True).
+        
+        Returns:
+            The rendered system instruction string
+        """
+        return self.build(system_only=True)
+        
     def debug_tools(self) -> Dict[str, Any]:
         """Debug method to inspect the tools configuration.
         

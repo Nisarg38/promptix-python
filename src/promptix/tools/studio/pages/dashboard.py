@@ -75,26 +75,12 @@ def render_recent_prompts():
                 if last_modified and isinstance(last_modified, str):
                     st.write(f"**Last modified:** {last_modified[:10]}")
             
-            with col2:
+            with col3:
                 if st.button("✏️ Edit", key=f"edit_{prompt['id']}", use_container_width=True):
                     st.session_state["prompt_id"] = prompt["id"]
                     st.session_state["current_page"] = "Version Manager"
                     st.rerun()
             
-            with col3:
-                if st.button("🎮 Play", key=f"play_{prompt['id']}", use_container_width=True):
-                    # Find a live version or default to first version
-                    version_id = live_version
-                    if not version_id and prompt.get('versions'):
-                        version_id = next(iter(prompt['versions']))
-                    
-                    if version_id:
-                        st.session_state["prompt_id"] = prompt["id"]
-                        st.session_state["version_id"] = version_id
-                        st.session_state["current_page"] = "Playground"
-                        st.rerun()
-                    else:
-                        st.error("No versions available for this prompt")
 
 def render_stats():
     """Render statistics about prompts"""
