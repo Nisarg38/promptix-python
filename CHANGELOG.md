@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.6] - 2024-05-17
+
+### Added
+- Improved Promptix Studio with enhanced user interface and functionality
+- Updated License with additional clarifications
+
 ## [0.1.5] - 2024-05-15
 
 ### Added
