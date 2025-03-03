@@ -18,17 +18,17 @@ def main():
     
     # Example 1: Basic builder usage with SimpleChat
     print("Example 1: Basic Builder (SimpleChat)")
-    config1 = (
+    SystemPrompt = (
         Promptix.builder("SimpleChat")
         .with_user_name("Alice")
         .with_assistant_name("Helper")
-        .build()
+        .system_instruction()
     )
-    print_config(config1)
+    print_config(SystemPrompt)
 
     # Example 2: Builder with version specification
     print("Example 2: Builder with Version (SimpleChat v2)")
-    config2 = (
+    config1 = (
         Promptix.builder("SimpleChat")
         .with_version("v2")
         .with_user_name("Bob")
@@ -36,7 +36,7 @@ def main():
         .with_personality_type("professional")
         .build()
     )
-    print_config(config2)
+    print_config(config1)
 
     # Example 3: Builder with memory (conversation history)
     print("Example 3: Builder with Memory")
@@ -45,7 +45,7 @@ def main():
         {"role": "assistant", "content": "I'd be happy to help! Could you share some code with me?"}
     ]
     
-    config3 = (
+    config2 = (
         Promptix.builder("CodeReviewer")
         .with_code_snippet("def add(a, b): return a + b")
         .with_programming_language("Python")
@@ -53,13 +53,13 @@ def main():
         .with_memory(memory)
         .build()
     )
-    print_config(config3)
+    print_config(config2)
 
     
     # Example 4: Builder for specific client
     print("Example 4: Builder for Specific Client (Anthropic)")
     try:
-        config5 = (
+        config3 = (
             Promptix.builder("CodeReviewer")
             .with_version("v2")  # Anthropic-compatible version
             .with_code_snippet("def process(data): return [x for x in data if x > 0]")
@@ -69,13 +69,13 @@ def main():
             .for_client("anthropic")  # Specify client type
             .build()
         )
-        print_config(config5)
+        print_config(config3)
     except ValueError as e:
         print(f"Error: {str(e)}")
 
     # Example 5: Complex tool configuration
     print("Example 5: Complex Tool Configuration")
-    config5 = (
+    config4 = (
         Promptix.builder("ComplexCodeReviewer")
         .with_programming_language("Python")
         .with_severity("high")
@@ -88,7 +88,7 @@ def main():
         .disable_tools("style_checker")
         .build()
     )
-    print_config(config5)
+    print_config(config4)
 
 if __name__ == "__main__":
     main() 

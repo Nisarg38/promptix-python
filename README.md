@@ -19,32 +19,59 @@ Managing prompts across multiple applications, models, and use cases can quickly
 
 ## ✨ Key Features
 
-### 🎯 Dynamic Prompt Generation
-Create versatile prompts with Promptix's templating system, allowing for context-aware adjustments:
+### 🔄 Static Prompt Retrieval and Version Control
+Fetch your static prompts and manage different versions without dynamic templating:
 
 ```python
-support_prompt = Promptix.get_prompt(
-    prompt_template="CustomerSupport",
-    # These variables dynamically modify the prompt
-    department="Billing",
-    customer_tier="Premium",
-    issue_type="refund request",
-    agent_name="Alex"
-)
-```
-
-### 🔄 Version Control Built-in
-Keep track of prompt iterations and test new versions without breaking production:
-
-```python
-# Get the latest live version (for production)
-live_prompt = Promptix.get_prompt("CustomerSupport")
+# Get the latest live version of a static prompt
+live_prompt = Promptix.get_prompt("CustomerSupportStatic")
 
 # Test a new draft version in development
 draft_prompt = Promptix.get_prompt(
-    prompt_template="CustomerSupport", 
+    prompt_template="CustomerSupportStatic", 
     version="v2"
 )
+```
+
+### 🎯 Dynamic Templating with Builder Pattern
+Create sophisticated, context-aware system instructions using the fluent builder API:
+
+```python
+# Generate a dynamic system instruction
+system_instruction = (
+    Promptix.builder("CustomerSupport")
+    .with_customer_name("Jane Doe")
+    .with_department("Technical Support")
+    .with_priority("high")
+    .with_tool("ticket_history")
+    .with_tool_parameter("ticket_history", "max_tickets", 5)
+    .system_instruction()  # Returns the system instruction string
+)
+```
+
+### 🤖 Model Configuration for API Calls
+Prepare complete configurations for different LLM providers:
+
+```python
+# OpenAI integration
+openai_config = (
+    Promptix.builder("AgentPrompt")
+    .with_customer_context(customer_data)
+    .with_issue_details(issue)
+    .for_client("openai")
+    .build()
+)
+openai_response = openai_client.chat.completions.create(**openai_config)
+
+# Anthropic integration
+anthropic_config = (
+    Promptix.builder("AgentPrompt")
+    .with_customer_context(customer_data)
+    .with_issue_details(issue)
+    .for_client("anthropic")
+    .build()
+)
+anthropic_response = anthropic_client.messages.create(**anthropic_config)
 ```
 
 ### 🎨 Promptix Studio
@@ -54,49 +81,34 @@ Manage prompts through a clean web interface by simply running:
 promptix studio
 ```
 
-### 🛠️ Fluent Builder API
-Create sophisticated prompt configurations with an intuitive builder pattern:
+When you run this command, you'll get access to the Promptix Studio dashboard:
 
-```python
-config = (
-    Promptix.builder("CustomerSupport")
-    .with_customer_name("Jane Doe")
-    .with_department("Technical Support")
-    .with_priority("high")
-    .with_tool("ticket_history")  # Enable specific tools
-    .with_tool_parameter("ticket_history", "max_tickets", 5)
-    .with_memory(conversation_history)
-    .build()
-)
-```
+![Promptix Studio Dashboard](https://raw.githubusercontent.com/username/promptix/main/docs/images/promptix-studio-dashboard.png)
 
-### 🤖 Multi-Provider Support
-Send your prompts to any LLM provider while maintaining a consistent interface:
+The Studio interface provides:
 
-```python
-# OpenAI integration
-openai_config = Promptix.builder("AgentPrompt").build()
-openai_response = openai_client.chat.completions.create(**openai_config)
+- **Dashboard overview** with prompt usage statistics
+- **Prompt Library** for browsing and managing all your prompts
+- **Version management** to track prompt iterations and mark releases as live
+- **Quick creation** of new prompts with a visual editor
+- **Usage statistics** showing which models and providers are most used
+- **Live editing** with immediate validation and preview
 
-# Anthropic integration
-anthropic_config = (
-    Promptix.builder("AgentPrompt")
-    .for_client("anthropic")
-    .build()
-)
-anthropic_response = anthropic_client.messages.create(**anthropic_config)
-```
+Studio makes it easy to collaborate on prompts, test variations, and manage your prompt library without touching code.
+
+> **Note**: To include the screenshot in your README, save the image to your repository (e.g., in a `docs/images/` directory) and update the image path accordingly.
 
 ### 🧠 Context-Aware Prompting
 Adapt prompts based on dynamic conditions to create truly intelligent interactions:
 
 ```python
-# Prompt adapts based on user context
-prompt = Promptix.get_prompt(
-    prompt_template="CustomerSupport",
-    customer_history_length="long" if customer.interactions > 5 else "short",
-    sentiment="frustrated" if sentiment_score < 0.3 else "neutral",
-    technical_level=customer.technical_proficiency
+# Build system instruction with conditional logic
+system_instruction = (
+    Promptix.builder("CustomerSupport")
+    .with_history_context("long" if customer.interactions > 5 else "short")
+    .with_sentiment("frustrated" if sentiment_score < 0.3 else "neutral")
+    .with_technical_level(customer.technical_proficiency)
+    .system_instruction()
 )
 ```
 
@@ -117,27 +129,34 @@ promptix studio
 
 2. **Create your first prompt template** in the Studio UI or in your YAML file.
 
-3. **Use the prompt in your code**:
+3. **Use prompts in your code**:
 ```python
 from promptix import Promptix
 
-# Basic usage
-greeting = Promptix.get_prompt(
-    prompt_template="Greeting",
-    user_name="Alex"
+# Static prompt retrieval
+greeting = Promptix.get_prompt("SimpleGreeting")
+
+# Dynamic system instruction
+system_instruction = (
+    Promptix.builder("CustomerSupport")
+    .with_customer_name("Alex")
+    .with_issue_type("billing")
+    .system_instruction()
 )
 
 # With OpenAI
 from openai import OpenAI
 client = OpenAI()
 
-model_config = Promptix.prepare_model_config(
-    prompt_template="CustomerSupport",
-    customer_name="Jordan Smith",
-    issue="billing question"
+openai_config = (
+    Promptix.builder("CustomerSupport")
+    .with_customer_name("Jordan Smith")
+    .with_issue("billing question")
+    .for_client("openai")
+    .build()
 )
 
-response = client.chat.completions.create(**model_config)
+response = client.chat.completions.create(**openai_config)
 ```
 
 ## 📊 Real-World Use Cases
@@ -174,6 +193,7 @@ security_review_config = (
     .with_review_focus("security")
     .with_tool("vulnerability_scanner")
     .with_tool("dependency_checker")
+    .for_client("openai")
     .build()
 )
 ```
@@ -184,10 +204,11 @@ Promptix automatically validates your prompt variables against defined schemas:
 
 ```python
 try:
-    # Will raise error if technical_level isn't one of the allowed values
-    prompt = Promptix.get_prompt(
-        prompt_template="TechnicalSupport",
-        technical_level="expert"  # Must be in ["beginner", "intermediate", "advanced"]
+    # Dynamic system instruction with validation
+    system_instruction = (
+        Promptix.builder("TechnicalSupport")
+        .with_technical_level("expert")  # Must be in ["beginner", "intermediate", "advanced", "expert"]
+        .system_instruction()
     )
 except ValueError as e:
     print(f"Validation Error: {str(e)}")
