@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.7] - 2024-05-18
+
+### Changed
+- Updated code with latest improvements
+- Fixed minor issues from previous release
+
 ## [0.1.6] - 2024-05-17
 
 ### Added
