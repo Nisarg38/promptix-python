@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.8] - 2025-03-03
+
+## Changed
+- Updated PyProject.toml and Added MANIFEST.in 
+- Making the Promptix Studio fully functional.
+
 ## [0.1.7] - 2024-05-18
 
 ### Changed
