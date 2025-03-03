@@ -1,0 +1,144 @@
+##########################################################################
+
+### TO DO List ###
+
+
+# Last Release: 
+
+    - [Done] - Fix test for test_tools_and_functions
+    - [Done] - Test yaml 
+    - [Done] Fix test_tools_and_functions 
+    - [Done] Change the structure of prompt just it with current setup
+    - [Done] Add support for tools templating. 
+    - [Done] Prompts.json/Prompts.yaml structure validation. - Need to fix the structure
+    - [Done] Changed tools structure fix that + Yaml verififcation.
+    - [Done] Verification for anthropic only anthropic models can go cross-verify with provider 
+    - [Done] Fix the examples to show proper use case 
+    - [Done] Updates Tests accordingly 
+    - [Done] Improve README
+    - [Done] Release
+
+
+# This Release:
+
+    - [Done] Improve Promptix Studio 
+      - Update Tools Page in Playground and Remove logging in console 
+    - [Done] Add Examples + Readme: 
+      - get_prompt to be use not for templating just to fetch and manage static promtps 
+      - builder is used for dynamic templating 
+      - builder with api_config for model_config for the api 
+    - [Done] License Change ?? - Added a Common Clause
+
+
+# Next PR: 
+
+    - PR 1: [Done] - Improvements to functions and tools 
+    - PR 2: [In progress] - Improve DB Studio
+    - PR 3: [Backlog] - Openai Interceptor Functionailty 
+
+
+# Next Steps: 
+
+    - Imrpove docs + blogs + linkedin post. And Reach out to people. 
+    - Work on Backend to get a test API out. 
+    - API Integration in library.
+    - Build out the very user-friendly UI for wasp app. 
+    - Deploy 
+    - Marketing 
+
+
+
+Go through the @README.md 
+and I am thinking of structuring it in this format 
+
+
+- get_prompt to be use not for templating just to fetch and manage static promtps 
+- builder is used for dynamic templating 
+- builder with api_config for model_config for the api 
+
+
+
+
+
+# Dynamic Tools 
+
+{
+  "ServiceAgent": {
+    "name": "ServiceAgent",
+    "description": "A dynamic service agent prompt that adapts based on user type, communication channel, and required services",
+    "versions": {
+      "v1": {
+        "is_live": true,
+        "config": {
+          "system_instruction": "You are a helpful service agent assisting customers with their needs.\n\n{% if new_user %}\nThis is a new user who may need additional guidance.\n{% else %}\nThis is a returning user who is familiar with our services.\n{% endif %}\n\n{% if communication_type == \"phone\" %}\nThis is a phone conversation. Use clear verbal communication.\n{% elif communication_type == \"sms\" %}\nThis is an SMS conversation. Keep responses concise.\n{% elif communication_type == \"chat\" %}\nThis is a live chat conversation. Balance tone and efficiency.\n{% endif %}\n\nService Requirements:\n{% if transportation_type %}\n- Verify pickup and destination\n- Check available transportation options\n{% endif %}\n\n{% if scheduling_required %}\n- Manage appointment scheduling\n- Send confirmation and reminders\n{% endif %}\n\n{{ tools_template }}",
+          "temperature": 0.7,
+          "max_tokens": 2000,
+          "top_p": 1,
+          "frequency_penalty": 0,
+          "presence_penalty": 0,
+          "tools": []
+        },
+        "metadata": {
+          "created_at": "2024-03-19",
+          "author": "system",
+          "description": "Dynamic service agent template with conditional tool inclusion"
+        },
+        "created_at": "2024-03-19T00:00:00.000000",
+        "last_modified": "2024-03-19T00:00:00.000000",
+        "schema": {
+          "required": [
+            "communication_type"
+          ],
+          "optional": [
+            "new_user",
+            "transportation_type",
+            "scheduling_required",
+            "vehicle_selection"
+          ],
+          "types": {
+            "communication_type": [
+              "phone",
+              "sms",
+              "chat"
+            ],
+            "new_user": "boolean",
+            "transportation_type": "boolean",
+            "scheduling_required": "boolean",
+            "vehicle_selection": "boolean"
+          }
+        }
+      }
+    },
+    "tools_config": {
+      "tool_1": {
+        "name": "VehicleTool",
+        "description": "Tool for vehicle-based services",
+        "parameters": {
+          "vehicle_id": {
+            "type": "string",
+            "description": "Unique identifier for the vehicle"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the vehicle"
+          }
+        }
+      },
+      "tool_2": {
+        "name": "StandardTool",
+        "description": "Standard tool without vehicle-specific functionality",
+        "parameters": {
+          "user_id": {
+            "type": "string",
+            "description": "Unique identifier for the user"
+          },
+          "session": {
+            "type": "string",
+            "description": "Session details"
+          }
+        }
+      }
+    },
+    "tools_template": "{% raw %}{% if vehicle_selection %}{% set selected_tool_names = ['default_tool'] %}{% else %}{% set selected_tool_names = ['no_vehicle_tool'] %}{% endif %}{% set combined_tools = [] %}{% for tool_name in selected_tool_names %}{% if tool_name in tools_config %}{% set combined_tools = combined_tools + [tools_config[tool_name]] %}{% endif %}{% endfor %}{% endraw %}{{ combined_tools | tojson }}"
+  }
+}

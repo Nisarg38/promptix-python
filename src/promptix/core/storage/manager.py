@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from typing import Dict, Any
 from .loaders import PromptLoaderFactory
+from .utils import create_default_prompts_file
 
 class PromptManager:
     """Manages prompts from local storage."""
@@ -28,7 +29,7 @@ class PromptManager:
         else:
             # Create new file with preferred format
             default_file = Path(f"prompts{self.format}")
-            default_file.touch()
+            create_default_prompts_file(default_file)
             return default_file
     
     def _load_prompts(self) -> None:

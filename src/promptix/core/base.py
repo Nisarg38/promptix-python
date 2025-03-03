@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional, List, Union
 from jinja2 import BaseLoader, Environment, TemplateError
 from ..enhancements.logging import setup_logging
 from .storage.loaders import PromptLoaderFactory
+from .storage.utils import create_default_prompts_file
 
 
 class Promptix:
@@ -34,7 +35,10 @@ class Promptix:
             elif json_file.exists():
                 prompt_file = json_file
             else:
-                cls._logger.warning("No prompts file found (tried prompts.yaml, prompts.yml, prompts.json); _prompts will be empty.")
+                # Create a default prompts file (YAML format)
+                prompt_file = yaml_file
+                cls._prompts = create_default_prompts_file(prompt_file)
+                cls._logger.info(f"Created new prompts file at {prompt_file} with a sample prompt")
                 return
                 
             loader = PromptLoaderFactory.get_loader(prompt_file)

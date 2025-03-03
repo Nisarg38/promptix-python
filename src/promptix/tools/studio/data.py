@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 from datetime import datetime
 from pathlib import Path
 from promptix.core.storage.loaders import PromptLoaderFactory, InvalidPromptSchemaError
+from promptix.core.storage.utils import create_default_prompts_file
 import traceback
 
 class PromptManager:
@@ -15,10 +16,9 @@ class PromptManager:
     def _ensure_storage_exists(self):
         """Ensure the storage file exists"""
         if not os.path.exists(self.storage_path):
-            with open(self.storage_path, 'w') as f:
-                json.dump({
-                    "schema": 1.0  # Adding schema version as required by the validator
-                }, f)
+            # Create a default prompts file, preferring YAML format
+            # But respect the extension if it's already specified
+            create_default_prompts_file(Path(self.storage_path))
     
     def load_prompts(self) -> Dict:
         """Load all prompts from storage with schema validation"""
