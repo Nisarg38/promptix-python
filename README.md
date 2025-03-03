@@ -83,7 +83,7 @@ promptix studio
 
 When you run this command, you'll get access to the Promptix Studio dashboard:
 
-![Promptix Studio Dashboard](https://raw.githubusercontent.com/username/promptix/main/docs/images/promptix-studio-dashboard.png)
+![Promptix Studio Dashboard](https://raw.githubusercontent.com/Nisarg38/promptix-python/refs/heads/main/docs/images/promptix-studio-dashboard.png)
 
 The Studio interface provides:
 
