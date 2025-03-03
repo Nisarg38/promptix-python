@@ -50,6 +50,12 @@ dev = [
     "mypy>=1.0.0",
 ]
 
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"promptix.tools.studio" = ["*.webp", "*.ico"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
