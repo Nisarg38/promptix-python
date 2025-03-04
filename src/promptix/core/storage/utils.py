@@ -2,6 +2,10 @@ import json
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any
+from promptix.enhancements.logging import setup_logging
+
+# Set up logger for this module
+logger = setup_logging()
 
 from .loaders import PromptLoaderFactory
 
@@ -23,7 +27,7 @@ def create_default_prompts_file(file_path: Path) -> Dict[str, Any]:
     if file_path.suffix.lower() not in ['.yaml', '.yml', '.json']:
         # If no valid extension is provided, prefer YAML
         file_path = file_path.with_suffix('.yaml')
-        print(f"No valid extension provided, defaulting to YAML format: {file_path}")
+        logger.info(f"No valid extension provided, defaulting to YAML format: {file_path}")
     
     # Get current timestamp
     current_time = datetime.now().isoformat()
@@ -78,6 +82,6 @@ def create_default_prompts_file(file_path: Path) -> Dict[str, Any]:
     loader = PromptLoaderFactory.get_loader(file_path)
     loader.save(default_prompts, file_path)
     
-    print(f"Created new prompts file at {file_path} with a sample prompt")
+    logger.info(f"Created new prompts file at {file_path} with a sample prompt")
     
     return default_prompts 

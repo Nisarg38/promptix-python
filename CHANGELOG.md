@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.9] - 2025-03-03
+
+## Changed
+- Promptix Studio Updated 
+- Updated README
+
 ## [0.1.8] - 2025-03-03
 
 ## Changed

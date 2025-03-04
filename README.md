@@ -148,10 +148,16 @@ system_instruction = (
 from openai import OpenAI
 client = OpenAI()
 
+# Example conversation history
+memory = [
+    {"role": "user", "content": "Can you help me with my last transaction ?"}
+]
+
 openai_config = (
     Promptix.builder("CustomerSupport")
     .with_customer_name("Jordan Smith")
     .with_issue("billing question")
+    .with_memory(memory)
     .for_client("openai")
     .build()
 )
@@ -181,11 +187,20 @@ Generate consistent but customizable content with prompts that:
 - Maintain brand voice while allowing flexibility
 - Include relevant reference materials based on topic
 
+Read more about the design principles behind Promptix in [Why I Created Promptix: A Local-First Approach to Prompt Management](https://nisarg38.github.io/Portfolio-Website/blog/blogs/promptix-01).
+
+For a detailed guide on how to use Promptix, see [How to Use Promptix: A Developer's Guide](https://nisarg38.github.io/Portfolio-Website/blog/blogs/promptix-02).
+
 ## 🧪 Advanced Usage
 
 ### Custom Tools Configuration
 
 ```python
+# Example conversation history
+memory = [
+    {"role": "user", "content": "Can you help me understand Python decorators?"}
+]
+
 # Configure specialized tools for different scenarios
 security_review_config = (
     Promptix.builder("CodeReviewer")
@@ -193,6 +208,7 @@ security_review_config = (
     .with_review_focus("security")
     .with_tool("vulnerability_scanner")
     .with_tool("dependency_checker")
+    .with_memory(memory)
     .for_client("openai")
     .build()
 )

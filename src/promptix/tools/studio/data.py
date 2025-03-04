@@ -8,10 +8,21 @@ from promptix.core.storage.utils import create_default_prompts_file
 import traceback
 
 class PromptManager:
-    def __init__(self, storage_path: str = "prompts.json"):
-        self.storage_path = storage_path
+    def __init__(self):
+        # Check for YAML file first, then JSON
+        yaml_path = os.path.join(os.getcwd(), "prompts.yaml")
+        json_path = os.path.join(os.getcwd(), "prompts.json")
+        
+        if os.path.exists(yaml_path):
+            self.storage_path = yaml_path
+        elif os.path.exists(json_path):
+            self.storage_path = json_path
+        else:
+            self.storage_path = yaml_path  # Default to yaml if neither exists
+        
         self._ensure_storage_exists()
-        self._loader = PromptLoaderFactory.get_loader(Path(storage_path))
+            
+        self._loader = PromptLoaderFactory.get_loader(Path(self.storage_path))
     
     def _ensure_storage_exists(self):
         """Ensure the storage file exists"""
