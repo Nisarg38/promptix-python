@@ -96,6 +96,45 @@ class PromptixBuilder:
             self._data[field] = value
         return self
     
+    def with_var(self, variables: Dict[str, Any]):
+        """Set multiple variables at once using a dictionary.
+        
+        This method allows passing a dictionary of variables to be used in prompt templates
+        and tools configuration. Variables can be used in tools templates to conditionally
+        enable tools or set tool parameters based on values like severity, language, etc.
+        
+        All variables are made available to the tools_template Jinja2 template, allowing
+        for conditional tool selection based on variables. For example, you can conditionally
+        enable certain tools based on the programming language or severity.
+        
+        Note: If tools are explicitly activated using .with_tool(), those tools will always 
+        be included regardless of the conditions in the tools_template.
+        
+        Args:
+            variables: Dictionary of variable names and their values to be set
+            
+        Returns:
+            Self for method chaining
+            
+        Example:
+            ```python
+            config = (Promptix.builder("ComplexCodeReviewer")
+                      .with_var({
+                          'programming_language': 'Python',
+                          'severity': 'high',
+                          'review_focus': 'security and performance'
+                      })
+                      .build())
+            ```
+        """
+        if not isinstance(variables, dict):
+            raise TypeError("Expected a dictionary of variables")
+            
+        for field, value in variables.items():
+            self._validate_type(field, value)
+            self._data[field] = value
+        return self
+    
     def with_memory(self, memory: List[Dict[str, str]]):
         """Set the conversation memory."""
         if not isinstance(memory, list):
@@ -158,10 +197,31 @@ class PromptixBuilder:
         
         Args:
             tool_name: Name of the tool to activate
+            *args: Additional tool names to activate
             
         Returns:
             Self for method chaining
+            
+        Example:
+            ```python
+            # Activate a single tool
+            config = builder.with_tool("complexity_analyzer").build()
+            
+            # Activate multiple tools at once
+            config = builder.with_tool("complexity_analyzer", "security_scanner").build()
+            ```
         """
+        # First handle the primary tool_name
+        self._activate_tool(tool_name)
+        
+        # Handle any additional tool names passed as positional arguments
+        for tool in args:
+            self._activate_tool(tool)
+                
+        return self
+        
+    def _activate_tool(self, tool_name: str) -> None:
+        """Internal helper to activate a single tool."""
         # Validate tool exists in prompts configuration
         tools_config = self.version_data.get("tools_config", {})
         tools = tools_config.get("tools", {})
@@ -178,9 +238,7 @@ class PromptixBuilder:
                 f"This tool will be ignored."
             )
             self._logger.warning(warning_msg)
-                
-        return self
-        
+    
     def with_tool_parameter(self, tool_name: str, param_name: str, param_value: Any) -> "PromptixBuilder":
         """Set a parameter value for a specific tool.
         
@@ -262,27 +320,93 @@ class PromptixBuilder:
         return self
 
     def _process_tools_template(self) -> List[Dict[str, Any]]:
-        """Process the tools template and return the configured tools."""
+        """Process the tools template and return the configured tools.
+        
+        The tools_template can output a JSON list of tool names that should be activated.
+        These are then combined with any tools explicitly activated via with_tool().
+        """
         tools_config = self.version_data.get("tools_config", {})
         available_tools = tools_config.get("tools", {})
         
         if not tools_config or not available_tools:
             return []
 
-        # Get the selected tools
+        # Track both template-selected and explicitly activated tools
+        template_selected_tools = []
+        explicitly_activated_tools = []
         selected_tools = {}
         
-        # Check which tools are activated (either with or without the "use_" prefix)
+        # First, find explicitly activated tools (via with_tool)
         for tool_name in available_tools.keys():
             prefixed_name = f"use_{tool_name}"
-            # Check if tool is activated directly or with "use_" prefix
             if (tool_name in self._data and self._data[tool_name]) or \
                (prefixed_name in self._data and self._data[prefixed_name]):
+                explicitly_activated_tools.append(tool_name)
                 selected_tools[tool_name] = available_tools[tool_name]
         
-        # If no tools selected, return empty list
+        # Process tools template if available to get template-selected tools
+        tools_template = tools_config.get("tools_template")
+        if tools_template:
+            try:
+                from jinja2 import Template
+                
+                # Make a copy of _data to avoid modifying the original
+                template_vars = dict(self._data)
+                
+                # Add the tools configuration to the template variables
+                template_vars['tools'] = available_tools
+                
+                # Render the template with the variables
+                template = Template(tools_template)
+                rendered_template = template.render(**template_vars)
+                
+                # Skip empty template output
+                if rendered_template.strip():
+                    # Parse the rendered template (assuming it returns a JSON-like string)
+                    import json
+                    try:
+                        template_result = json.loads(rendered_template)
+                        
+                        # Handle different return types
+                        if isinstance(template_result, list):
+                            # If it's a list of tool names (new format)
+                            if all(isinstance(item, str) for item in template_result):
+                                template_selected_tools = template_result
+                                for tool_name in template_selected_tools:
+                                    if tool_name in available_tools and tool_name not in selected_tools:
+                                        selected_tools[tool_name] = available_tools[tool_name]
+                            # If it's a list of tool objects (old format for backward compatibility)
+                            elif all(isinstance(item, dict) for item in template_result):
+                                for tool in template_result:
+                                    if isinstance(tool, dict) and 'name' in tool:
+                                        tool_name = tool['name']
+                                        template_selected_tools.append(tool_name)
+                                        if tool_name in available_tools and tool_name not in selected_tools:
+                                            selected_tools[tool_name] = available_tools[tool_name]
+                        # If it's a dictionary of tools (old format for backward compatibility)
+                        elif isinstance(template_result, dict):
+                            for tool_name, tool_config in template_result.items():
+                                template_selected_tools.append(tool_name)
+                                if tool_name not in selected_tools:
+                                    selected_tools[tool_name] = tool_config
+                        else:
+                            self._logger.warning(f"Unexpected tools_template result type: {type(template_result)}")
+                            
+                    except json.JSONDecodeError as json_error:
+                        self._logger.warning(f"Error parsing tools_template result: {str(json_error)}")
+            except Exception as e:
+                import traceback
+                error_details = traceback.format_exc()
+                self._logger.warning(f"Error processing tools_template: {str(e)}\nDetails: {error_details}")
+        
+        # If no tools selected after all processing, return empty list
         if not selected_tools:
             return []
+        
+        # Add debug info about which tools were selected and why
+        self._logger.debug(f"Tools from template: {template_selected_tools}")
+        self._logger.debug(f"Explicitly activated tools: {explicitly_activated_tools}")
+        self._logger.debug(f"Final selected tools: {list(selected_tools.keys())}")
             
         try:
             # Convert to the format expected by the adapter

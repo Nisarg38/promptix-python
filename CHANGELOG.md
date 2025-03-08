@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Enhanced tools_template functionality: Variables set with `.with_var()` are now accessible in tools_template for conditional tool selection
+- Added example showcasing conditional tools selection based on variables
+- Added comprehensive tests for conditional tools feature
+
 ## [0.1.9] - 2025-03-03
 
 ## Changed
