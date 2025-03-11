@@ -23,6 +23,7 @@ class PromptixBuilder:
         self._data = {}          # Holds all variables
         self._memory = []        # Conversation history
         self._client = "openai"  # Default client
+        self._model_params = {}  # Holds direct model parameters
         
         # Ensure prompts are loaded
         if not Promptix._prompts:
@@ -108,7 +109,7 @@ class PromptixBuilder:
         enable certain tools based on the programming language or severity.
         
         Note: If tools are explicitly activated using .with_tool(), those tools will always 
-        be included regardless of the conditions in the tools_template.
+        be included regardless of template conditions.
         
         Args:
             variables: Dictionary of variable names and their values to be set
@@ -127,12 +128,26 @@ class PromptixBuilder:
                       .build())
             ```
         """
-        if not isinstance(variables, dict):
-            raise TypeError("Expected a dictionary of variables")
-            
         for field, value in variables.items():
             self._validate_type(field, value)
             self._data[field] = value
+        return self
+    
+    def with_extra(self, extra_params: Dict[str, Any]):
+        """Set additional/extra parameters to be passed directly to the model API.
+        
+        This method allows passing a dictionary of parameters (such as temperature, 
+        top_p, etc.) that will be directly included in the model configuration without 
+        being treated as template variables.
+        
+        Args:
+            extra_params: Dictionary containing model parameters to be passed directly
+                         to the API (e.g., temperature, top_p, max_tokens).
+            
+        Returns:
+            Self reference for method chaining.
+        """
+        self._model_params.update(extra_params)
         return self
     
     def with_memory(self, memory: List[Dict[str, str]]):
@@ -467,6 +482,9 @@ class PromptixBuilder:
         if "model" not in self.version_data.get("config", {}):
             raise ValueError(f"Model must be specified in the prompt version data config for '{self.prompt_template}'")
         model_config["model"] = self.version_data["config"]["model"]
+        
+        # Add any direct model parameters from with_extra
+        model_config.update(self._model_params)
         
         # Handle system message differently for different providers
         if self._client == "anthropic":

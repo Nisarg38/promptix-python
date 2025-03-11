@@ -80,6 +80,9 @@ def main():
             'severity': 'high',
             'review_focus': 'security and performance'
         })
+        .with_extra({
+            'temperature': 0.9
+        })
         .with_tool("complexity_analyzer")  # Explicitly add another tool
         .build()
     )
