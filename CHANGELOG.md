@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.10] - 2025-03-12
 
 ### Added
 - Enhanced tools_template functionality: Variables set with `.with_var()` are now accessible in tools_template for conditional tool selection
@@ -19,19 +19,19 @@
 - Updated PyProject.toml and Added MANIFEST.in 
 - Making the Promptix Studio fully functional.
 
-## [0.1.7] - 2024-05-18
+## [0.1.7] - 2025-03-02
 
 ### Changed
 - Updated code with latest improvements
 - Fixed minor issues from previous release
 
-## [0.1.6] - 2024-05-17
+## [0.1.6] - 2025-03-02
 
 ### Added
 - Improved Promptix Studio with enhanced user interface and functionality
 - Updated License with additional clarifications
 
-## [0.1.5] - 2024-05-15
+## [0.1.5] - 2025-02-27
 
 ### Added
 - Improved documentation for builder patterns
@@ -42,7 +42,7 @@
 - Refined API interface for better developer experience
 - Optimized template rendering for better performance
 
-## [0.1.4] - 2024-02-02
+## [0.1.4] - 2025-02-02
 
 ### Added
 - Builder pattern support for creating model configurations
@@ -56,7 +56,7 @@
 - Improved documentation with builder pattern examples
 - Added type hints and validation for builder methods
 
-## [0.1.3] - 2024-01-26
+## [0.1.3] - 2025-02-26
 
 ### Added
 - OpenAI integration support with prepare_model_config functionality
@@ -68,7 +68,7 @@
 - Improved error handling for invalid memory formats
 - Updated documentation with OpenAI integration examples
 
-## [0.1.2] - 2024-03-19
+## [0.1.2] - 2025-02-19
 
 ### Added
 - New DungeonMaster template for RPG scenario generation
@@ -81,7 +81,7 @@
 - Improved test coverage for complex scenarios
 - Updated template validation for optional fields
 
-## [0.1.1] - 2024-01-20
+## [0.1.1] - 2025-01-20
 
 ### Added
 - Enhanced schema validation with warning system for missing fields
@@ -99,7 +99,7 @@
 - Fixed handling of custom_data and nested fields
 - Fixed test environment cleanup and prompts.json handling
 
-## [0.1.0] - 2024-01-19
+## [0.1.0] - 2025-01-19
 
 ### Added
 - Initial release of Promptix Library
