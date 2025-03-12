@@ -112,6 +112,36 @@ system_instruction = (
 )
 ```
 
+### 🔧 Conditional Tool Selection
+Variables set using `.with_var()` are available in tools_template allowing for dynamic tool selection based on variables:
+
+```python
+# Conditionally select tools based on variables
+config = (
+    Promptix.builder("ComplexCodeReviewer")
+    .with_var({
+        'programming_language': 'Python',  # This affects which tools are selected
+        'severity': 'high',
+        'review_focus': 'security'
+    })
+    .build()
+)
+
+# Explicitly added tools will override template selections
+config = (
+    Promptix.builder("ComplexCodeReviewer")
+    .with_var({
+        'programming_language': 'Java',
+        'severity': 'medium'
+    })
+    .with_tool("complexity_analyzer")  # This tool will be included regardless of template logic
+    .with_tool_parameter("complexity_analyzer", "thresholds", {"cyclomatic": 10})
+    .build()
+)
+```
+
+This allows you to create sophisticated tools configurations that adapt based on input variables, with the ability to override the template logic when needed.
+
 ## 🚀 Getting Started
 
 ### Installation

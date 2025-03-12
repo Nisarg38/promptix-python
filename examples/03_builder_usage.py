@@ -90,5 +90,48 @@ def main():
     )
     print_config(config4)
 
+    # Example 6: Using with_var for multiple variables at once
+    print("Example 6: Using with_var Method")
+    config5 = (
+        Promptix.builder("ComplexCodeReviewer")
+        .with_var({
+            'programming_language': 'Python',
+            'severity': 'high',
+            'review_focus': 'security and performance'
+        })
+        .build()
+    )
+    print_config(config5)
+
+    # Example 7: Using with_var for multiple variables which dicpates tools structure
+    print("Example 7: Using with_var Method")
+    config6 = (
+        Promptix.builder("ComplexCodeReviewer")
+        .with_var({
+            'programming_language': 'Java',
+            'severity': 'high',
+            'review_focus': 'security and performance'
+        })
+        .with_tool_parameter("complexity_analyzer", "thresholds", {"cyclomatic": 8, "cognitive": 5})
+        .build()
+
+    )
+    print_config(config6)
+
+    # Example 8: Using with_var for multiple variables which dicpates tools structure
+    print("Example 8: Using with_var Method")
+    config7 = (
+        Promptix.builder("ComplexCodeReviewer")
+        .with_var({
+            'programming_language': 'Java',
+            'severity': 'high',
+            'review_focus': 'security and performance'
+        })
+        .build()
+
+    )
+    print_config(config7)
+
+
 if __name__ == "__main__":
     main() 
