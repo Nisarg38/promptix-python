@@ -178,7 +178,7 @@
   - Easy integration with existing projects
 
 ### Dependencies
-- Python >=3.8
+- Python >=3.9
 - Streamlit >=1.29.0
 - Python-dotenv >=1.0.0
 

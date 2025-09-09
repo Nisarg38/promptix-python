@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Optional, Union, Dict, Any
+from typing import Optional, Union, Dict, Any, List
 from dotenv import load_dotenv
 
 # Load environment variables from a .env file if present
@@ -66,7 +66,7 @@ class PromptixConfig:
         filename = self.get("default_prompt_filename")
         return self.working_directory / filename
     
-    def _get_prompt_search_paths(self) -> list[Path]:
+    def _get_prompt_search_paths(self) -> List[Path]:
         """Get ordered list of paths to search for prompts files (YAML only)."""
         base_dir = self.working_directory
         
@@ -90,11 +90,11 @@ class PromptixConfig:
         """Get the preferred storage format (yaml/json)."""
         return os.getenv("PROMPTIX_STORAGE_FORMAT", self.get("storage_format"))
     
-    def get_supported_extensions(self) -> list[str]:
+    def get_supported_extensions(self) -> List[str]:
         """Get list of supported file extensions (YAML only)."""
         return self.get("prompt_file_extensions")
     
-    def get_unsupported_extensions(self) -> list[str]:
+    def get_unsupported_extensions(self) -> List[str]:
         """Get list of unsupported file extensions."""
         return self.get("unsupported_extensions")
     
@@ -132,7 +132,7 @@ class PromptixConfig:
         """
         self._config_cache[key] = value
     
-    def check_for_unsupported_files(self) -> list[Path]:
+    def check_for_unsupported_files(self) -> List[Path]:
         """Check working directory for unsupported JSON files."""
         base_dir = self.working_directory
         unsupported_files = []
