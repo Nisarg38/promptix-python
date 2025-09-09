@@ -84,11 +84,13 @@ def test_template_demo_builder():
 
 def test_builder_validation():
     """Test builder validation and error cases."""
-    with pytest.raises(ValueError):
+    from promptix.core.exceptions import PromptNotFoundError, UnsupportedClientError
+    
+    with pytest.raises(PromptNotFoundError):
         # Should raise error for invalid template name
         Promptix.builder("NonExistentTemplate").build()
 
-    with pytest.raises(ValueError):
+    with pytest.raises(UnsupportedClientError):
         # Should raise error for invalid client type
         (Promptix.builder("SimpleChat")
          .for_client("invalid_client")

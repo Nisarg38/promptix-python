@@ -28,7 +28,8 @@ def test_get_prompt_specific_version():
 
 def test_get_prompt_invalid_template():
     """Test error handling for invalid template."""
-    with pytest.raises(ValueError):
+    from promptix.core.exceptions import PromptNotFoundError
+    with pytest.raises(PromptNotFoundError):
         Promptix.get_prompt(
             prompt_template="NonExistentTemplate",
             user_name="Test User"

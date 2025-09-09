@@ -21,7 +21,7 @@ Usage:
    config = Promptix.builder("template_name").with_variable("value").build()
 """
 
-from .core.base import Promptix
+from .core.base_refactored import Promptix
 
-__version__ = "0.1.11"
+__version__ = "0.1.13"
 __all__ = ["Promptix"]
