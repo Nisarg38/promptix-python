@@ -77,13 +77,15 @@ class Promptix:
         # Load prompt data
         try:
             prompt_data = self._prompt_loader.get_prompt_data(prompt_template)
-        except Exception as e:
-            available_prompts = list(self._prompt_loader.get_prompts().keys())
+        except StorageError as err:
+            try:
+                available_prompts = list(self._prompt_loader.get_prompts().keys())
+            except StorageError:
+                available_prompts = []
             raise PromptNotFoundError(
                 prompt_name=prompt_template,
                 available_prompts=available_prompts
-            )
-        
+            ) from err
         versions = prompt_data.get("versions", {})
         
         # Get the appropriate version data
