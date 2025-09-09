@@ -164,19 +164,19 @@ class Promptix:
             VariableValidationError: If a variable doesn't match the schema type.
             ConfigurationError: If required configuration is missing.
         """
-        # Get the system message using existing render method
-        system_message = self.render_prompt(prompt_template, version, **variables)
-        
         # Get the prompt data for version information
         try:
             prompt_data = self._prompt_loader.get_prompt_data(prompt_template)
-        except Exception as e:
-            available_prompts = list(self._prompt_loader.get_prompts().keys())
+        except StorageError as err:
+            try:
+                available_prompts = list(self._prompt_loader.get_prompts().keys())
+            except StorageError:
+                available_prompts = []
             raise PromptNotFoundError(
                 prompt_name=prompt_template,
                 available_prompts=available_prompts
-            )
-        
+            ) from err
+
         versions = prompt_data.get("versions", {})
         version_data = self._version_manager.get_version_data(versions, version, prompt_template)
         
