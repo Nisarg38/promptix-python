@@ -58,21 +58,49 @@ class PromptixBuilder:
         # Initialize prompt data
         self._initialize_prompt_data()
     
-    def _initialize_prompt_data(self) -> None:
-        """Initialize prompt data and find live version.
-        
-        Raises:
-            PromptNotFoundError: If the prompt template is not found.
-        """
+++ b/src/promptix/core/builder_refactored.py
+@@
+-from .exceptions import (
+-    PromptNotFoundError,
+-    VersionNotFoundError,
+-    UnsupportedClientError,
+-    ToolNotFoundError,
+-    ToolProcessingError,
+-    ValidationError
+from .exceptions import (
+    PromptNotFoundError,
+    VersionNotFoundError,
+    UnsupportedClientError,
+    ToolNotFoundError,
+    ToolProcessingError,
+    ValidationError,
+    StorageError
+)
+
+     def _initialize_prompt_data(self) -> None:
+         """Initialize prompt data and find live version.
+         
+         Raises:
+             PromptNotFoundError: If the prompt template is not found.
+         """
+-        try:
+-            self.prompt_data = self._prompt_loader.get_prompt_data(self.prompt_template)
+-        except Exception as e:
+-            available_prompts = list(self._prompt_loader.get_prompts().keys())
+-            raise PromptNotFoundError(
+-                prompt_name=self.prompt_template,
+-                available_prompts=available_prompts
         try:
             self.prompt_data = self._prompt_loader.get_prompt_data(self.prompt_template)
-        except Exception as e:
-            available_prompts = list(self._prompt_loader.get_prompts().keys())
+        except StorageError as err:
+            try:
+                available_prompts = list(self._prompt_loader.get_prompts().keys())
+            except StorageError:
+                available_prompts = []
             raise PromptNotFoundError(
                 prompt_name=self.prompt_template,
                 available_prompts=available_prompts
-            )
-        
+            ) from err
         versions = self.prompt_data.get("versions", {})
         live_version_key = self._version_manager.find_live_version(versions, self.prompt_template)
         self.version_data = versions[live_version_key]
