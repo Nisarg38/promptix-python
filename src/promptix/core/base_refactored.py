@@ -14,8 +14,7 @@ from .components import (
     VersionManager,
     ModelConfigBuilder
 )
-from .exceptions import PromptNotFoundError, ConfigurationError
-
+from .exceptions import PromptNotFoundError, ConfigurationError, StorageError
 
 class Promptix:
     """Main class for managing and using prompts with schema validation and template rendering."""
