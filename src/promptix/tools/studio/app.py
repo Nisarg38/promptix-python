@@ -177,7 +177,7 @@ def main():
         # Initialize session state
         init_session_state()
         
-        # Ensure prompts.json exists
+        # Ensure prompts.yaml exists
         prompt_manager = PromptManager()
         
         # Render sidebar

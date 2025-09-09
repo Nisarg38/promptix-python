@@ -1,5 +1,59 @@
 # Changelog
 
+## [0.1.11] - 2025-01-19
+
+### 🚨 BREAKING CHANGES
+- **JSON format is no longer supported**: All prompt storage now uses YAML format exclusively
+- Users with existing `prompts.json` files must migrate to `prompts.yaml`
+
+### Added
+- Centralized configuration management with `PromptixConfig` class
+- Environment variable support for configuration (e.g., `PROMPTIX_LOG_LEVEL`, `PROMPTIX_STORAGE_FORMAT`)
+- Enhanced error messages with clear migration guidance for JSON format
+- Automatic detection of unsupported JSON files with helpful migration instructions
+- `check_for_unsupported_files()` method to identify JSON files that need migration
+
+### Changed
+- **BREAKING**: Completely removed JSON format support for prompt storage
+- Standardized on YAML as the sole storage format (.yaml, .yml extensions only)
+- Updated Promptix Studio to work exclusively with YAML format
+- Improved configuration system with centralized path management
+- Enhanced error handling with actionable user guidance
+- Updated all examples and documentation to reference YAML instead of JSON
+- Improved storage architecture with simplified, maintainable code
+
+### Deprecated
+- N/A (JSON format support has been completely removed)
+
+### Removed
+- `JSONPromptLoader` class and all JSON handling code
+- Support for `prompts.json` files (users must migrate to `prompts.yaml`)
+- Dual-format confusion by eliminating JSON/YAML mixed support
+- Legacy JSON fallback mechanisms in Promptix Studio
+
+### Fixed
+- Version consistency: synchronized version 0.1.11 across `pyproject.toml` and `__init__.py`
+- Storage format confusion by eliminating dual YAML/JSON support
+- Configuration management with centralized, environment-aware settings
+- Error messages now provide clear, actionable migration guidance
+
+### Migration Guide
+**For users with existing `prompts.json` files:**
+
+1. **Rename your file**: `mv prompts.json prompts.yaml`
+2. **Verify YAML syntax**: Ensure your content follows proper YAML format
+3. **Test your setup**: Run your application to verify the migration worked
+4. **Remove old file**: Delete the old `prompts.json` file
+
+**Error messages will guide you through this process if JSON files are detected.**
+
+### Technical Improvements
+- Simplified codebase by removing JSON loader complexity
+- Better separation of concerns with centralized configuration
+- Enhanced logging and error reporting
+- Improved test coverage for YAML-only functionality
+- More maintainable storage architecture
+
 ## [0.1.10] - 2025-03-12
 
 ### Added

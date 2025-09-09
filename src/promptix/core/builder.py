@@ -30,7 +30,7 @@ class PromptixBuilder:
             Promptix._load_prompts()
         
         if prompt_template not in Promptix._prompts:
-            raise ValueError(f"Prompt template '{prompt_template}' not found in prompts.json.")
+            raise ValueError(f"Prompt template '{prompt_template}' not found in prompts configuration.")
         
         self.prompt_data = Promptix._prompts[prompt_template]
         versions = self.prompt_data.get("versions", {})

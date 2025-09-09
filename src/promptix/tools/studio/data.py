@@ -1,27 +1,34 @@
-import json
 import os
 from typing import Dict, List, Optional
 from datetime import datetime
 from pathlib import Path
-from promptix.core.storage.loaders import PromptLoaderFactory, InvalidPromptSchemaError
+from promptix.core.storage.loaders import PromptLoaderFactory, InvalidPromptSchemaError, UnsupportedFormatError
 from promptix.core.storage.utils import create_default_prompts_file
+from promptix.core.config import config
 import traceback
 
 class PromptManager:
     def __init__(self):
-        # Check for YAML file first, then JSON
-        yaml_path = os.path.join(os.getcwd(), "prompts.yaml")
-        json_path = os.path.join(os.getcwd(), "prompts.json")
+        # Use centralized configuration to find the correct YAML file
+        # Check for unsupported JSON files first
+        unsupported_files = config.check_for_unsupported_files()
+        if unsupported_files:
+            json_file = unsupported_files[0]
+            raise UnsupportedFormatError(
+                json_file,
+                f"Promptix Studio no longer supports JSON format. "
+                f"Please convert '{json_file}' to YAML format. "
+                f"You can rename it to '{json_file.with_suffix('.yaml')}' and ensure YAML syntax is correct."
+            )
         
-        if os.path.exists(yaml_path):
-            self.storage_path = yaml_path
-        elif os.path.exists(json_path):
-            self.storage_path = json_path
-        else:
-            self.storage_path = yaml_path  # Default to yaml if neither exists
-        
-        self._ensure_storage_exists()
+        # Get the prompt file path from configuration
+        prompt_file = config.get_prompt_file_path()
+        if prompt_file is None:
+            # Create default YAML file
+            prompt_file = config.get_default_prompt_file_path()
             
+        self.storage_path = str(prompt_file)
+        self._ensure_storage_exists()
         self._loader = PromptLoaderFactory.get_loader(Path(self.storage_path))
     
     def _ensure_storage_exists(self):
@@ -32,32 +39,30 @@ class PromptManager:
             create_default_prompts_file(Path(self.storage_path))
     
     def load_prompts(self) -> Dict:
-        """Load all prompts from storage with schema validation"""
+        """Load all prompts from YAML storage with schema validation"""
         try:
             return self._loader.load(Path(self.storage_path))
         except InvalidPromptSchemaError as e:
             print(f"Warning: Schema validation error: {e}")
-            # Fallback to basic JSON loading without validation if schema is invalid
-            try:
-                with open(self.storage_path, 'r') as f:
-                    return json.load(f)
-            except json.JSONDecodeError:
-                return {"schema": 1.0}
-        except Exception:
+            # Return empty schema-compliant structure
+            return {"schema": 1.0}
+        except Exception as e:
+            print(f"Warning: Error loading prompts: {e}")
             return {"schema": 1.0}
     
     def save_prompts(self, prompts: Dict):
-        """Save prompts to storage with validation"""
+        """Save prompts to YAML storage with validation"""
         try:
             # First validate the data
             self._loader.validate_loaded(prompts)
-            # Then save
+            # Then save in YAML format
             self._loader.save(prompts, Path(self.storage_path))
         except InvalidPromptSchemaError as e:
             print(f"Warning: Schema validation error during save: {e}")
-            # Fallback to basic JSON saving without validation
+            # Save without validation but still in YAML format
+            import yaml
             with open(self.storage_path, 'w') as f:
-                json.dump(prompts, f, indent=2)
+                yaml.dump(prompts, f, sort_keys=False, allow_unicode=True)
     
     def get_prompt(self, prompt_id: str) -> Optional[Dict]:
         """Get a specific prompt by ID"""

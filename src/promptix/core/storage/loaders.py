@@ -1,6 +1,5 @@
 # src/promptix/core/loaders.py
 from abc import ABC, abstractmethod
-import json
 import yaml
 from pathlib import Path
 from typing import Dict, Any
@@ -95,19 +94,13 @@ class PromptLoader(ABC):
         """Validate loaded data against schema"""
         pass
 
-class JSONPromptLoader(PromptLoader):
-    def load(self, file_path: Path) -> Dict[str, Any]:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        self.validate_loaded(data)
-        return data
-    
-    def save(self, data: Dict[str, Any], file_path: Path) -> None:
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-
-    def validate_loaded(self, data: Dict[str, Any]) -> None:
-        SchemaValidator.validate(data)  # Direct schema validation
+class UnsupportedFormatError(ValueError):
+    """Raised when trying to use an unsupported or deprecated file format"""
+    def __init__(self, file_path: Path, message: str = None):
+        if message is None:
+            message = f"JSON format is no longer supported. Please convert {file_path} to YAML format (.yaml or .yml)"
+        super().__init__(message)
+        self.file_path = file_path
 
 class YAMLPromptLoader(PromptLoader):
     def load(self, file_path: Path) -> Dict[str, Any]:
@@ -120,8 +113,9 @@ class YAMLPromptLoader(PromptLoader):
         with open(file_path, 'w', encoding='utf-8') as f:
             yaml.dump(data, f, sort_keys=False, allow_unicode=True)
 
-    # Reuse same validation as JSON loader
-    validate_loaded = JSONPromptLoader.validate_loaded
+    def validate_loaded(self, data: Dict[str, Any]) -> None:
+        """Validate loaded data against schema"""
+        SchemaValidator.validate(data)
 
 class PromptLoaderFactory:
     @staticmethod
@@ -129,6 +123,10 @@ class PromptLoaderFactory:
         if file_path.suffix.lower() in ['.yml', '.yaml']:
             return YAMLPromptLoader()
         elif file_path.suffix.lower() == '.json':
-            return JSONPromptLoader()
+            raise UnsupportedFormatError(
+                file_path, 
+                f"JSON format is no longer supported. Please convert '{file_path}' to YAML format. "
+                f"You can rename it to '{file_path.with_suffix('.yaml')}' and update the syntax if needed."
+            )
         else:
-            raise ValueError(f"Unsupported file format: {file_path.suffix}")
+            raise ValueError(f"Unsupported file format: {file_path.suffix}. Only YAML (.yaml, .yml) files are supported.")

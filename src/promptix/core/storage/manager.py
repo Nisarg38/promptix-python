@@ -1,43 +1,59 @@
 import json
+import warnings
 from pathlib import Path
 from typing import Dict, Any
 from .loaders import PromptLoaderFactory
 from .utils import create_default_prompts_file
+from ...enhancements.logging import setup_logging
+from ..config import config
 
 class PromptManager:
-    """Manages prompts from local storage."""
-    
-    DEFAULT_FORMAT = '.yaml'  # Change default to YAML
+    """Manages prompts from local storage using centralized configuration."""
     
     def __init__(self, format: str = None):
         self.prompts: Dict[str, Any] = {}
-        self.format = format or self.DEFAULT_FORMAT
+        # Legacy format parameter is ignored in favor of centralized config
+        if format:
+            self._logger = setup_logging()
+            self._logger.warning(
+                f"Format parameter '{format}' is deprecated. "
+                f"Use PROMPTIX_STORAGE_FORMAT environment variable instead."
+            )
+        self._logger = setup_logging()
         self._load_prompts()
     
     def _get_prompt_file(self) -> Path:
-        # Try YAML first (default), then JSON
-        yaml_file = Path("prompts.yaml")
-        yml_file = Path("prompts.yml")
-        json_file = Path("prompts.json")
+        """Get the prompt file path using centralized configuration."""
+        # Check for unsupported JSON files first
+        unsupported_files = config.check_for_unsupported_files()
+        if unsupported_files:
+            json_file = unsupported_files[0]
+            raise ValueError(
+                f"JSON format is no longer supported. Found unsupported file: {json_file}\n"
+                f"Please convert to YAML format:\n"
+                f"1. Rename {json_file} to {json_file.with_suffix('.yaml')}\n"
+                f"2. Ensure the content follows YAML syntax\n"
+                f"3. Remove the old JSON file"
+            )
         
-        if yaml_file.exists():
-            return yaml_file
-        elif yml_file.exists():
-            return yml_file
-        elif json_file.exists():
-            return json_file
-        else:
-            # Create new file with preferred format
-            default_file = Path(f"prompts{self.format}")
-            create_default_prompts_file(default_file)
-            return default_file
+        # Use centralized configuration to find prompt file
+        prompt_file = config.get_prompt_file_path()
+        
+        if prompt_file is None:
+            # No existing file found, create default
+            prompt_file = config.get_default_prompt_file_path()
+            create_default_prompts_file(prompt_file)
+            return prompt_file
+            
+        return prompt_file
     
     def _load_prompts(self) -> None:
-        """Load prompts from local prompts.json file."""
+        """Load prompts from local YAML prompts file (JSON no longer supported)."""
         try:
             prompt_file = self._get_prompt_file()
             loader = PromptLoaderFactory.get_loader(prompt_file)
             self.prompts = loader.load(prompt_file)
+            self._logger.info(f"Successfully loaded prompts from {prompt_file}")
         except Exception as e:
             raise ValueError(f"Failed to load prompts: {str(e)}")
     
@@ -68,7 +84,7 @@ class PromptManager:
         return formatted_data
 
     def save_prompts(self) -> None:
-        """Save prompts to local prompts.json file."""
+        """Save prompts to local YAML prompts file (JSON no longer supported)."""
         try:
             prompt_file = self._get_prompt_file()
             loader = PromptLoaderFactory.get_loader(prompt_file)
@@ -77,5 +93,6 @@ class PromptManager:
                 for prompt_id, prompt_data in self.prompts.items()
             }
             loader.save(formatted_prompts, prompt_file)
+            self._logger.info(f"Successfully saved prompts to {prompt_file}")
         except Exception as e:
             raise ValueError(f"Failed to save prompts: {str(e)}") 

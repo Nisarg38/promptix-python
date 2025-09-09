@@ -6,6 +6,7 @@ from jinja2 import BaseLoader, Environment, TemplateError
 from ..enhancements.logging import setup_logging
 from .storage.loaders import PromptLoaderFactory
 from .storage.utils import create_default_prompts_file
+from .config import config
 
 
 class Promptix:
@@ -21,28 +22,34 @@ class Promptix:
     
     @classmethod
     def _load_prompts(cls) -> None:
-        """Load prompts from local prompts file (yaml/yml/json)."""
+        """Load prompts from local prompts file using centralized configuration."""
         try:
-            # Try YAML first, then JSON
-            yaml_file = Path("prompts.yaml")
-            yml_file = Path("prompts.yml")
-            json_file = Path("prompts.json")
+            # Check for unsupported JSON files first
+            unsupported_files = config.check_for_unsupported_files()
+            if unsupported_files:
+                json_file = unsupported_files[0]  # Get the first JSON file found
+                raise ValueError(
+                    f"JSON format is no longer supported. Found unsupported file: {json_file}\n"
+                    f"Please convert to YAML format:\n"
+                    f"1. Rename {json_file} to {json_file.with_suffix('.yaml')}\n"
+                    f"2. Ensure the content follows YAML syntax\n"
+                    f"3. Remove the old JSON file"
+                )
             
-            if yaml_file.exists():
-                prompt_file = yaml_file
-            elif yml_file.exists():
-                prompt_file = yml_file
-            elif json_file.exists():
-                prompt_file = json_file
-            else:
-                # Create a default prompts file (YAML format)
-                prompt_file = yaml_file
+            # Use centralized configuration to find prompt file
+            prompt_file = config.get_prompt_file_path()
+            
+            if prompt_file is None:
+                # No existing prompts file found, create default
+                prompt_file = config.get_default_prompt_file_path()
                 cls._prompts = create_default_prompts_file(prompt_file)
                 cls._logger.info(f"Created new prompts file at {prompt_file} with a sample prompt")
                 return
-                
+            
             loader = PromptLoaderFactory.get_loader(prompt_file)
             cls._prompts = loader.load(prompt_file)
+            cls._logger.info(f"Successfully loaded prompts from {prompt_file}")
+            
         except Exception as e:
             raise ValueError(f"Failed to load prompts: {str(e)}")
     
