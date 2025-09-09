@@ -92,7 +92,13 @@ class Promptix:
         version_data = self._version_manager.get_version_data(versions, version, prompt_template)
         
         # Get the system instruction template
-        template_text = self._version_manager.get_system_instruction(version_data, prompt_template)
+        try:
+            template_text = self._version_manager.get_system_instruction(version_data, prompt_template)
+        except ValueError as err:
+            raise ConfigurationError(
+                config_issue="Missing 'config.system_instruction'",
+                config_path=f"{prompt_template}.versions"
+            ) from err
         
         # Validate variables against schema
         schema = version_data.get("schema", {})
