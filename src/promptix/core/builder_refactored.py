@@ -474,14 +474,12 @@ from .exceptions import (
                     available_tools=available_tools,
                     prompt_name=self.prompt_template
                 )
-                
                 if template_result:
                     self._process_template_result(template_result, available_tools, selected_tools)
-                    
-            except Exception as e:
+            except TemplateRenderError as e:
                 if self._logger:
-                    self._logger.warning(f"Error processing tools template: {str(e)}")
-        
+                    self._logger.warning(f"Error processing tools template: {e!s}")
+            # Let unexpected exceptions bubble up
         # If no tools selected, return empty list
         if not selected_tools:
             return []
