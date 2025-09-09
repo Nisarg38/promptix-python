@@ -71,9 +71,26 @@ class PromptLoader:
                 self._logger.info(f"Successfully loaded prompts from {prompt_file}")
             self._loaded = True
             return self._prompts
-            
+
+        except UnsupportedFormatError:
+            # Bubble up as-is per public contract.
+            raise
+        except StorageError:
+            # Already a Promptix storage error; preserve type.
+            raise
+        except ValueError as e:
+            # Normalize unknown-extension errors from factory into a structured error.
+            if 'Unsupported file format' in str(e) and 'prompt_file' in locals():
+                ext = str(getattr(prompt_file, "suffix", "")).lstrip('.')
+                raise UnsupportedFormatError(
+                    file_path=str(prompt_file),
+                    unsupported_format=ext or "unknown",
+                    supported_formats=["yaml", "yml"]
+                ) from e
+            raise StorageError("Failed to load prompts", {"cause": str(e)}) from e
         except Exception as e:
-            raise StorageError(f"Failed to load prompts: {str(e)}")
+            # Catch-all for anything else, with proper chaining.
+            raise StorageError("Failed to load prompts", {"cause": str(e)}) from e
     
     def get_prompts(self) -> Dict[str, Any]:
         """Get the loaded prompts.
