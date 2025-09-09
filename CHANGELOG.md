@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.12] - 2025-01-19
+
+### 🚨 BREAKING CHANGES
+- **Minimum Python version updated**: Now requires Python 3.9+ (previously 3.8+)
+
+### Fixed
+- Fixed `TypeError: 'type' object is not subscriptable` error when running on Python 3.8
+- Updated type annotations in `config.py` to use `List[Type]` instead of `list[Type]` for better compatibility
+- Updated CI/CD workflows to use Python 3.9+ for testing and publishing
+
+### Changed
+- Minimum Python version requirement updated from 3.8 to 3.9
+- Removed Python 3.8 from supported versions in package classifiers
+- Updated Black formatter target version to py39
+
 ## [0.1.11] - 2025-01-19
 
 ### 🚨 BREAKING CHANGES
