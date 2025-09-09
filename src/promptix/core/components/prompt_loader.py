@@ -116,14 +116,10 @@ class PromptLoader:
         """
         prompts = self.get_prompts()
         if prompt_template not in prompts:
+        if prompt_template not in prompts:
+            from ..exceptions import PromptNotFoundError
             available_prompts = list(prompts.keys())
-            raise StorageError(
-                f"Prompt template '{prompt_template}' not found",
-                details={
-                    "prompt_template": prompt_template,
-                    "available_prompts": available_prompts
-                }
-            )
+            raise PromptNotFoundError(prompt_template, available_prompts)
         return prompts[prompt_template]
     
     def is_loaded(self) -> bool:
