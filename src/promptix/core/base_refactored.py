@@ -224,16 +224,18 @@ class Promptix:
         """
         try:
             prompt_data = self._prompt_loader.get_prompt_data(prompt_template)
-        except Exception as e:
-            available_prompts = list(self._prompt_loader.get_prompts().keys())
+        except StorageError as err:
+            try:
+                available_prompts = list(self._prompt_loader.get_prompts().keys())
+            except StorageError:
+                available_prompts = []
             raise PromptNotFoundError(
                 prompt_name=prompt_template,
                 available_prompts=available_prompts
-            )
-        
+            ) from err
+
         versions = prompt_data.get("versions", {})
         return self._version_manager.list_versions(versions)
-    
     def validate_template(self, template_text: str) -> bool:
         """Validate that a template is syntactically correct.
         
