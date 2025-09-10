@@ -2,7 +2,8 @@ import os
 from typing import Dict, List, Optional
 from datetime import datetime
 from pathlib import Path
-from promptix.core.storage.loaders import PromptLoaderFactory, InvalidPromptSchemaError, UnsupportedFormatError
+from promptix.core.storage.loaders import PromptLoaderFactory, InvalidPromptSchemaError
+from promptix.core.exceptions import UnsupportedFormatError
 from promptix.core.storage.utils import create_default_prompts_file
 from promptix.core.config import config
 import traceback
@@ -15,10 +16,9 @@ class PromptManager:
         if unsupported_files:
             json_file = unsupported_files[0]
             raise UnsupportedFormatError(
-                json_file,
-                f"Promptix Studio no longer supports JSON format. "
-                f"Please convert '{json_file}' to YAML format. "
-                f"You can rename it to '{json_file.with_suffix('.yaml')}' and ensure YAML syntax is correct."
+                str(json_file),
+                "json",
+                ["yaml", "yml"]
             )
         
         # Get the prompt file path from configuration

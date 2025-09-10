@@ -111,7 +111,8 @@ def test_template_parameter_validation():
     """Test template parameter validation."""
     # In the current implementation, it seems the template doesn't validate difficulty levels
     # So instead, we'll test with a non-existent template name
-    with pytest.raises(ValueError):
+    from promptix.core.exceptions import PromptNotFoundError
+    with pytest.raises(PromptNotFoundError):
         Promptix.get_prompt(
             prompt_template="NonExistentTemplate",
             content_type="tutorial",
