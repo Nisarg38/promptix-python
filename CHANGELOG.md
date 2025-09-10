@@ -1,5 +1,54 @@
 # Changelog
 
+## [0.1.13] - 2025-01-19
+
+### 🏗️ **Architecture Improvements**
+
+### Added
+- **Dependency Injection System**: Implemented comprehensive DI container (`container.py`) for better testability and modularity
+  - Support for singleton, factory, and transient service lifetimes
+  - Scoped containers for isolated testing
+  - Automatic dependency resolution with type checking
+- **Focused Component Architecture**: Broke down monolithic classes into single-responsibility components
+  - `PromptLoader`: Handles prompt loading and caching logic
+  - `VariableValidator`: Manages schema validation and type checking
+  - `TemplateRenderer`: Processes Jinja2 template rendering
+  - `VersionManager`: Manages prompt versioning logic
+  - `ModelConfigBuilder`: Builds model configurations for different providers
+- **Standardized Exception Hierarchy**: Comprehensive custom exception system (`exceptions.py`)
+  - Base `PromptixError` class with structured error details
+  - Specialized exceptions for different error categories (validation, storage, tools, etc.)
+  - Enhanced error messages with contextual information and debugging details
+  - Support for error chaining and detailed error reporting
+
+### Changed
+- **Refactored Main Classes**: `Promptix` and `PromptixBuilder` classes now use dependency injection
+  - Maintained backward compatibility while improving internal structure
+  - Better separation of concerns following Single Responsibility Principle
+  - Enhanced testability through dependency injection
+- **Improved Error Handling**: Consistent error handling patterns across the entire codebase
+  - All components now use standardized exceptions
+  - Better error context and debugging information
+  - Graceful error recovery where appropriate
+
+### Technical Improvements
+- **Better Testability**: All components can be easily mocked and tested in isolation
+- **Improved Maintainability**: Clear separation of responsibilities makes code easier to understand and modify  
+- **Enhanced Modularity**: Components can be replaced or extended without affecting other parts of the system
+- **Type Safety**: Enhanced type checking throughout the dependency injection system
+- **Logging Integration**: Better logging integration across all components
+
+### Backward Compatibility
+- All existing public APIs remain unchanged
+- Existing code will continue to work without modifications
+- Internal refactoring does not affect end-user experience
+
+### Developer Experience
+- Cleaner, more maintainable codebase
+- Better error messages with actionable information
+- Improved debugging capabilities through structured error details
+- Enhanced testing infrastructure for better reliability
+
 ## [0.1.12] - 2025-01-19
 
 ### 🚨 BREAKING CHANGES
