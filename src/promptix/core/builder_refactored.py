@@ -21,7 +21,10 @@ from .exceptions import (
     UnsupportedClientError,
     ToolNotFoundError,
     ToolProcessingError,
-    ValidationError
+    ValidationError,
+    StorageError,
+    RequiredVariableError,
+    VariableValidationError
 )
 
 
@@ -57,39 +60,13 @@ class PromptixBuilder:
         
         # Initialize prompt data
         self._initialize_prompt_data()
-    
-++ b/src/promptix/core/builder_refactored.py
-@@
--from .exceptions import (
--    PromptNotFoundError,
--    VersionNotFoundError,
--    UnsupportedClientError,
--    ToolNotFoundError,
--    ToolProcessingError,
--    ValidationError
-from .exceptions import (
-    PromptNotFoundError,
-    VersionNotFoundError,
-    UnsupportedClientError,
-    ToolNotFoundError,
-    ToolProcessingError,
-    ValidationError,
-    StorageError
-)
 
-     def _initialize_prompt_data(self) -> None:
-         """Initialize prompt data and find live version.
-         
-         Raises:
-             PromptNotFoundError: If the prompt template is not found.
-         """
--        try:
--            self.prompt_data = self._prompt_loader.get_prompt_data(self.prompt_template)
--        except Exception as e:
--            available_prompts = list(self._prompt_loader.get_prompts().keys())
--            raise PromptNotFoundError(
--                prompt_name=self.prompt_template,
--                available_prompts=available_prompts
+    def _initialize_prompt_data(self) -> None:
+        """Initialize prompt data and find live version.
+        
+        Raises:
+            PromptNotFoundError: If the prompt template is not found.
+        """
         try:
             self.prompt_data = self._prompt_loader.get_prompt_data(self.prompt_template)
         except StorageError as err:
@@ -549,9 +526,9 @@ from .exceptions import (
             from .base_refactored import Promptix  # Import here to avoid circular dependency
             promptix_instance = Promptix(self._container)
             system_message = promptix_instance.render_prompt(self.prompt_template, self.custom_version, **self._data)
-        except Exception as e:
+        except (ValueError, ImportError, RuntimeError, RequiredVariableError, VariableValidationError) as e:
             if self._logger:
-                self._logger.warning(f"Error generating system message: {str(e)}")
+                self._logger.warning(f"Error generating system message: {e!s}")
             # Provide a fallback basic message when template rendering fails
             system_message = f"You are an AI assistant for {self.prompt_template}."
         

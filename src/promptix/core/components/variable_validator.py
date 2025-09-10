@@ -120,11 +120,11 @@ class VariableValidator:
         """
         type_checks = {
             "string": lambda v: isinstance(v, str),
-            "integer": lambda v: isinstance(v, int),
+            "integer": lambda v: isinstance(v, int) and not isinstance(v, bool),
             "boolean": lambda v: isinstance(v, bool),
-            "array": lambda v: isinstance(v, list),
+            "array": lambda v: isinstance(v, (list, tuple)),
             "object": lambda v: isinstance(v, dict),
-            "number": lambda v: isinstance(v, (int, float))
+            "number": lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)
         }
         
         if expected_type in type_checks:
@@ -173,7 +173,7 @@ class VariableValidator:
                     expected_type="string"
                 )
         elif expected_type == "number":
-            if not isinstance(value, (int, float)):
+            if not (isinstance(value, (int, float)) and not isinstance(value, bool)):
                 raise VariableValidationError(
                     prompt_name="builder",
                     variable_name=field,
@@ -182,7 +182,7 @@ class VariableValidator:
                     expected_type="number"
                 )
         elif expected_type == "integer":
-            if not isinstance(value, int):
+            if not (isinstance(value, int) and not isinstance(value, bool)):
                 raise VariableValidationError(
                     prompt_name="builder",
                     variable_name=field,

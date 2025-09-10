@@ -184,7 +184,7 @@ class StorageError(PromptixError):
     pass
 
 
-class FileNotFoundError(StorageError):
+class StorageFileNotFoundError(StorageError):
     """Raised when a required file is not found."""
     
     def __init__(self, file_path: str, file_type: str = "file"):
@@ -223,12 +223,12 @@ class FileParsingError(StorageError):
 
 # === Memory and Message Errors ===
 
-class MemoryError(PromptixError):
+class PromptixMemoryError(PromptixError):
     """Base class for memory/message-related errors."""
     pass
 
 
-class InvalidMemoryFormatError(MemoryError):
+class InvalidMemoryFormatError(PromptixMemoryError):
     """Raised when memory/message format is invalid."""
     
     def __init__(self, error_description: str, invalid_message: Optional[Dict[str, Any]] = None):

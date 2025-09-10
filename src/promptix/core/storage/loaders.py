@@ -4,6 +4,7 @@ import yaml
 from pathlib import Path
 from typing import Dict, Any
 from jsonschema import Draft7Validator, ValidationError
+from ..exceptions import UnsupportedFormatError
 
 class InvalidPromptSchemaError(ValueError):
     """Raised when prompt data fails schema validation"""
@@ -94,14 +95,6 @@ class PromptLoader(ABC):
         """Validate loaded data against schema"""
         pass
 
-class UnsupportedFormatError(ValueError):
-    """Raised when trying to use an unsupported or deprecated file format"""
-    def __init__(self, file_path: Path, message: str = None):
-        if message is None:
-            message = f"JSON format is no longer supported. Please convert {file_path} to YAML format (.yaml or .yml)"
-        super().__init__(message)
-        self.file_path = file_path
-
 class YAMLPromptLoader(PromptLoader):
     def load(self, file_path: Path) -> Dict[str, Any]:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -124,9 +117,9 @@ class PromptLoaderFactory:
             return YAMLPromptLoader()
         elif file_path.suffix.lower() == '.json':
             raise UnsupportedFormatError(
-                file_path, 
-                f"JSON format is no longer supported. Please convert '{file_path}' to YAML format. "
-                f"You can rename it to '{file_path.with_suffix('.yaml')}' and update the syntax if needed."
+                str(file_path),
+                "json",
+                ["yaml", "yml"]
             )
         else:
             raise ValueError(f"Unsupported file format: {file_path.suffix}. Only YAML (.yaml, .yml) files are supported.")

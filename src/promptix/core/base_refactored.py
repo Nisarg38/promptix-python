@@ -180,6 +180,9 @@ class Promptix:
         versions = prompt_data.get("versions", {})
         version_data = self._version_manager.get_version_data(versions, version, prompt_template)
         
+        # Render the system message
+        system_message = self.render_prompt(prompt_template, version, **variables)
+        
         # Build the model configuration
         return self._model_config_builder.build_model_config(
             system_message=system_message,

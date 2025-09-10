@@ -7,7 +7,7 @@ and managing the prompt data in memory.
 
 from pathlib import Path
 from typing import Any, Dict, Optional
-from ..exceptions import StorageError, FileNotFoundError, UnsupportedFormatError
+from ..exceptions import StorageError, StorageFileNotFoundError, UnsupportedFormatError
 from ..storage.loaders import PromptLoaderFactory
 from ..storage.utils import create_default_prompts_file
 from ..config import config
@@ -115,7 +115,6 @@ class PromptLoader:
             StorageError: If prompt is not found.
         """
         prompts = self.get_prompts()
-        if prompt_template not in prompts:
         if prompt_template not in prompts:
             from ..exceptions import PromptNotFoundError
             available_prompts = list(prompts.keys())
