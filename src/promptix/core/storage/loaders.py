@@ -3,8 +3,8 @@ from abc import ABC, abstractmethod
 import yaml
 from pathlib import Path
 from typing import Dict, Any
-from jsonschema import Draft7Validator, ValidationError
 from ..exceptions import UnsupportedFormatError
+from ..validation import get_validation_engine, ValidationType
 
 class InvalidPromptSchemaError(ValueError):
     """Raised when prompt data fails schema validation"""
@@ -13,73 +13,17 @@ class InvalidPromptSchemaError(ValueError):
         self.validation_message = message
 
 class SchemaValidator:
-    """Base class for schema validation"""
+    """Schema validation using the centralized validation engine."""
     
-    _schema = {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "type": "object",
-        "properties": {
-            "schema": {"type": "number"}  # Schema version as a number
-        },
-        "additionalProperties": {  # All other properties (prompt definitions)
-            "type": "object",
-            "required": ["versions"],
-            "properties": {
-                "versions": {
-                    "type": "object",
-                    "patternProperties": {
-                        r"^v\d+$": {
-                            "type": "object",
-                            "required": ["config"],
-                            "properties": {
-                                "config": {
-                                    "type": "object",
-                                    "required": ["system_instruction"],
-                                    "properties": {
-                                        "system_instruction": {"type": "string"},
-                                        "model": {"type": "string"},
-                                        "tools": {
-                                            "type": "array",
-                                            "items": {"type": "object"},
-                                            "default": []
-                                        }
-                                    }
-                                },
-                                "tools_config": {
-                                    "type": "object",
-                                    "properties": {
-                                        "tools_template": {"type": "string"},
-                                        "tools": {
-                                            "type": "object",
-                                            "additionalProperties": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "description": {"type": "string"},
-                                                    "parameters": {"type": "object"}
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    validator = Draft7Validator(_schema)
-
     @classmethod
     def validate(cls, data: Dict[str, Any]) -> None:
-        """Validate data against the schema"""
+        """Validate data against the default prompt schema."""
         try:
-            cls.validator.validate(data)
-        except ValidationError as e:
-            error_path = ".".join(map(str, e.path))
-            error_msg = f"Validation error at {error_path}: {e.message}"
-            raise InvalidPromptSchemaError(error_msg) from e
+            validation_engine = get_validation_engine()
+            validation_engine.validate_structure(data)
+        except Exception as e:
+            # Convert validation engine exceptions to the expected format for backward compatibility
+            raise InvalidPromptSchemaError(str(e)) from e
 
 class PromptLoader(ABC):
     @abstractmethod

@@ -5,7 +5,7 @@ This component handles rendering of prompt templates using Jinja2,
 including variable substitution and template processing.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional, List, Union
 from jinja2 import BaseLoader, Environment, TemplateError
 from ..exceptions import TemplateRenderError
 
@@ -13,7 +13,7 @@ from ..exceptions import TemplateRenderError
 class TemplateRenderer:
     """Handles template rendering with Jinja2."""
     
-    def __init__(self, logger=None):
+    def __init__(self, logger: Optional[Any] = None) -> None:
         """Initialize the template renderer.
         
         Args:

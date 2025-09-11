@@ -165,7 +165,7 @@ class Config:
     """Legacy Config class for backwards compatibility."""
     
     @classmethod
-    def get_promptix_key(cls):
+    def get_promptix_key(cls) -> str:
         """Get the Promptix key from environment variables."""
         return config.get_promptix_key()
     

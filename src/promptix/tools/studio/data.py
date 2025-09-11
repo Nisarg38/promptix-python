@@ -9,7 +9,7 @@ from promptix.core.config import config
 import traceback
 
 class PromptManager:
-    def __init__(self):
+    def __init__(self) -> None:
         # Use centralized configuration to find the correct YAML file
         # Check for unsupported JSON files first
         unsupported_files = config.check_for_unsupported_files()
@@ -31,7 +31,7 @@ class PromptManager:
         self._ensure_storage_exists()
         self._loader = PromptLoaderFactory.get_loader(Path(self.storage_path))
     
-    def _ensure_storage_exists(self):
+    def _ensure_storage_exists(self) -> None:
         """Ensure the storage file exists"""
         if not os.path.exists(self.storage_path):
             # Create a default prompts file, preferring YAML format

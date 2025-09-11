@@ -7,6 +7,7 @@ from ..enhancements.logging import setup_logging
 from .storage.loaders import PromptLoaderFactory
 from .storage.utils import create_default_prompts_file
 from .config import config
+from .validation import get_validation_engine
 
 
 class Promptix:
@@ -53,74 +54,6 @@ class Promptix:
         except Exception as e:
             raise ValueError(f"Failed to load prompts: {str(e)}")
     
-    @classmethod
-    def _validate_variables(
-        cls, 
-        schema: Dict[str, Any], 
-        user_vars: Dict[str, Any],
-        template_name: str
-    ) -> None:
-        """
-        Validate user variables against the prompt's schema:
-        1. Check required variables are present.
-        2. (Optional) Check that each variable matches the expected type or enumeration.
-        """
-        required = schema.get("required", [])
-        optional = schema.get("optional", [])
-        types_dict = schema.get("types", {})
-
-        # --- 1) Check required variables ---
-        missing_required = [r for r in required if r not in user_vars]
-        if missing_required:
-            raise ValueError(
-                f"Prompt '{template_name}' is missing required variables: {', '.join(missing_required)}"
-            )
-
-        # --- 2) Check for unknown variables (optional) ---
-        # If you want to strictly disallow extra variables not in required/optional, uncomment below:
-        # allowed_vars = set(required + optional)
-        # unknown_vars = [k for k in user_vars if k not in allowed_vars]
-        # if unknown_vars:
-        #     raise ValueError(
-        #         f"Prompt '{template_name}' got unknown variables: {', '.join(unknown_vars)}"
-        #     )
-        
-        # --- 3) Basic type checking / enumeration checks ---
-        # The "types" block can define:
-        #   - a list of valid strings (for enumerations),
-        #   - "string", "integer", "boolean", "array", "object", etc. 
-        # We'll do partial checks here:
-        for var_name, var_value in user_vars.items():
-            if var_name not in types_dict:
-                # Not specified in the schema, skip type check for now
-                continue
-
-            expected_type = types_dict[var_name]
-            
-            # 3.1) If it's a list, we treat it like an enum of allowed values
-            if isinstance(expected_type, list):
-                # user_vars[var_name] must be one of these enumerations
-                if var_value not in expected_type:
-                    raise ValueError(
-                        f"Variable '{var_name}' must be one of {expected_type}, got '{var_value}'"
-                    )
-            
-            # 3.2) If it's a string specifying a type name
-            elif isinstance(expected_type, str):
-                if expected_type == "string" and not isinstance(var_value, str):
-                    raise TypeError(f"Variable '{var_name}' must be a string.")
-                elif expected_type == "integer" and not isinstance(var_value, int):
-                    raise TypeError(f"Variable '{var_name}' must be an integer.")
-                elif expected_type == "boolean" and not isinstance(var_value, bool):
-                    raise TypeError(f"Variable '{var_name}' must be a boolean.")
-                elif expected_type == "array" and not isinstance(var_value, list):
-                    raise TypeError(f"Variable '{var_name}' must be a list/array.")
-                elif expected_type == "object" and not isinstance(var_value, dict):
-                    raise TypeError(f"Variable '{var_name}' must be an object/dict.")
-                # else: we ignore unrecognized type hints for now
-
-            # 3.3) If it's something else, skip or handle as needed
-            # e.g., a more complex structure or nested checks (not implemented here)
     
     @classmethod
     def _find_live_version(cls, versions: Dict[str, Any]) -> Optional[str]:
@@ -193,7 +126,8 @@ class Promptix:
         
         # --- 2) Validate variables against schema ---
         schema = version_data.get("schema", {})
-        cls._validate_variables(schema, variables, prompt_template)
+        validation_engine = get_validation_engine(cls._logger)
+        validation_engine.validate_variables(schema, variables, prompt_template)
         
         # --- 3) Render with Jinja2 to handle conditionals, loops, etc. ---
         try:

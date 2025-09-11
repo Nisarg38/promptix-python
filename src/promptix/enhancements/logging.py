@@ -1,5 +1,6 @@
 import logging
 import sys
+from typing import Any
 
 # ANSI escape codes for colors
 YELLOW = "\033[93m"
@@ -10,7 +11,7 @@ RESET = "\033[0m"
 class ColoredFormatter(logging.Formatter):
     """Custom formatter that adds colors to different log levels."""
     
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         # Add colors based on log level
         if record.levelno == logging.WARNING:
             # Ensure warning appears on its own line and ends with a newline
@@ -21,7 +22,7 @@ class ColoredFormatter(logging.Formatter):
             record.msg = f"{GRAY}[DEBUG] {record.msg}{RESET}"
         return super().format(record)
 
-def setup_logging(level=logging.INFO):
+def setup_logging(level: int = logging.INFO) -> logging.Logger:
     """Setup logging with a clean, minimal format and colors."""
     # Disable existing loggers to prevent duplicates
     logging.getLogger().handlers = []
