@@ -6,7 +6,7 @@ code coverage and test specific functionality.
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock, mock_open
+from unittest.mock import Mock, patch, MagicMock, mock_open, call
 import tempfile
 import os
 import yaml
@@ -40,7 +40,9 @@ class TestStorageComponents:
         result = loader.load("/fake/path.yaml")
         
         assert "TestPrompt" in result
-        mock_file.assert_called_once_with("/fake/path.yaml", 'r', encoding='utf-8')
+        # Check that open was called with our specific file (may be called multiple times due to .env loading)
+        expected_call = call("/fake/path.yaml", 'r', encoding='utf-8')
+        assert expected_call in mock_file.call_args_list, f"Expected {expected_call} in {mock_file.call_args_list}"
         mock_yaml_load.assert_called_once()
 
     @patch('builtins.open', side_effect=FileNotFoundError())
@@ -494,8 +496,6 @@ class TestUtilityComponents:
             func = getattr(utils, 'create_default_prompts_file')
             assert callable(func)
             
-            with tempfile.NamedTemporaryFile(suffix='.yaml', delete=False) as tmp:
-            import tempfile
             with tempfile.NamedTemporaryFile(suffix='.yaml', delete=False) as tmp:
                 tmp_path = Path(tmp.name)
             

@@ -66,6 +66,10 @@ class PromptManager:
     def list_prompts(self) -> Dict[str, Any]:
         """Return all available prompts."""
         return self.prompts
+    
+    def load_prompts(self) -> None:
+        """Public method to reload prompts from storage."""
+        self._load_prompts()
 
     def _format_prompt_for_storage(self, prompt_data: Dict[str, Any]) -> Dict[str, Any]:
         """Convert multiline prompts to single line with escaped newlines."""
