@@ -56,7 +56,12 @@ class YAMLPromptLoader(PromptLoader):
 
 class PromptLoaderFactory:
     @staticmethod
-    def get_loader(file_path: Path) -> PromptLoader:
+    def get_loader(file_path) -> PromptLoader:
+        # Convert string to Path if needed
+        if isinstance(file_path, str):
+            from pathlib import Path
+            file_path = Path(file_path)
+        
         if file_path.suffix.lower() in ['.yml', '.yaml']:
             return YAMLPromptLoader()
         elif file_path.suffix.lower() == '.json':

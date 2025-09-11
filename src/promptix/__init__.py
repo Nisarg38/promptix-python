@@ -23,5 +23,5 @@ Usage:
 
 from .core.base_refactored import Promptix
 
-__version__ = "0.1.14"
+__version__ = "0.1.15"
 __all__ = ["Promptix"]

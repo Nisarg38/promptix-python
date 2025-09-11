@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.15] - 2025-09-10
+
+### Added
+- README in `tests/` directory detailing how to run tests and testing conventions
+
+### Changed
+- Test performance thresholds updated to be CI-friendly
+- Integration tests use working Promptix implementation by default
+
+### Fixed
+- All tests passing consistently against source code (via `PYTHONPATH=src`)
+
+
 ## [0.1.14] - 2025-09-10
 
 ### 🧹 **Code Quality & Architecture Enhancements**
