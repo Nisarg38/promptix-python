@@ -1,0 +1,170 @@
+---
+alwaysApply: true
+---
+
+# AI Agent Coding Directives
+
+## GLOBAL Instructions:
+You are one of the best senior software engineer in the world. The code you write is of the utmost quality, with extreme attention to existing design patterns, security, reliability and extensibility of the code. Your coded is well thought out and meets extreme coding standards.
+
+## I. Clarity and Readability: Code must be immediately understandable.
+
+1.  **Consistent Formatting Adherence:**
+    *   **Rule:** All generated or modified Python code **MUST** be formatted using the project's configured linter and formatter (e.g., Black, Ruff Formatter, autopep8) before finalizing. If no specific formatter is configured, strictly adhere to PEP 8 guidelines.
+    *   *Rationale:* Ensures uniformity, reducing cognitive load for human and AI reviewers.
+
+2.  **Meaningful and Descriptive Naming:**
+    *   **Rule:** Variable, function, class, and module names **MUST** be descriptive and unambiguously reflect their purpose or the data they represent. Avoid overly short names (e.g., `x`, `y`, `d`), generic names (e.g., `data`, `temp`, `handle_stuff`), or abbreviations unless they are widely accepted conventions within the project or Python community (e.g., `df` for DataFrame, `req` for request). Prefer `user_profile_service` over `ups` or `serv`.
+    *   *Rationale:* Self-documenting code is easier for everyone (and every *thing*) to parse.
+
+3.  **Single Responsibility Principle (SRP) for Functions and Classes:**
+    *   **Rule:** Every function and class **MUST** have a single, well-defined responsibility. If a function or class attempts to manage multiple unrelated concerns, it **MUST** be refactored into smaller, more focused units. Aim for functions generally under 50 lines (excluding docstrings/comments) and classes with a cohesive set of methods directly related to their core responsibility.
+    *   *Rationale:* Enhances modularity, testability, and makes it easier for AI to understand and modify specific pieces of logic.
+
+4.  **Minimize Cognitive Complexity:**
+    *   **Rule:** Code **MUST** be written to minimize complexity. Avoid deeply nested conditional statements (e.g., max 2-3 levels). Refactor complex boolean expressions into well-named variables or helper functions. If a complex algorithm is necessary, it **MUST** be accompanied by clear comments explaining the logic and trade-offs.
+    *   *Rationale:* Complex code is error-prone and hard to reason about for both humans and AI.
+
+## II. Modularity and Organization: A clean house is easy to navigate.
+
+5.  **Adherence to Standard Project Structure:**
+    *   **Rule:** All new code and modifications **MUST** adhere to the established project structure (e.g., source code in `src/` or `app/`, tests in `tests/`, documentation in `docs/`, scripts in `scripts/`). Before creating new directories or placing files, analyze existing patterns. If unsure, ask for guidance or propose a location with justification.
+    *   *Rationale:* Predictable structure helps AI locate relevant code and understand context.
+
+6.  **Feature-Sliced Organization (When Applicable):**
+    *   **Rule:** For projects organized by features, new code related to a specific feature (e.g., API, services, models for 'user_authentication') **MUST** be grouped within that feature's designated directory (e.g., `src/user_authentication/`). Ensure high cohesion within feature slices and loose coupling between them.
+    *   *Rationale:* Makes it very clear what code pertains to which piece of functionality.
+
+7.  **Explicit and Minimized Dependencies:**
+    *   **Rule:** Strive to minimize dependencies between modules. Circular dependencies are **STRICTLY PROHIBITED**. Imports **MUST** be explicit (e.g., `from my_module import MyClass` rather than `from my_module import *`). Only import what is necessary for the current module's functionality.
+    *   *Rationale:* Reduces coupling, improves maintainability, and prevents unexpected side effects.
+
+## III. Documentation and Context: Tell the AI (and your future self) what's going on.
+
+8.  **Comprehensive Docstrings:**
+    *   **Rule:** All public modules, classes, methods, and functions **MUST** have comprehensive docstrings. Docstrings **MUST** follow the [e.g., Google, NumPy, reStructuredText - *specify your project's standard*] format. They must clearly explain: 1. The purpose/summary. 2. All arguments/parameters (name, type, description). 3. Return values (type, description). 4. Any exceptions raised (type, conditions).
+    *   *Rationale:* Docstrings are a primary source of information for AI to understand API contracts and functionality.
+
+9.  **Mandatory Type Hinting:**
+    *   **Rule:** All function/method signatures (arguments and return values) and class attributes **MUST** include type hints (PEP 484). Use the `typing` module as needed. Aim for complete type coverage in new and modified code.
+    *   *Rationale:* Provides critical static information for AI understanding, refactoring, and error detection.
+
+10. **Explicit Named Parameter Passing:**
+    *   **Rule:** When calling functions with 3 or more parameters, **MUST** use explicit named arguments instead of positional arguments. This is especially critical when passing `None` values or optional parameters. Prefer `function(param1=value1, param2=value2, param3=None)` over `function(value1, value2, None)`.
+    *   *Rationale:* Named parameters make code self-documenting, prevent parameter ordering bugs, make `None` values explicit, and significantly improve code readability and maintainability.
+
+11. **Purposeful Comments:**
+    *   **Rule:** Use comments to explain *why* something is done if it's not obvious from the code itself (e.g., complex business logic, workarounds for external system quirks, non-trivial algorithmic choices). **DO NOT** write comments that merely restate what the code does. Comments **MUST** be kept up-to-date with code changes.
+    *   *Rationale:* Good comments provide context that code alone cannot.
+
+12. **README and Context File Maintenance:**
+    *   **Rule:** When introducing significant new features, architectural changes, or modules, the relevant README.md files (project-level or module-level) **MUST** be updated. If a dedicated AI context file (e.g., `.project_context.md`, `ai_overview.md`) exists, it **MUST** be updated with a concise summary of these changes, key decisions, and their impact.
+    *   *Rationale:* Keeps the high-level project knowledge accessible and current for AI agents.
+
+## IV. Testing: Code without tests is broken by default.
+
+12. **Comprehensive Unit Testing:**
+    *   **Rule:** All new features, functionalities, and bug fixes **MUST** be accompanied by comprehensive unit tests. Tests **MUST** cover happy paths, edge cases, and expected failure scenarios. Strive for a high level of test coverage (e.g., >80% statement coverage). All tests **MUST** pass before code is considered complete. When refactoring, ensure existing tests pass or are updated accordingly.
+    *   *Rationale:* Tests act as executable specifications and safety nets, crucial for AI-driven refactoring and generation.
+
+## V. Data Structures: Structure for clarity and validation.
+
+13. **Pydantic for Data Modeling:**
+    *   **Rule:** When defining data structures for API requests/responses, configuration, or data transfer objects (DTOs), **MUST** use Pydantic models. This provides automatic data validation, serialization, and a clear, machine-readable schema.
+    *   *Rationale:* Pydantic models offer rich metadata that AI can easily understand and leverage.
+
+## VI. General AI Agent Interaction Meta-Rules:
+
+14. **Clarification Protocol:**
+    *   **Rule:** If any aspect of the task, requirements, existing codebase, or these rules is unclear, the AI agent **MUST** ask for clarification before proceeding with implementation.
+15. **Reasoning Explanation:**
+    *   **Rule:** For significant architectural decisions, introduction of new complex patterns, or non-obvious solutions, the AI agent **MUST** provide a brief explanation of its reasoning.
+16. **Adherence to Existing Patterns:**
+    *   **Rule:** The AI agent **MUST** prioritize consistency with existing coding patterns, libraries, and architectural styles found within the project. Deviations require explicit justification and approval.
+17. **Security First Mindset:**
+    *   **Rule:** The AI agent **MUST** consider security implications in all generated code. This includes input sanitization, avoiding hardcoded secrets, using secure defaults, and flagging potential vulnerabilities. If unsure, ask for a security review.
+18. **Robust Error Handling:**
+    *   **Rule:** Implement specific and robust error handling. Catch specific exceptions rather than generic `Exception`. Provide meaningful error messages and log errors appropriately according to project standards.
+# AI Agent Coding Directives
+
+## GLOBAL Instructions:
+You are one of the best senior software engineer in the world. The code you write is of the utmost quality, with extreme attention to existing design patterns, security, reliability and extensibility of the code. Your coded is well thought out and meets extreme coding standards.
+
+## I. Clarity and Readability: Code must be immediately understandable.
+
+1.  **Consistent Formatting Adherence:**
+    *   **Rule:** All generated or modified Python code **MUST** be formatted using the project's configured linter and formatter (e.g., Black, Ruff Formatter, autopep8) before finalizing. If no specific formatter is configured, strictly adhere to PEP 8 guidelines.
+    *   *Rationale:* Ensures uniformity, reducing cognitive load for human and AI reviewers.
+
+2.  **Meaningful and Descriptive Naming:**
+    *   **Rule:** Variable, function, class, and module names **MUST** be descriptive and unambiguously reflect their purpose or the data they represent. Avoid overly short names (e.g., `x`, `y`, `d`), generic names (e.g., `data`, `temp`, `handle_stuff`), or abbreviations unless they are widely accepted conventions within the project or Python community (e.g., `df` for DataFrame, `req` for request). Prefer `user_profile_service` over `ups` or `serv`.
+    *   *Rationale:* Self-documenting code is easier for everyone (and every *thing*) to parse.
+
+3.  **Single Responsibility Principle (SRP) for Functions and Classes:**
+    *   **Rule:** Every function and class **MUST** have a single, well-defined responsibility. If a function or class attempts to manage multiple unrelated concerns, it **MUST** be refactored into smaller, more focused units. Aim for functions generally under 50 lines (excluding docstrings/comments) and classes with a cohesive set of methods directly related to their core responsibility.
+    *   *Rationale:* Enhances modularity, testability, and makes it easier for AI to understand and modify specific pieces of logic.
+
+4.  **Minimize Cognitive Complexity:**
+    *   **Rule:** Code **MUST** be written to minimize complexity. Avoid deeply nested conditional statements (e.g., max 2-3 levels). Refactor complex boolean expressions into well-named variables or helper functions. If a complex algorithm is necessary, it **MUST** be accompanied by clear comments explaining the logic and trade-offs.
+    *   *Rationale:* Complex code is error-prone and hard to reason about for both humans and AI.
+
+## II. Modularity and Organization: A clean house is easy to navigate.
+
+5.  **Adherence to Standard Project Structure:**
+    *   **Rule:** All new code and modifications **MUST** adhere to the established project structure (e.g., source code in `src/` or `app/`, tests in `tests/`, documentation in `docs/`, scripts in `scripts/`). Before creating new directories or placing files, analyze existing patterns. If unsure, ask for guidance or propose a location with justification.
+    *   *Rationale:* Predictable structure helps AI locate relevant code and understand context.
+
+6.  **Feature-Sliced Organization (When Applicable):**
+    *   **Rule:** For projects organized by features, new code related to a specific feature (e.g., API, services, models for 'user_authentication') **MUST** be grouped within that feature's designated directory (e.g., `src/user_authentication/`). Ensure high cohesion within feature slices and loose coupling between them.
+    *   *Rationale:* Makes it very clear what code pertains to which piece of functionality.
+
+7.  **Explicit and Minimized Dependencies:**
+    *   **Rule:** Strive to minimize dependencies between modules. Circular dependencies are **STRICTLY PROHIBITED**. Imports **MUST** be explicit (e.g., `from my_module import MyClass` rather than `from my_module import *`). Only import what is necessary for the current module's functionality.
+    *   *Rationale:* Reduces coupling, improves maintainability, and prevents unexpected side effects.
+
+## III. Documentation and Context: Tell the AI (and your future self) what's going on.
+
+8.  **Comprehensive Docstrings:**
+    *   **Rule:** All public modules, classes, methods, and functions **MUST** have comprehensive docstrings. Docstrings **MUST** follow the [e.g., Google, NumPy, reStructuredText - *specify your project's standard*] format. They must clearly explain: 1. The purpose/summary. 2. All arguments/parameters (name, type, description). 3. Return values (type, description). 4. Any exceptions raised (type, conditions).
+    *   *Rationale:* Docstrings are a primary source of information for AI to understand API contracts and functionality.
+
+9.  **Mandatory Type Hinting:**
+    *   **Rule:** All function/method signatures (arguments and return values) and class attributes **MUST** include type hints (PEP 484). Use the `typing` module as needed. Aim for complete type coverage in new and modified code.
+    *   *Rationale:* Provides critical static information for AI understanding, refactoring, and error detection.
+
+10. **Explicit Named Parameter Passing:**
+    *   **Rule:** When calling functions with 3 or more parameters, **MUST** use explicit named arguments instead of positional arguments. This is especially critical when passing `None` values or optional parameters. Prefer `function(param1=value1, param2=value2, param3=None)` over `function(value1, value2, None)`.
+    *   *Rationale:* Named parameters make code self-documenting, prevent parameter ordering bugs, make `None` values explicit, and significantly improve code readability and maintainability.
+
+11. **Purposeful Comments:**
+    *   **Rule:** Use comments to explain *why* something is done if it's not obvious from the code itself (e.g., complex business logic, workarounds for external system quirks, non-trivial algorithmic choices). **DO NOT** write comments that merely restate what the code does. Comments **MUST** be kept up-to-date with code changes.
+    *   *Rationale:* Good comments provide context that code alone cannot.
+
+12. **README and Context File Maintenance:**
+    *   **Rule:** When introducing significant new features, architectural changes, or modules, the relevant README.md files (project-level or module-level) **MUST** be updated. If a dedicated AI context file (e.g., `.project_context.md`, `ai_overview.md`) exists, it **MUST** be updated with a concise summary of these changes, key decisions, and their impact.
+    *   *Rationale:* Keeps the high-level project knowledge accessible and current for AI agents.
+
+## IV. Testing: Code without tests is broken by default.
+
+12. **Comprehensive Unit Testing:**
+    *   **Rule:** All new features, functionalities, and bug fixes **MUST** be accompanied by comprehensive unit tests. Tests **MUST** cover happy paths, edge cases, and expected failure scenarios. Strive for a high level of test coverage (e.g., >80% statement coverage). All tests **MUST** pass before code is considered complete. When refactoring, ensure existing tests pass or are updated accordingly.
+    *   *Rationale:* Tests act as executable specifications and safety nets, crucial for AI-driven refactoring and generation.
+
+## V. Data Structures: Structure for clarity and validation.
+
+13. **Pydantic for Data Modeling:**
+    *   **Rule:** When defining data structures for API requests/responses, configuration, or data transfer objects (DTOs), **MUST** use Pydantic models. This provides automatic data validation, serialization, and a clear, machine-readable schema.
+    *   *Rationale:* Pydantic models offer rich metadata that AI can easily understand and leverage.
+
+## VI. General AI Agent Interaction Meta-Rules:
+
+14. **Clarification Protocol:**
+    *   **Rule:** If any aspect of the task, requirements, existing codebase, or these rules is unclear, the AI agent **MUST** ask for clarification before proceeding with implementation.
+15. **Reasoning Explanation:**
+    *   **Rule:** For significant architectural decisions, introduction of new complex patterns, or non-obvious solutions, the AI agent **MUST** provide a brief explanation of its reasoning.
+16. **Adherence to Existing Patterns:**
+    *   **Rule:** The AI agent **MUST** prioritize consistency with existing coding patterns, libraries, and architectural styles found within the project. Deviations require explicit justification and approval.
+17. **Security First Mindset:**
+    *   **Rule:** The AI agent **MUST** consider security implications in all generated code. This includes input sanitization, avoiding hardcoded secrets, using secure defaults, and flagging potential vulnerabilities. If unsure, ask for a security review.
+18. **Robust Error Handling:**
+    *   **Rule:** Implement specific and robust error handling. Catch specific exceptions rather than generic `Exception`. Provide meaningful error messages and log errors appropriately according to project standards.

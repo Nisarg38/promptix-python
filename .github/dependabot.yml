@@ -1,0 +1,110 @@
+# Dependabot configuration for automated dependency updates
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "promptix-maintainers"
+    assignees:
+      - "promptix-maintainers"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "automated"
+    groups:
+      # Group development dependencies together
+      development-dependencies:
+        patterns:
+          - "pytest*"
+          - "black"
+          - "isort"
+          - "flake8*"
+          - "mypy"
+          - "bandit"
+          - "safety"
+          - "pre-commit"
+          - "sphinx*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Group security tools together
+      # Group development dependencies together
+      development-dependencies:
+        patterns:
+          - "pytest*"
+          - "black"
+          - "isort"
+          - "flake8*"
+          - "mypy"
+          - "pre-commit"
+          - "sphinx*"
+      # Group core dependencies
+      core-dependencies:
+        patterns:
+          - "streamlit"
+          - "jinja2"
+          - "pyyaml"
+          - "jsonschema"
+          - "python-dotenv"
+    ignore:
+      # Ignore major version updates for core dependencies (manual review required)
+      - dependency-name: "streamlit"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "jinja2"
+        update-types: ["version-update:semver-major"]
+    allow:
+      # Allow all dependency types
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+      - dependency-type: "development"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "promptix-maintainers"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "github-actions"
+      - "automated"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Docker dependencies (if we add Docker in the future)
+  # - package-ecosystem: "docker"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "weekly"
+  #   open-pull-requests-limit: 3
+  #   reviewers:
+  #     - "promptix-maintainers"
+  #   commit-message:
+  #     prefix: "docker"
+  #   labels:
+  #     - "docker"
+  #     - "automated"
