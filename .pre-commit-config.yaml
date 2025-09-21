@@ -7,7 +7,8 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
-        args: ['--maxkb=1000']
+        args:
+          - '--maxkb=1000'
       - id: check-toml
       - id: check-json
       - id: check-merge-conflict
@@ -21,14 +22,17 @@ repos:
     hooks:
       - id: black
         language_version: python3
-        args: [--line-length=88]
+        args:
+          - '--line-length=88'
 
   # Import sorting
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
     hooks:
       - id: isort
-        args: [--profile=black, --line-length=88]
+        args:
+          - '--profile=black'
+          - '--line-length=88'
 
   # Linting and code quality
   - repo: https://github.com/pycqa/flake8
@@ -36,12 +40,14 @@ repos:
     hooks:
       - id: flake8
         additional_dependencies:
-          - flake8-docstrings>=1.7.0
-          - flake8-bugbear>=23.0.0
-          - flake8-comprehensions>=3.14.0
-          - flake8-implicit-str-concat>=0.4.0
-          - flake8-simplify>=0.20.0
-        args: [--max-line-length=88, --extend-ignore=E203,W503]
+          - 'flake8-docstrings>=1.7.0'
+          - 'flake8-bugbear>=23.0.0'
+          - 'flake8-comprehensions>=3.14.0'
+          - 'flake8-implicit-str-concat>=0.4.0'
+          - 'flake8-simplify>=0.20.0'
+        args:
+          - '--max-line-length=88'
+          - '--extend-ignore=E203,W503'
 
   # Type checking
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -49,73 +55,85 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies:
-          - types-PyYAML
-          - types-requests
-        args: [--ignore-missing-imports]
-        exclude: ^(tests/|docs/)
+          - 'types-PyYAML'
+          - 'types-requests'
+        args:
+          - '--ignore-missing-imports'
+        exclude: '^(tests/|docs/)'
 
   # Docstring style checking
   - repo: https://github.com/PyCQA/pydocstyle
     rev: 6.3.0
     hooks:
       - id: pydocstyle
-        args: [--convention=google]
-        additional_dependencies: [toml]
-        exclude: ^(tests/|docs/|examples/)
+        args:
+          - '--convention=google'
+        additional_dependencies:
+          - 'toml'
+        exclude: '^(tests/|docs/|examples/)'
 
   # Security scanning
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.5
     hooks:
       - id: bandit
-        args: [-r, src/]
-        exclude: ^tests/
+        args:
+          - '-r'
+          - 'src/'
+        exclude: '^tests/'
 
   # Dependency security scanning
   - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
     rev: v1.3.2
     hooks:
       - id: python-safety-dependencies-check
-        files: requirements.*\.txt$
+        files: 'requirements.*\.txt$'
 
   # Code complexity checking
   - repo: https://github.com/rubik/xenon
     rev: v0.9.1
     hooks:
       - id: xenon
-        args: [--max-average=A, --max-modules=B, --max-absolute=B]
-        exclude: ^(tests/|docs/)
+        args:
+          - '--max-average=A'
+          - '--max-modules=B'
+          - '--max-absolute=B'
+        exclude: '^(tests/|docs/)'
 
   # Spelling checker (for documentation and comments)
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.6
     hooks:
       - id: codespell
-        args: [--skip=*.git,*.png,*.jpg,*.svg,*.ico,*.webp,*/__pycache__/*,*/venv/*,*/htmlcov/*,*/dist/*,*/build/*]
-        exclude: ^(coverage\.xml|\.coverage|htmlcov/|dist/|build/)
+        args:
+          - '--skip=*.git,*.png,*.jpg,*.svg,*.ico,*.webp,*/__pycache__/*,*/venv/*,*/htmlcov/*,*/dist/*,*/build/*'
+        exclude: '^(coverage\.xml|\.coverage|htmlcov/|dist/|build/)'
 
   # YAML formatting
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v3.1.0
     hooks:
       - id: prettier
-        types: [yaml]
-        exclude: ^(\.pre-commit-config\.yaml|\.github/workflows/)
+        types:
+          - 'yaml'
+        exclude: '^(\.pre-commit-config\.yaml|\.github/workflows/)'
 
   # Markdown formatting
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.38.0
     hooks:
       - id: markdownlint
-        args: [--fix]
-        exclude: ^(CHANGELOG\.md)
+        args:
+          - '--fix'
+        exclude: '^(CHANGELOG\.md)'
 
   # Check for common Python issues
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.15.0
     hooks:
       - id: pyupgrade
-        args: [--py39-plus]
+        args:
+          - '--py39-plus'
 
   # Check requirements files
   - repo: https://github.com/asottile/requirements-txt-fixer
@@ -148,7 +166,7 @@ repos:
           # Could add more version consistency checks here
           print('Version consistency check passed');
         "]
-        files: ^(pyproject\.toml|src/promptix/__init__\.py)$
+        files: '^(pyproject\.toml|src/promptix/__init__\.py)$'
         pass_filenames: false
 
   # Performance regression detection (optional, can be slow)

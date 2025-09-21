@@ -393,16 +393,22 @@ You can configure Promptix behavior:
    from promptix import Promptix
    from pathlib import Path
 
-   # Custom prompt file location
-   px = Promptix(working_directory="/path/to/prompts")
+   # Method 1: Configure through the centralized config
+   from promptix.core.config import config
+   config.set_working_directory("/path/to/prompts")
+   px = Promptix()
 
-   # Using builder pattern
-   from promptix.core.builder import PromptixBuilder
+   # Method 2: Use environment variables for other Promptix settings
+   import os
+   os.environ['PROMPTIX_PROMPT_FILE'] = "/path/to/custom_prompts.yaml"
+   os.environ['PROMPTIX_LOG_LEVEL'] = "DEBUG"
+   px = Promptix()
 
-   px = (PromptixBuilder()
-         .with_working_directory("/custom/path")
-         .with_default_version("v2")
-         .build())
+   # Method 3: Using builder pattern (for building model configurations)
+   from promptix.core.builder_refactored import PromptixBuilder
+   config_dict = (PromptixBuilder("template_name")
+                  .with_variable("key", "value")
+                  .build())
 
 Promptix Studio
 ---------------

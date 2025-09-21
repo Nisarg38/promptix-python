@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "promptix"
-version = "0.1.15"
+version = "0.1.16"
 description = "A simple library for managing and using prompts locally with Promptix Studio"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -117,6 +117,7 @@ include-package-data = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+pythonpath = ["src"]
 addopts = "--cov=promptix --cov-report=term-missing"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",

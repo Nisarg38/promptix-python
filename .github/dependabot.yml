@@ -39,17 +39,6 @@ updates:
         update-types:
           - "minor"
           - "patch"
-      # Group security tools together
-      # Group development dependencies together
-      development-dependencies:
-        patterns:
-          - "pytest*"
-          - "black"
-          - "isort"
-          - "flake8*"
-          - "mypy"
-          - "pre-commit"
-          - "sphinx*"
       # Group core dependencies
       core-dependencies:
         patterns:
