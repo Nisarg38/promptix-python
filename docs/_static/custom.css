@@ -1,0 +1,104 @@
+/* Custom CSS for Promptix documentation */
+
+/* Improve code block styling */
+.highlight {
+    border-radius: 4px;
+    margin: 1em 0;
+}
+
+/* Better spacing for API documentation */
+.py.class, .py.function, .py.method {
+    margin-bottom: 2em;
+}
+
+/* Style for version badges */
+.version-badge {
+    background-color: #28a745;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+}
+
+/* Improve table styling */
+table.docutils {
+    border-collapse: collapse;
+    margin: 1em 0;
+}
+
+table.docutils th,
+table.docutils td {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+}
+
+table.docutils th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+/* Better admonition styling */
+.admonition {
+    margin: 1em 0;
+    padding: 0.5em 1em;
+    border-left: 4px solid #ccc;
+    border-radius: 0 4px 4px 0;
+}
+
+.admonition.note {
+    border-left-color: #17a2b8;
+    background-color: #d1ecf1;
+}
+
+.admonition.warning {
+    border-left-color: #ffc107;
+    background-color: #fff3cd;
+}
+
+.admonition.error {
+    border-left-color: #dc3545;
+    background-color: #f8d7da;
+}
+
+/* Improve navigation */
+.wy-nav-content {
+    max-width: none;
+}
+
+/* Better spacing for parameters */
+.field-list {
+    margin: 1em 0;
+}
+
+.field-list dt {
+    font-weight: bold;
+    margin-top: 0.5em;
+}
+
+/* Code signature styling */
+.sig-name {
+    font-weight: bold;
+}
+
+.sig-param {
+    font-style: italic;
+}
+
+/* Improve search results */
+.search ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.search li {
+    margin-bottom: 1em;
+    padding: 0.5em;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Custom logo styling if needed */
+.wy-side-nav-search .wy-dropdown > a img.logo {
+    max-width: 100%;
+    height: auto;
+}
