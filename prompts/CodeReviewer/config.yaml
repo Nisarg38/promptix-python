@@ -1,0 +1,32 @@
+# Agent configuration
+metadata:
+  name: "CodeReviewer"
+  description: "A prompt for reviewing code and providing feedback"
+  author: "Promptix Team"
+  version: "1.0.0"
+  created_at: "2024-03-01"
+  last_modified: "2024-03-01"
+  last_modified_by: "Promptix Team"
+
+# Schema for variables
+schema:
+  type: "object"
+  required:
+    - programming_language
+    - review_focus
+  properties:
+    code_snippet:
+      type: string
+    programming_language:
+      type: string
+    review_focus:
+      type: string
+  additionalProperties: false
+
+# Configuration for the prompt
+config:
+  model: "gpt-4o"
+  provider: "openai"
+  temperature: 0.3
+  max_tokens: 1500
+  top_p: 1

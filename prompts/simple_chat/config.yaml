@@ -1,0 +1,26 @@
+# Agent configuration
+metadata:
+  name: "Simple Chat"
+  description: "A basic conversational agent"
+  author: "Promptix"
+  version: "1.0.0"
+
+# Schema for variables
+schema:
+  type: "object"
+  properties:
+    personality:
+      type: "string"
+      description: "The personality type of the assistant"
+      default: "helpful"
+    domain:
+      type: "string"
+      description: "Domain of expertise"
+      default: "general"
+  additionalProperties: true
+
+# Configuration for the prompt
+config:
+  model: "gpt-4"
+  temperature: 0.7
+  max_tokens: 1000

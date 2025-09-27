@@ -46,37 +46,39 @@ class PromptixConfig:
         self.working_directory = Path(path)
         self._config_cache.clear()  # Clear cache when working directory changes
     
-    def get_prompt_file_path(self) -> Optional[Path]:
+    def get_prompts_workspace_path(self) -> Path:
         """
-        Get the path to the prompts file, searching in priority order.
+        Get the path to the prompts workspace directory.
         
         Returns:
-            Path to existing prompts file or None if not found
+            Path to prompts/ directory
         """
-        search_paths = self._get_prompt_search_paths()
-        
-        for file_path in search_paths:
-            if file_path.exists():
-                return file_path
-        
-        return None
+        return self.working_directory / "prompts"
     
-    def get_default_prompt_file_path(self) -> Path:
-        """Get the default path for creating new prompts files."""
-        filename = self.get("default_prompt_filename")
-        return self.working_directory / filename
+    def has_prompts_workspace(self) -> bool:
+        """
+        Check if prompts workspace directory exists.
+        
+        Returns:
+            True if prompts/ directory exists
+        """
+        prompts_dir = self.get_prompts_workspace_path()
+        return prompts_dir.exists() and prompts_dir.is_dir()
     
-    def _get_prompt_search_paths(self) -> List[Path]:
-        """Get ordered list of paths to search for prompts files (YAML only)."""
-        base_dir = self.working_directory
+    def create_default_workspace(self) -> Path:
+        """
+        Create the default prompts workspace directory structure.
         
-        # Only YAML formats are supported
-        yaml_paths = [
-            base_dir / "prompts.yaml",
-            base_dir / "prompts.yml",
-        ]
+        Returns:
+            Path to created prompts/ directory
+        """
+        prompts_dir = self.get_prompts_workspace_path()
+        prompts_dir.mkdir(parents=True, exist_ok=True)
         
-        return yaml_paths
+        # Create .promptix directory for workspace configuration
+        promptix_config_dir = self.working_directory / ".promptix"
+        promptix_config_dir.mkdir(parents=True, exist_ok=True)
+        return prompts_dir
     
     def get_promptix_key(self) -> str:
         """Get the Promptix API key from environment variables."""
