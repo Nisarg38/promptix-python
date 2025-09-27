@@ -8,6 +8,7 @@ import os
 import subprocess
 import socket
 from pathlib import Path
+from typing import Optional
 
 import click
 from rich.console import Console
@@ -30,7 +31,7 @@ def is_port_in_use(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('localhost', port)) == 0
 
-def find_available_port(start_port: int, max_attempts: int = 10) -> int | None:
+def find_available_port(start_port: int, max_attempts: int = 10) -> Optional[int]:
     """Find an available port starting from start_port."""
     for port in range(start_port, start_port + max_attempts):
         if not is_port_in_use(port):

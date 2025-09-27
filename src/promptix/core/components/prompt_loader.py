@@ -260,7 +260,7 @@ How can I help you today?"""
         # Load version history
         versions = {}
         if versions_dir.exists():
-            versions = self._load_versions(versions_dir)
+            versions = self._load_versions(versions_dir, config_data)
         
         # Create current version if we have a prompt
         if current_prompt and 'current' not in versions:
@@ -270,12 +270,17 @@ How can I help you today?"""
             schema_section = config_data.get('schema') or {}
             if not isinstance(schema_section, dict):
                 schema_section = {}
+            tools_config_section = config_data.get('tools_config') or {}
+            if not isinstance(tools_config_section, dict):
+                tools_config_section = {}
+                
             versions['current'] = {
                 'config': {
                     'system_instruction': current_prompt,
                     **config_section,
                 },
                 'schema': schema_section,
+                'tools_config': tools_config_section,
                 'is_live': True,
             }
         
@@ -292,17 +297,19 @@ How can I help you today?"""
             'metadata': config_data.get('metadata', {})
         }
     
-    def _load_versions(self, versions_dir: Path) -> Dict[str, Any]:
+    def _load_versions(self, versions_dir: Path, base_config: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         Load version history from versions/ directory.
         
         Args:
             versions_dir: Path to versions directory
+            base_config: Base configuration to inherit schema and config from
             
         Returns:
             Dictionary of version data
         """
         versions = {}
+        base_config = base_config or {}
         
         for version_file in versions_dir.glob("*.md"):
             version_name = version_file.stem
@@ -310,11 +317,14 @@ How can I help you today?"""
                 with open(version_file, 'r', encoding='utf-8') as f:
                     content = f.read().strip()
                 
+                # Inherit configuration from base config
+                config_section = base_config.get('config', {}).copy()
+                config_section['system_instruction'] = content
+                
                 versions[version_name] = {
-                    'config': {
-                        'system_instruction': content
-                    },
-                    'schema': {},  # Could be loaded from metadata if needed
+                    'config': config_section,
+                    'schema': base_config.get('schema', {}),  # Inherit schema from base config
+                    'tools_config': base_config.get('tools_config', {}),  # Inherit tools_config from base config
                     'is_live': False  # Historical versions are not live
                 }
             except Exception as e:

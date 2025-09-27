@@ -1,0 +1,42 @@
+# Test Agent configuration
+metadata:
+  name: "TemplateDemo"
+  description: "A template demonstration prompt for testing"
+  author: "Test Suite"
+  version: "1.0.0"
+
+# Schema for variables
+schema:
+  type: "object"
+  required:
+    - content_type
+    - theme
+    - difficulty
+  optional:
+    - elements
+  properties:
+    content_type:
+      type: string
+      enum:
+        - tutorial
+        - article
+        - guide
+    theme:
+      type: string
+    difficulty:
+      type: string
+      enum:
+        - beginner
+        - intermediate
+        - advanced
+    elements:
+      type: array
+      items:
+        type: string
+  additionalProperties: false
+
+# Configuration for the prompt
+config:
+  model: "gpt-3.5-turbo"
+  provider: "openai"
+  temperature: 0.7

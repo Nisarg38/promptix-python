@@ -1,0 +1,39 @@
+# Test Agent configuration
+metadata:
+  name: "CodeReviewer"
+  description: "A code review prompt for testing"
+  author: "Test Suite"
+  version: "1.0.0"
+
+# Schema for variables
+schema:
+  type: "object"
+  required:
+    - code_snippet
+    - programming_language
+    - review_focus
+  optional:
+    - severity
+  properties:
+    code_snippet:
+      type: string
+    programming_language:
+      type: string
+    review_focus:
+      type: string
+    severity:
+      type: string
+      enum:
+        - low
+        - medium
+        - high
+        - critical
+      default: medium
+  additionalProperties: false
+
+# Configuration for the prompt
+config:
+  model: "gpt-4"
+  provider: "openai"
+  temperature: 0.2
+  max_tokens: 1500

@@ -134,6 +134,30 @@ class PromptixConfig:
         """
         self._config_cache[key] = value
     
+    def get_prompt_file_path(self) -> Optional[Path]:
+        """
+        Get path to legacy prompts file (backward compatibility).
+        
+        This method supports the legacy single-file approach for backward compatibility.
+        In the new system, we prefer the workspace approach using prompts/ directory.
+        
+        Returns:
+            Path to prompts.yaml file if it exists, None otherwise
+        """
+        base_dir = self.working_directory
+        
+        # Check for existing YAML files in the preferred order
+        for ext in self.get_supported_extensions():
+            file_path = base_dir / f"prompts{ext}"
+            if file_path.exists():
+                return file_path
+        
+        return None
+    
+    def get_default_prompt_file_path(self) -> Path:
+        """Get the default path for creating a new prompts file."""
+        return self.working_directory / self.get("default_prompt_filename")
+    
     def check_for_unsupported_files(self) -> List[Path]:
         """Check working directory for unsupported JSON files."""
         base_dir = self.working_directory
