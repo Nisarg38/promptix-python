@@ -58,7 +58,25 @@ config:
 
 # Tools configuration
 tools_config:
-  tools_template: '{% set tool_names = [] %}{% if programming_language == "Python" %}{% set tool_names = tool_names + ["complexity_analyzer", "security_scanner"] %}{% elif programming_language == "Java" %}{% set tool_names = tool_names + ["style_checker"] %}{% endif %}{{ tool_names | tojson }}'
+  tools_template: >-
+    {% set tool_names = [] %}
+    {% if programming_language == "Python" %}
+      {% if use_complexity_analyzer %}
+        {% set tool_names = tool_names + ["complexity_analyzer"] %}
+      {% endif %}
+      {% if use_security_scanner %}
+        {% set tool_names = tool_names + ["security_scanner"] %}
+      {% endif %}
+    {% elif programming_language == "Java" %}
+      {% if use_style_checker %}
+        {% set tool_names = tool_names + ["style_checker"] %}
+      {% endif %}
+    {% endif %}
+    {% if use_test_coverage %}
+      {% set tool_names = tool_names + ["test_coverage"] %}
+    {% endif %}
+    {{ tool_names | tojson }}
+    
   tools:
     complexity_analyzer:
       description: "Analyzes code complexity metrics (cyclomatic, cognitive)"

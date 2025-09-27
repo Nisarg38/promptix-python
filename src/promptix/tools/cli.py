@@ -21,8 +21,9 @@ from openai.cli import main as openai_main
 from ..core.config import Config
 from ..core.workspace_manager import WorkspaceManager
 
-# Create a rich console for beautiful output
+# Create rich consoles for beautiful output
 console = Console()
+error_console = Console(stderr=True)
 
 def is_port_in_use(port: int) -> bool:
     """Check if a port is in use."""
@@ -58,7 +59,7 @@ def studio(port: int):
     app_path = os.path.join(os.path.dirname(__file__), "studio", "app.py")
     
     if not os.path.exists(app_path):
-        console.print("[bold red]❌ Error:[/bold red] Promptix Studio app not found.", file=sys.stderr)
+        error_console.print("[bold red]❌ Error:[/bold red] Promptix Studio app not found.")
         sys.exit(1)
     
     try:
@@ -76,9 +77,8 @@ def studio(port: int):
                 new_port = find_available_port(port)
             
             if new_port is None:
-                console.print(
-                    f"[bold red]❌ Error:[/bold red] Could not find an available port after trying {port} through {port+9}",
-                    file=sys.stderr
+                error_console.print(
+                    f"[bold red]❌ Error:[/bold red] Could not find an available port after trying {port} through {port+9}"
                 )
                 sys.exit(1)
             
@@ -101,14 +101,13 @@ def studio(port: int):
             check=True
         )
     except FileNotFoundError:
-        console.print(
+        error_console.print(
             "[bold red]❌ Error:[/bold red] Streamlit is not installed.\n"
-            "[yellow]💡 Fix:[/yellow] pip install streamlit", 
-            file=sys.stderr
+            "[yellow]💡 Fix:[/yellow] pip install streamlit"
         )
         sys.exit(1)
     except subprocess.CalledProcessError as e:
-        console.print(f"[bold red]❌ Error launching Promptix Studio:[/bold red] {str(e)}", file=sys.stderr)
+        error_console.print(f"[bold red]❌ Error launching Promptix Studio:[/bold red] {str(e)}")
         sys.exit(1)
     except KeyboardInterrupt:
         console.print("\n[green]👋 Thanks for using Promptix Studio! See you next time![/green]")
@@ -155,10 +154,10 @@ def create(name: str):
         console.print(success_panel)
         
     except ValueError as e:
-        console.print(f"[bold red]❌ Error:[/bold red] {e}", file=sys.stderr)
+        error_console.print(f"[bold red]❌ Error:[/bold red] {e}")
         sys.exit(1)
     except Exception as e:
-        console.print(f"[bold red]❌ Unexpected error:[/bold red] {e}", file=sys.stderr)
+        error_console.print(f"[bold red]❌ Unexpected error:[/bold red] {e}")
         sys.exit(1)
 
 @agent.command()
@@ -185,7 +184,7 @@ def list():
         console.print(f"\n[green]Found {len(agents)} agent(s)[/green]")
         
     except Exception as e:
-        console.print(f"[bold red]❌ Error listing agents:[/bold red] {e}", file=sys.stderr)
+        error_console.print(f"[bold red]❌ Error listing agents:[/bold red] {e}")
         sys.exit(1)
 
 @cli.command(context_settings=dict(
@@ -210,7 +209,7 @@ def openai(ctx):
         
         sys.exit(openai_main())
     except Exception as e:
-        console.print(f"[bold red]❌ Error:[/bold red] {str(e)}", file=sys.stderr)
+        error_console.print(f"[bold red]❌ Error:[/bold red] {str(e)}")
         sys.exit(1)
 
 def main():
@@ -231,7 +230,7 @@ def main():
         console.print("\n[green]👋 Thanks for using Promptix! See you next time![/green]")
         sys.exit(0)
     except Exception as e:
-        console.print(f"[bold red]❌ Unexpected error:[/bold red] {str(e)}", file=sys.stderr)
+        error_console.print(f"[bold red]❌ Unexpected error:[/bold red] {str(e)}")
         sys.exit(1)
 
 if __name__ == "__main__":
