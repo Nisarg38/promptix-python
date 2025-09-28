@@ -19,7 +19,7 @@ hooks_dir = project_root / "hooks"
 sys.path.insert(0, str(hooks_dir))
 
 # Import the pre-commit hook functions (we'll need to modify the hook to make functions importable)
-from tests.test_helpers.precommit_helper import PreCommitHookTester
+from test_helpers.precommit_helper import PreCommitHookTester
 
 
 class TestPreCommitHookCore:
