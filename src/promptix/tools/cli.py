@@ -21,6 +21,8 @@ from rich import print as rich_print
 from openai.cli import main as openai_main
 from ..core.config import Config
 from ..core.workspace_manager import WorkspaceManager
+from .version_manager import VersionManager
+from .hook_manager import HookManager
 
 # Create rich consoles for beautiful output
 console = Console()
@@ -186,6 +188,221 @@ def list():
         
     except Exception as e:
         error_console.print(f"[bold red]❌ Error listing agents:[/bold red] {e}")
+        sys.exit(1)
+
+@cli.group()
+def version():
+    """🔄 Manage prompt versions"""
+    pass
+
+@version.command()
+def list():
+    """📋 List all agents and their current versions"""
+    try:
+        vm = VersionManager()
+        vm.list_agents()
+    except ValueError as e:
+        error_console.print(f"[bold red]❌ Error:[/bold red] {e}")
+        sys.exit(1)
+    except Exception as e:
+        error_console.print(f"[bold red]❌ Unexpected error:[/bold red] {e}")
+        sys.exit(1)
+
+@version.command()
+@click.argument('agent')
+def versions(agent: str):
+    """📋 List all versions for a specific agent
+    
+    AGENT: Name of the agent to list versions for
+    """
+    try:
+        vm = VersionManager()
+        vm.list_versions(agent)
+    except ValueError as e:
+        error_console.print(f"[bold red]❌ Error:[/bold red] {e}")
+        sys.exit(1)
+    except Exception as e:
+        error_console.print(f"[bold red]❌ Unexpected error:[/bold red] {e}")
+        sys.exit(1)
+
+@version.command()
+@click.argument('agent')
+@click.argument('version_name')
+def get(agent: str, version_name: str):
+    """📖 Get content of a specific version
+    
+    AGENT: Name of the agent
+    VERSION_NAME: Version to retrieve (e.g., v001)
+    """
+    try:
+        vm = VersionManager()
+        vm.get_version(agent, version_name)
+    except ValueError as e:
+        error_console.print(f"[bold red]❌ Error:[/bold red] {e}")
+        sys.exit(1)
+    except Exception as e:
+        error_console.print(f"[bold red]❌ Unexpected error:[/bold red] {e}")
+        sys.exit(1)
+
+@version.command()
+@click.argument('agent')
+@click.argument('version_name')
+def switch(agent: str, version_name: str):
+    """🔄 Switch agent to a specific version
+    
+    AGENT: Name of the agent
+    VERSION_NAME: Version to switch to (e.g., v001)
+    """
+    try:
+        console.print(f"[yellow]🔄 Switching {agent} to {version_name}...[/yellow]")
+        
+        vm = VersionManager()
+        vm.switch_version(agent, version_name)
+        
+        success_panel = Panel(
+            f"[bold green]✅ Successfully switched {agent} to {version_name}[/bold green]\n\n"
+            f"[blue]Next steps:[/blue]\n"
+            f"• Review current.md to see the deployed version\n"
+            f"• Commit changes: git add . && git commit -m 'Switch to {version_name}'\n"
+            f"• The pre-commit hook will create a new version if needed",
+            title="Version Switch Complete",
+            border_style="green"
+        )
+        console.print(success_panel)
+        
+    except ValueError as e:
+        error_console.print(f"[bold red]❌ Error:[/bold red] {e}")
+        sys.exit(1)
+    except Exception as e:
+        error_console.print(f"[bold red]❌ Unexpected error:[/bold red] {e}")
+        sys.exit(1)
+
+@version.command()
+@click.argument('agent')
+@click.option('--name', help='Version name (auto-generated if not provided)')
+@click.option('--notes', default='Manually created', help='Version notes')
+def create(agent: str, name: str, notes: str):
+    """➕ Create a new version from current.md
+    
+    AGENT: Name of the agent
+    """
+    try:
+        console.print(f"[yellow]➕ Creating new version for {agent}...[/yellow]")
+        
+        vm = VersionManager()
+        vm.create_version(agent, name, notes)
+        
+    except ValueError as e:
+        error_console.print(f"[bold red]❌ Error:[/bold red] {e}")
+        sys.exit(1)
+    except Exception as e:
+        error_console.print(f"[bold red]❌ Unexpected error:[/bold red] {e}")
+        sys.exit(1)
+
+@cli.group()
+def hooks():
+    """🔧 Manage git pre-commit hooks"""
+    pass
+
+@hooks.command()
+@click.option('--force', is_flag=True, help='Overwrite existing hook')
+def install(force: bool):
+    """🔧 Install the Promptix pre-commit hook"""
+    try:
+        console.print("[yellow]🔧 Installing Promptix pre-commit hook...[/yellow]")
+        
+        hm = HookManager()
+        hm.install_hook(force)
+        
+        if force or not hm.has_existing_hook():
+            install_panel = Panel(
+                f"[bold green]✅ Promptix pre-commit hook installed![/bold green]\n\n"
+                f"[blue]What happens now:[/blue]\n"
+                f"• Every time you edit current.md and commit, a new version is created\n"
+                f"• When you change current_version in config.yaml, that version is deployed\n"
+                f"• Use 'SKIP_PROMPTIX_HOOK=1 git commit' to bypass when needed\n\n"
+                f"[blue]Try it:[/blue]\n"
+                f"• Edit any prompts/*/current.md file\n"
+                f"• Run: git add . && git commit -m 'Test versioning'\n"
+                f"• Check the new version in prompts/*/versions/",
+                title="Hook Installation Complete",
+                border_style="green"
+            )
+            console.print(install_panel)
+        
+    except ValueError as e:
+        error_console.print(f"[bold red]❌ Error:[/bold red] {e}")
+        sys.exit(1)
+    except Exception as e:
+        error_console.print(f"[bold red]❌ Unexpected error:[/bold red] {e}")
+        sys.exit(1)
+
+@hooks.command()
+def uninstall():
+    """🗑️ Uninstall the Promptix pre-commit hook"""
+    try:
+        console.print("[yellow]🗑️ Uninstalling Promptix pre-commit hook...[/yellow]")
+        
+        hm = HookManager()
+        hm.uninstall_hook()
+        
+    except ValueError as e:
+        error_console.print(f"[bold red]❌ Error:[/bold red] {e}")
+        sys.exit(1)
+    except Exception as e:
+        error_console.print(f"[bold red]❌ Unexpected error:[/bold red] {e}")
+        sys.exit(1)
+
+@hooks.command()
+def enable():
+    """✅ Enable a disabled hook"""
+    try:
+        hm = HookManager()
+        hm.enable_hook()
+    except ValueError as e:
+        error_console.print(f"[bold red]❌ Error:[/bold red] {e}")
+        sys.exit(1)
+    except Exception as e:
+        error_console.print(f"[bold red]❌ Unexpected error:[/bold red] {e}")
+        sys.exit(1)
+
+@hooks.command()
+def disable():
+    """⏸️ Disable the hook temporarily"""
+    try:
+        hm = HookManager()
+        hm.disable_hook()
+    except ValueError as e:
+        error_console.print(f"[bold red]❌ Error:[/bold red] {e}")
+        sys.exit(1)
+    except Exception as e:
+        error_console.print(f"[bold red]❌ Unexpected error:[/bold red] {e}")
+        sys.exit(1)
+
+@hooks.command()
+def status():
+    """📊 Show hook installation status"""
+    try:
+        hm = HookManager()
+        hm.status()
+    except ValueError as e:
+        error_console.print(f"[bold red]❌ Error:[/bold red] {e}")
+        sys.exit(1)
+    except Exception as e:
+        error_console.print(f"[bold red]❌ Unexpected error:[/bold red] {e}")
+        sys.exit(1)
+
+@hooks.command()
+def test():
+    """🧪 Test the hook without committing"""
+    try:
+        hm = HookManager()
+        hm.test_hook()
+    except ValueError as e:
+        error_console.print(f"[bold red]❌ Error:[/bold red] {e}")
+        sys.exit(1)
+    except Exception as e:
+        error_console.print(f"[bold red]❌ Unexpected error:[/bold red] {e}")
         sys.exit(1)
 
 @cli.command(context_settings=dict(

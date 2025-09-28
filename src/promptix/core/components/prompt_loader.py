@@ -223,6 +223,10 @@ How can I help you today?"""
         """
         Load agent data from directory structure.
         
+        Supports both legacy and new version management systems:
+        - Legacy: Uses 'is_live' flags in individual versions
+        - New: Uses 'current_version' tracking in config.yaml
+        
         Args:
             agent_dir: Path to agent directory
             
@@ -284,12 +288,32 @@ How can I help you today?"""
                 'is_live': True,
             }
         
-        # Ensure at least one version is live
+        # NEW: Handle current_version tracking from our auto-versioning system
+        current_version = config_data.get('current_version')
+        if current_version:
+            # Reset all is_live flags
+            for version_data in versions.values():
+                version_data['is_live'] = False
+            
+            # Set the specified current_version as live
+            if current_version in versions:
+                versions[current_version]['is_live'] = True
+                if self._logger:
+                    self._logger.debug(f"Set {current_version} as live version for {agent_dir.name}")
+            else:
+                # Current version not found in versions, but we have current_version specified
+                # This can happen if current.md was switched to a version by our hook system
+                if self._logger:
+                    self._logger.warning(f"current_version '{current_version}' not found in versions for {agent_dir.name}")
+        
+        # Ensure at least one version is live (fallback to legacy behavior)
         live_versions = [k for k, v in versions.items() if v.get('is_live', False)]
         if not live_versions and versions:
             # Make 'current' live if it exists, otherwise make the first version live
             live_key = 'current' if 'current' in versions else list(versions.keys())[0]
             versions[live_key]['is_live'] = True
+            if self._logger:
+                self._logger.debug(f"Fallback: set {live_key} as live version for {agent_dir.name}")
         
         # Return V1-compatible structure
         return {
@@ -301,6 +325,8 @@ How can I help you today?"""
         """
         Load version history from versions/ directory.
         
+        Handles both legacy version files and new auto-versioned files with headers.
+        
         Args:
             versions_dir: Path to versions directory
             base_config: Base configuration to inherit schema and config from
@@ -308,6 +334,8 @@ How can I help you today?"""
         Returns:
             Dictionary of version data
         """
+        import re
+        
         versions = {}
         base_config = base_config or {}
         
@@ -317,15 +345,36 @@ How can I help you today?"""
                 with open(version_file, 'r', encoding='utf-8') as f:
                     content = f.read().strip()
                 
+                # NEW: Remove version headers created by our auto-versioning system
+                # Remove lines like: <!-- Version v001 - Created 2024-03-01T10:00:00 -->
+                content = re.sub(r'^<!--\s*Version\s+.*?-->\s*\n?', '', content, flags=re.MULTILINE)
+                content = content.strip()
+                
+                # Skip empty files
+                if not content:
+                    if self._logger:
+                        self._logger.warning(f"Version file {version_file} is empty, skipping")
+                    continue
+                
                 # Inherit configuration from base config
                 config_section = base_config.get('config', {}).copy()
                 config_section['system_instruction'] = content
+                
+                # NEW: Integrate version metadata from config.yaml if available
+                version_metadata = base_config.get('versions', {}).get(version_name, {})
                 
                 versions[version_name] = {
                     'config': config_section,
                     'schema': base_config.get('schema', {}),  # Inherit schema from base config
                     'tools_config': base_config.get('tools_config', {}),  # Inherit tools_config from base config
-                    'is_live': False  # Historical versions are not live
+                    'is_live': False,  # Historical versions are not live (will be set by current_version logic)
+                    # Include version metadata if available
+                    'metadata': {
+                        'created_at': version_metadata.get('created_at'),
+                        'author': version_metadata.get('author'),
+                        'commit': version_metadata.get('commit'),
+                        'notes': version_metadata.get('notes'),
+                    } if version_metadata else {}
                 }
             except Exception as e:
                 if self._logger:
