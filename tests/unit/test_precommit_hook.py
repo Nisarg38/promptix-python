@@ -96,6 +96,11 @@ class TestPreCommitHookCore:
         """Test finding changes to both current.md and config.yaml"""
         tester = PreCommitHookTester(temp_workspace)
         
+        # Create the other_agent directory and file for the test
+        other_agent_dir = temp_workspace / "prompts" / "other_agent"
+        other_agent_dir.mkdir()
+        (other_agent_dir / "current.md").write_text("Other agent content")
+        
         staged_files = [
             "prompts/test_agent/current.md",
             "prompts/test_agent/config.yaml",

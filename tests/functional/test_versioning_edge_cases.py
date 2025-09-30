@@ -350,20 +350,17 @@ class TestVersioningErrorConditions:
         versions_dir = agent_dir / "versions"
         versions_dir.mkdir()
         
-        # Make versions directory read-only
-        versions_dir.chmod(0o444)
+        versions_dir = agent_dir / "versions"
+        versions_dir.mkdir()
         
-        try:
-            tester = PreCommitHookTester(error_workspace)
+        tester = PreCommitHookTester(error_workspace)
+
+        # Simulate permission denied when copying into versions directory
+        with patch('shutil.copy2', side_effect=PermissionError("Permission denied")):
             version_name = tester.create_version_snapshot("prompts/permission_agent/current.md")
-            
-            # Should fail gracefully
-            assert version_name is None
-            
-        finally:
-            # Restore permissions for cleanup
-            versions_dir.chmod(0o755)
-    
+
+        # Should fail gracefully
+        assert version_name is None
     def test_corrupted_git_repository(self, error_workspace):
         """Test behavior with corrupted git repository"""
         agent_dir = error_workspace / "prompts" / "git_corrupt_agent"

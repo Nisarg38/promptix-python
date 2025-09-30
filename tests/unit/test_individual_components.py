@@ -205,6 +205,7 @@ class TestAdapterComponents:
 
     def test_openai_adapter_initialization(self):
         """Test OpenAI adapter initialization."""
+        pytest.importorskip("openai", reason="OpenAI adapter depends on the optional openai package")
         from promptix.core.adapters.openai import OpenAIAdapter
         
         try:
@@ -216,6 +217,7 @@ class TestAdapterComponents:
 
     def test_openai_adapter_config_preparation(self):
         """Test OpenAI adapter config preparation."""
+        pytest.importorskip("openai", reason="OpenAI adapter depends on the optional openai package")
         from promptix.core.adapters.openai import OpenAIAdapter
         
         try:
@@ -234,6 +236,9 @@ class TestAdapterComponents:
         except Exception:
             # Method might work differently or require different parameters
             pass
+
+        pytest.importorskip("anthropic", reason="Anthropic adapter depends on the optional anthropic package")
+        from promptix.core.adapters.anthropic import AnthropicAdapter
 
     def test_anthropic_adapter_initialization(self):
         """Test Anthropic adapter initialization."""

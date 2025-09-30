@@ -266,7 +266,23 @@ class PreCommitHookTester:
     def stage_files(self, files: List[str]):
         """Stage files for git commit"""
         try:
-            subprocess.run(['git', 'add'] + files, check=True, cwd=self.workspace_path)
+            repo_root = self.workspace_path.resolve()
+            normalized: List[str] = []
+            for file in files:
+                path = Path(file)
+                if not path.is_absolute():
+                    path = (repo_root / path).resolve()
+                else:
+                    path = path.resolve()
+                try:
+                    rel = path.relative_to(repo_root)
+                except ValueError:
+                    self.print_status(f"Skipped staging outside repo: {path}", "warning")
+                    continue
+                normalized.append(rel.as_posix())
+            if not normalized:
+                return
+            subprocess.run(['git', 'add', '--'] + normalized, check=True, cwd=repo_root)
         except subprocess.CalledProcessError as e:
             self.print_status(f"Failed to stage files: {e}", "warning")
     

@@ -33,6 +33,7 @@ class TestVersioningIntegration:
     def git_workspace(self):
         """Create a complete git workspace with Promptix structure"""
         temp_dir = Path(tempfile.mkdtemp(prefix="test_integration_"))
+        prev_cwd = Path.cwd()
         
         # Initialize git repo
         os.chdir(temp_dir)
@@ -92,7 +93,7 @@ class TestVersioningIntegration:
         yield temp_dir
         
         # Cleanup
-        os.chdir("/")
+        os.chdir(prev_cwd)
         shutil.rmtree(temp_dir)
     
     def test_complete_development_workflow(self, git_workspace):
@@ -326,9 +327,10 @@ class TestVersioningIntegration:
         assert processed_count == 2
         
         # Verify versions created for both agents
-        assert (git_workspace / "prompts" / "test_agent" / "versions").glob("v*.md")
-        assert (git_workspace / "prompts" / "agent2" / "versions").glob("v*.md")
-        
+        test_agent_versions = list((git_workspace / "prompts" / "test_agent" / "versions").glob("v*.md"))
+        agent2_versions = list((git_workspace / "prompts" / "agent2" / "versions").glob("v*.md"))
+        assert test_agent_versions
+        assert agent2_versions
         # Test API can access both agents
         with patch('promptix.core.config.config.get_prompts_workspace_path', 
                    return_value=git_workspace / "prompts"), \

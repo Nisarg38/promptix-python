@@ -468,10 +468,9 @@ class TestHookManagerErrorHandling:
             captured_output = io.StringIO()
             with patch('sys.stderr', captured_output):
                 hm.install_hook()
-            
             output = captured_output.getvalue()
-            # Should handle error gracefully
-    
+        assert "access denied" in output.lower()
+        assert not hm.pre_commit_hook.exists()
     def test_corrupted_hook_file(self, temp_workspace):
         """Test handling corrupted hook files"""
         hm = HookManager(str(temp_workspace))

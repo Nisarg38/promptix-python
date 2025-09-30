@@ -21,17 +21,26 @@ class HookManager:
     def __init__(self, workspace_path: Optional[str] = None):
         """Initialize with workspace path"""
         self.workspace_path = Path(workspace_path) if workspace_path else Path.cwd()
+        # Locate the git directory, supporting both real dirs and worktree pointer files
         self.git_dir = self.workspace_path / '.git'
+        if self.git_dir.is_file():
+            gitdir_line = self.git_dir.read_text().strip()
+            if gitdir_line.lower().startswith("gitdir:"):
+                resolved = (self.git_dir.parent / gitdir_line.split(":", 1)[1].strip()).resolve()
+                self.git_dir = resolved
+            else:
+                raise ValueError(f"Unsupported .git file format in {self.workspace_path}")
+
+        # Now safe to build hook paths off the resolved git directory
         self.hooks_dir = self.git_dir / 'hooks'
         self.pre_commit_hook = self.hooks_dir / 'pre-commit'
         self.backup_hook = self.hooks_dir / 'pre-commit.backup'
-        
-        # Path to our hook script
+
+        # Path to our hook script in the workspace
         self.promptix_hook = self.workspace_path / 'hooks' / 'pre-commit'
-        
+
         if not self.git_dir.exists():
             raise ValueError(f"Not a git repository: {self.workspace_path}")
-    
     def print_status(self, message: str, status: str = "info"):
         """Print colored status messages"""
         icons = {

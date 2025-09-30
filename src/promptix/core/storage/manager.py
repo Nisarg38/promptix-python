@@ -1,7 +1,7 @@
 import json
 import warnings
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from .loaders import PromptLoaderFactory
 from .utils import create_default_prompts_file, create_default_prompts_folder
 from ...enhancements.logging import setup_logging
@@ -24,7 +24,7 @@ class PromptManager:
         self._logger = setup_logging()
         self._load_prompts()
     
-    def _get_prompt_file(self) -> Path:
+    def _get_prompt_file(self) -> Optional[Path]:
         """Get the prompt file path using centralized configuration."""
         # Check for unsupported JSON files first
         unsupported_files = config.check_for_unsupported_files()
@@ -113,8 +113,12 @@ class PromptManager:
         """Public method to reload prompts from storage."""
         self._load_prompts()
 
-    def _format_prompt_for_storage(self, prompt_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _format_prompt_for_storage(self, prompt_data: Any) -> Any:
         """Convert multiline prompts to single line with escaped newlines."""
+        # Handle non-dict values (like schema float) directly
+        if not isinstance(prompt_data, dict):
+            return prompt_data
+            
         formatted_data = prompt_data.copy()
         
         # Process each version's system_message
@@ -133,6 +137,16 @@ class PromptManager:
         """Save prompts to local YAML prompts file (JSON no longer supported)."""
         try:
             prompt_file = self._get_prompt_file()
+            
+            # Handle folder-based mode
+            if prompt_file is None and self._folder_based:
+                # In folder-based mode, create a fallback YAML file in the prompts directory
+                prompt_file = self._prompts_directory / "prompts.yaml"
+                self._logger.info(f"Folder-based mode detected. Saving to fallback file: {prompt_file}")
+            elif prompt_file is None:
+                # Shouldn't happen, but provide a safe fallback
+                raise ValueError("No valid prompt file path found. Unable to save prompts.")
+            
             loader = PromptLoaderFactory.get_loader(prompt_file)
             formatted_prompts = {
                 prompt_id: self._format_prompt_for_storage(prompt_data)

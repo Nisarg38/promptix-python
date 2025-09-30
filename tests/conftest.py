@@ -98,11 +98,11 @@ def sample_prompts_data(test_prompts_dir):
     # This converts folder structure to the old nested dict format
     prompts_data = {}
     
-    for prompt_name in TEST_PROMPT_NAMES:
-        prompt_dir = test_prompts_dir / prompt_name
-        if not prompt_dir.exists():
+    for prompt_dir in test_prompts_dir.iterdir():
+        if not prompt_dir.is_dir():
             continue
-            
+        prompt_name = prompt_dir.name
+
         config_file = prompt_dir / "config.yaml"
         if not config_file.exists():
             continue
@@ -149,8 +149,6 @@ def sample_prompts_data(test_prompts_dir):
             }
         
         prompts_data[prompt_name] = {"versions": versions}
-    
-    return prompts_data
 
 @pytest.fixture
 def edge_case_data():
@@ -339,6 +337,10 @@ class MockPromptLoader:
         # Load prompts from folder structure
         for prompt_name in TEST_PROMPT_NAMES:
             prompt_dir = self.prompts_dir / prompt_name
+        for prompt_dir in self.prompts_dir.iterdir():
+            if not prompt_dir.is_dir():
+                continue
+            prompt_name = prompt_dir.name
             if not prompt_dir.exists():
                 continue
                 
@@ -388,9 +390,6 @@ class MockPromptLoader:
                 }
             
             self.prompts_data[prompt_name] = {"versions": versions}
-        
-        return self.prompts_data
-    
     def is_loaded(self):
         """Check if prompts are loaded."""
         return self._loaded

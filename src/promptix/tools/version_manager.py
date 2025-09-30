@@ -43,6 +43,43 @@ class VersionManager:
         }
         print(f"{icons.get(status, '📝')} {message}")
     
+    def _validate_path(self, base_dir: Path, candidate_path: Path, path_type: str = "path") -> bool:
+        """
+        Validate that a candidate path is within the expected base directory.
+        Prevents directory traversal attacks.
+        
+        Args:
+            base_dir: The expected base directory
+            candidate_path: The path to validate
+            path_type: Description of the path type for error messages
+            
+        Returns:
+            True if path is safe, False otherwise
+        """
+        try:
+            # Resolve both paths to handle symbolic links and relative components
+            resolved_base = base_dir.resolve()
+            resolved_candidate = candidate_path.resolve()
+            
+            # Check if the candidate path is within the base directory
+            # Using commonpath to ensure proper containment check
+            try:
+                common_path = Path(os.path.commonpath([resolved_base, resolved_candidate]))
+                is_contained = common_path == resolved_base
+            except ValueError:
+                # commonpath raises ValueError if paths are on different drives (Windows)
+                is_contained = False
+            
+            if not is_contained:
+                self.print_status(f"Invalid {path_type}: path traversal detected", "error")
+                return False
+                
+            return True
+            
+        except Exception as e:
+            self.print_status(f"Path validation error for {path_type}: {e}", "error")
+            return False
+    
     def find_agent_dirs(self) -> List[Path]:
         """Find all agent directories in prompts/"""
         agent_dirs = []
@@ -100,6 +137,10 @@ class VersionManager:
         """List all versions for a specific agent"""
         agent_dir = self.prompts_dir / agent_name
         
+        # Validate agent path to prevent directory traversal
+        if not self._validate_path(self.prompts_dir, agent_dir, "agent path"):
+            return
+        
         if not agent_dir.exists():
             self.print_status(f"Agent '{agent_name}' not found", "error")
             return
@@ -146,12 +187,22 @@ class VersionManager:
                 print(f"    👤 Author: {author}")
                 print(f"    📝 Notes: {notes}")
             print()
-    
     def get_version(self, agent_name: str, version_name: str):
         """Get the content of a specific version"""
         agent_dir = self.prompts_dir / agent_name
-        version_file = agent_dir / 'versions' / f'{version_name}.md'
         
+        # Validate agent path to prevent directory traversal
+        if not self._validate_path(self.prompts_dir, agent_dir, "agent path"):
+            return
+        
+        versions_dir = agent_dir / 'versions'
+        if not self._validate_path(agent_dir, versions_dir, "versions directory"):
+            return
+        version_file = versions_dir / f'{version_name}.md'
+        
+        # Validate version file path to prevent directory traversal
+        if not self._validate_path(versions_dir, version_file, "version file path"):
+            return
         if not version_file.exists():
             self.print_status(f"Version {version_name} not found for {agent_name}", "error")
             return
@@ -174,9 +225,19 @@ class VersionManager:
     def switch_version(self, agent_name: str, version_name: str):
         """Switch an agent to a specific version"""
         agent_dir = self.prompts_dir / agent_name
+        
+        # Validate agent path to prevent directory traversal
+        if not self._validate_path(self.prompts_dir, agent_dir, "agent path"):
+            return
+        
         config_path = agent_dir / 'config.yaml'
         current_md = agent_dir / 'current.md'
-        version_file = agent_dir / 'versions' / f'{version_name}.md'
+        versions_dir = agent_dir / 'versions'
+        version_file = versions_dir / f'{version_name}.md'
+        
+        # Validate version file path to prevent directory traversal
+        if not self._validate_path(versions_dir, version_file, "version file path"):
+            return
         
         if not agent_dir.exists():
             self.print_status(f"Agent '{agent_name}' not found", "error")
@@ -224,6 +285,11 @@ class VersionManager:
     def create_version(self, agent_name: str, version_name: Optional[str] = None, notes: str = "Manually created"):
         """Create a new version from current.md"""
         agent_dir = self.prompts_dir / agent_name
+        
+        # Validate agent path to prevent directory traversal
+        if not self._validate_path(self.prompts_dir, agent_dir, "agent path"):
+            return
+        
         config_path = agent_dir / 'config.yaml'
         current_md = agent_dir / 'current.md'
         versions_dir = agent_dir / 'versions'
@@ -259,6 +325,10 @@ class VersionManager:
             version_name = f'v{next_num:03d}'
         
         version_file = versions_dir / f'{version_name}.md'
+        
+        # Validate version file path to prevent directory traversal
+        if not self._validate_path(versions_dir, version_file, "version file path"):
+            return
         
         if version_file.exists():
             self.print_status(f"Version {version_name} already exists", "error")

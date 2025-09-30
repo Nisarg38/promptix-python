@@ -312,9 +312,10 @@ def install(force: bool):
         console.print("[yellow]🔧 Installing Promptix pre-commit hook...[/yellow]")
         
         hm = HookManager()
+        had_existing_hook = hm.has_existing_hook()
         hm.install_hook(force)
-        
-        if force or not hm.has_existing_hook():
+
+        if force or not had_existing_hook:
             install_panel = Panel(
                 f"[bold green]✅ Promptix pre-commit hook installed![/bold green]\n\n"
                 f"[blue]What happens now:[/blue]\n"
@@ -329,7 +330,6 @@ def install(force: bool):
                 border_style="green"
             )
             console.print(install_panel)
-        
     except ValueError as e:
         error_console.print(f"[bold red]❌ Error:[/bold red] {e}")
         sys.exit(1)

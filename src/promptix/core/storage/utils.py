@@ -66,21 +66,31 @@ def create_default_prompts_folder(prompts_dir: Path) -> Dict[str, Any]:
         }
     }
     
-    with open(welcome_dir / "config.yaml", 'w') as f:
-        yaml.dump(config_data, f, sort_keys=False, allow_unicode=True)
+    # Write config.yaml if it doesn’t already exist
+    config_path = welcome_dir / "config.yaml"
+    if config_path.exists():
+        logger.warning("config.yaml already exists in %s; skipping scaffold write", welcome_dir)
+    else:
+        with config_path.open("x", encoding="utf-8") as f:
+            yaml.dump(config_data, f, sort_keys=False, allow_unicode=True)
     
     # Create current.md
     template_content = "You are a helpful AI assistant that provides clear and concise responses to {{query}}."
     if 'context' in template_content or True:  # Always include context handling
         template_content += " Use the following context if provided: {{context}}"
     
-    with open(welcome_dir / "current.md", 'w') as f:
-        f.write(template_content)
+    current_path = welcome_dir / "current.md"
+    if current_path.exists():
+        logger.warning("current.md already exists in %s; skipping scaffold write", welcome_dir)
+    else:
+        current_path.write_text(template_content, encoding="utf-8")
     
     # Create v1.md
-    with open(welcome_dir / "versions" / "v1.md", 'w') as f:
-        f.write(template_content)
-    
+    version_path = welcome_dir / "versions" / "v1.md"
+    if version_path.exists():
+        logger.warning("versions/v1.md already exists in %s; skipping scaffold write", welcome_dir)
+    else:
+        version_path.write_text(template_content, encoding="utf-8")
     logger.info(f"Created new prompts folder structure at {prompts_dir} with a sample prompt")
     
     # Return equivalent structure for backward compatibility

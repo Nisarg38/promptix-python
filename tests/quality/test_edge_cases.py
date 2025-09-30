@@ -501,11 +501,10 @@ class TestResourceLimitEdgeCases:
         many_vars = {f"var_{i}": f"value_{i}" for i in range(1000)}
         
         try:
-            config = (
+            builder = (
                 Promptix.builder("SimpleChat")
                 .with_user_name("test")
                 .with_assistant_name("test")
-                **many_vars  # This syntax might not work, alternative approach below
             )
             
             # Alternative approach - add variables one by one

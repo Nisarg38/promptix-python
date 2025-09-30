@@ -21,6 +21,9 @@ class PromptManager:
             )
         
         # Use folder-based prompt management
+        # Note: FolderBasedPromptManager automatically handles migration
+        # from existing YAML files to folder structure on first initialization.
+        # Your existing prompts.yaml will be backed up and migrated safely.
         self._folder_manager = FolderBasedPromptManager()
     
     def load_prompts(self) -> Dict:

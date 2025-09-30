@@ -257,8 +257,11 @@ class TestEnhancedPromptLoader:
             yaml.dump(config, f, default_flow_style=False)
         
         # Reload and check that v003 is now live
-        loader = PromptLoader()
-        prompts = loader.load_prompts(force_reload=True)
+        with patch('promptix.core.config.config.get_prompts_workspace_path',
+                   return_value=temp_workspace / "prompts"), \
+             patch('promptix.core.config.config.has_prompts_workspace', return_value=True):
+            loader = PromptLoader()
+            prompts = loader.load_prompts(force_reload=True)
         
         live_versions = [k for k, v in prompts['test_agent']['versions'].items() if v.get('is_live', False)]
         assert 'v003' in live_versions

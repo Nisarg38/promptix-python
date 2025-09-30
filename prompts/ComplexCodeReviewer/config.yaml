@@ -60,17 +60,14 @@ config:
 tools_config:
   tools_template: >-
     {% set tool_names = [] %}
-    {% if programming_language == "Python" %}
-      {% if use_complexity_analyzer %}
-        {% set tool_names = tool_names + ["complexity_analyzer"] %}
-      {% endif %}
-      {% if use_security_scanner %}
-        {% set tool_names = tool_names + ["security_scanner"] %}
-      {% endif %}
-    {% elif programming_language == "Java" %}
-      {% if use_style_checker %}
-        {% set tool_names = tool_names + ["style_checker"] %}
-      {% endif %}
+    {% if use_complexity_analyzer %}
+      {% set tool_names = tool_names + ["complexity_analyzer"] %}
+    {% endif %}
+    {% if use_security_scanner %}
+      {% set tool_names = tool_names + ["security_scanner"] %}
+    {% endif %}
+    {% if use_style_checker and programming_language in ["Python", "Java"] %}
+      {% set tool_names = tool_names + ["style_checker"] %}
     {% endif %}
     {% if use_test_coverage %}
       {% set tool_names = tool_names + ["test_coverage"] %}
