@@ -75,33 +75,6 @@ response = client.chat.completions.create(**config)
 
 ---
 
-## 💖 Show Some Love
-
-**Promptix is free and open-source**, but if you're using it in your enterprise or finding it valuable, we'd love to hear about it! Here are some ways to show support:
-
-### 🌟 Enterprise Users
-If your company is using Promptix, we'd be thrilled to:
-- **Feature you** in our "Who's Using Promptix" section
-- **Get your feedback** on enterprise features
-- **Share your success story** (with permission)
-
-### 💰 Support the Project
-- ⭐ **Star this repository** - it helps others discover Promptix
-- 🐛 **Report issues** or suggest features
-- 💬 **Share your experience** - testimonials help the community
-- ☕ **Buy me a coffee** - [GitHub Sponsors](https://github.com/sponsors/Nisarg38) or [Ko-fi](https://ko-fi.com/promptix)
-
-### 🤝 Enterprise Support
-For enterprise users who want to:
-- Get priority support
-- Request custom features
-- Get implementation guidance
-- Discuss commercial licensing
-
-[Contact us](mailto:contact@promptix.io) - we'd love to chat!
-
----
-
 ## 🚀 Quick Start in 30 Seconds
 
 ### 1. Install Promptix
@@ -113,6 +86,26 @@ pip install promptix
 ```bash
 promptix studio  # Opens web UI at http://localhost:8501
 ```
+
+This creates a clean, organized structure in your repository:
+
+```
+prompts/
+├── CustomerSupport/
+│   ├── config.yaml          # Prompt metadata and settings
+│   ├── current.md           # Current live version
+│   └── versions/
+│       ├── v1.md            # Version history
+│       ├── v2.md
+│       └── v3.md
+└── CodeReviewer/
+    ├── config.yaml
+    ├── current.md
+    └── versions/
+        └── v1.md
+```
+
+**That's it!** Your prompts live in your repo, version-controlled with Git, just like your code.
 
 ### 3. Use It in Your Code
 ```python
@@ -385,6 +378,47 @@ config = (
 ## 🧪 Advanced Features
 
 <details>
+<summary><b>How Versioning Works</b></summary>
+
+Promptix stores prompts as files in your repository, making them part of your codebase:
+
+```
+prompts/
+└── CustomerSupport/
+    ├── config.yaml              # Metadata: active version, description
+    ├── current.md               # Symlink to live version (e.g., v3.md)
+    └── versions/
+        ├── v1.md                # First version
+        ├── v2.md                # Tested, but not live yet
+        └── v3.md                # Currently live (linked by current.md)
+```
+
+**Development Workflow:**
+
+1. **Create new version** in Promptix Studio or by adding `v4.md`
+2. **Test in development:**
+   ```python
+   # Test new version without affecting production
+   test_config = Promptix.builder("CustomerSupport", version="v4").build()
+   ```
+
+3. **Run your test suite** with the new prompt version
+
+4. **Promote to live** in Studio (updates `config.yaml` and `current.md`)
+
+5. **Production uses new version:**
+   ```python
+   # This now uses v4 automatically
+   prod_config = Promptix.builder("CustomerSupport").build()
+   ```
+
+6. **Rollback if needed:** Change active version in Studio instantly
+
+**All changes are tracked in Git** - you get full history, diffs, and blame for prompts just like code!
+
+</details>
+
+<details>
 <summary><b>Custom Tools Configuration</b></summary>
 
 ```python
@@ -457,6 +491,37 @@ Promptix is actively developed and welcomes contributions!
 - 📢 Share your experience using Promptix
 
 Your feedback helps make Promptix better for everyone!
+
+---
+
+## 💖 Support Promptix
+
+**Promptix is free and open-source**, built to solve real problems in production LLM applications. If you're finding it valuable, here's how you can help:
+
+### 🌟 For Teams & Enterprises
+
+If your company is using Promptix in production, we'd love to hear about it!
+
+- **Be featured** in our "Who's Using Promptix" section
+- **Share feedback** on enterprise features you need
+- **Tell your success story** (with permission)
+
+### 🚀 Show Your Support
+
+- ⭐ **Star this repository** - helps others discover Promptix
+- 🐛 **Report issues** and suggest features
+- 💬 **Share testimonials** - your experience helps the community grow
+- ☕ **Sponsor the project** - [GitHub Sponsors](https://github.com/sponsors/Nisarg38)
+
+### 🤝 Enterprise Support
+
+Need help with production deployments? We offer:
+- Priority support for critical issues
+- Custom feature development
+- Implementation guidance and consulting
+- Commercial licensing options
+
+**[Get in touch](mailto:contact@promptix.io)** - let's discuss how we can help!
 
 ---
 

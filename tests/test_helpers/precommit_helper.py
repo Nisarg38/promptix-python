@@ -29,7 +29,7 @@ class PreCommitHookTester:
         self.workspace_path = Path(workspace_path)
     
     def print_status(self, message: str, status: str = "info"):
-        """Print status messages (can be mocked in tests)"""
+        """Print status messages with Windows compatibility (can be mocked in tests)"""
         icons = {
             "info": "📝",
             "success": "✅", 
@@ -37,7 +37,20 @@ class PreCommitHookTester:
             "error": "❌",
             "version": "🔄"
         }
-        print(f"{icons.get(status, '📝')} {message}")
+        
+        # Handle Windows encoding issues
+        try:
+            print(f"{icons.get(status, '📝')} {message}")
+        except UnicodeEncodeError:
+            # Fallback for Windows cmd/powershell with limited encoding
+            simple_icons = {
+                "info": "[INFO]",
+                "success": "[OK]", 
+                "warning": "[WARN]",
+                "error": "[ERROR]",
+                "version": "[VERSION]"
+            }
+            print(f"{simple_icons.get(status, '[INFO]')} {message}")
     
     def is_hook_bypassed(self) -> bool:
         """Check if user wants to bypass the hook"""
@@ -144,17 +157,15 @@ class PreCommitHookTester:
         version_file = versions_dir / f'{version_name}.md'
         
         try:
-            # Copy current.md to new version file
-            shutil.copy2(current_path, version_file)
+            # Copy current.md to new version file with explicit UTF-8 encoding
+            with open(current_path, 'r', encoding='utf-8') as src:
+                content = src.read()
             
             # Add version header to the file
-            with open(version_file, 'r') as f:
-                content = f.read()
-            
             version_header = f"<!-- Version {version_name} - Created {datetime.now().isoformat()} -->\n"
-            with open(version_file, 'w') as f:
-                f.write(version_header)
-                f.write(content)
+            with open(version_file, 'w', encoding='utf-8') as dest:
+                dest.write(version_header)
+                dest.write(content)
             
             # Update config with new version info
             if 'versions' not in config:
@@ -223,9 +234,9 @@ class PreCommitHookTester:
         try:
             # Check if current.md differs from the specified version
             if current_md.exists():
-                with open(current_md, 'r') as f:
+                with open(current_md, 'r', encoding='utf-8') as f:
                     current_content = f.read()
-                with open(version_file, 'r') as f:
+                with open(version_file, 'r', encoding='utf-8') as f:
                     version_content = f.read()
                     # Remove version header if present
                     version_content = re.sub(r'^<!-- Version.*? -->\n', '', version_content)
@@ -233,17 +244,14 @@ class PreCommitHookTester:
                 if current_content.strip() == version_content.strip():
                     return False  # Already matches, no need to deploy
             
-            # Deploy the version to current.md
-            shutil.copy2(version_file, current_md)
-            
-            # Remove version header from current.md
-            with open(current_md, 'r') as f:
-                content = f.read()
+            # Deploy the version to current.md with explicit UTF-8 encoding
+            with open(version_file, 'r', encoding='utf-8') as src:
+                content = src.read()
             
             # Remove version header
             content = re.sub(r'^<!-- Version.*? -->\n', '', content)
-            with open(current_md, 'w') as f:
-                f.write(content)
+            with open(current_md, 'w', encoding='utf-8') as dest:
+                dest.write(content)
             
             # Stage current.md
             self.stage_files([str(current_md)])

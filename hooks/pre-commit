@@ -28,7 +28,7 @@ from typing import List, Optional, Tuple, Dict, Any
 
 
 def print_status(message: str, status: str = "info"):
-    """Print colored status messages"""
+    """Print colored status messages with Windows compatibility"""
     icons = {
         "info": "📝",
         "success": "✅", 
@@ -36,7 +36,20 @@ def print_status(message: str, status: str = "info"):
         "error": "❌",
         "version": "🔄"
     }
-    print(f"{icons.get(status, '📝')} {message}")
+    
+    # Handle Windows encoding issues
+    try:
+        print(f"{icons.get(status, '📝')} {message}")
+    except UnicodeEncodeError:
+        # Fallback for Windows cmd/powershell with limited encoding
+        simple_icons = {
+            "info": "[INFO]",
+            "success": "[OK]", 
+            "warning": "[WARN]",
+            "error": "[ERROR]",
+            "version": "[VERSION]"
+        }
+        print(f"{simple_icons.get(status, '[INFO]')} {message}")
 
 
 def is_hook_bypassed() -> bool:
@@ -231,8 +244,8 @@ def create_version_snapshot(current_md_path: str) -> Optional[str]:
     versions_dir.mkdir(exist_ok=True)
     
     try:
-        # Read current.md content
-        with open(current_path, 'r') as f:
+        # Read current.md content with explicit UTF-8 encoding
+        with open(current_path, 'r', encoding='utf-8') as f:
             current_content = f.read()
         
         # Prepare version content with header (will be added with actual version name)
@@ -247,13 +260,13 @@ def create_version_snapshot(current_md_path: str) -> Optional[str]:
         
         version_file, version_name = result
         
-        # Add version header to the file
-        with open(version_file, 'r') as f:
+        # Add version header to the file with explicit UTF-8 encoding
+        with open(version_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         created_at = datetime.now().isoformat()
         version_header = f"<!-- Version {version_name} - Created {created_at} -->\n"
-        with open(version_file, 'w') as f:
+        with open(version_file, 'w', encoding='utf-8') as f:
             f.write(version_header)
             f.write(content)
         
@@ -326,9 +339,9 @@ def handle_version_switch(config_path: str) -> bool:
     try:
         # Check if current.md differs from the specified version
         if current_md.exists():
-            with open(current_md, 'r') as f:
+            with open(current_md, 'r', encoding='utf-8') as f:
                 current_content = f.read()
-            with open(version_file, 'r') as f:
+            with open(version_file, 'r', encoding='utf-8') as f:
                 version_content = f.read()
                 # Remove version header if present
                 version_content = re.sub(r'^<!-- Version.*? -->\n', '', version_content)
@@ -336,17 +349,14 @@ def handle_version_switch(config_path: str) -> bool:
             if current_content.strip() == version_content.strip():
                 return False  # Already matches, no need to deploy
         
-        # Deploy the version to current.md
-        shutil.copy2(version_file, current_md)
-        
-        # Remove version header from current.md
-        with open(current_md, 'r') as f:
-            content = f.read()
+        # Deploy the version to current.md with explicit UTF-8 encoding
+        with open(version_file, 'r', encoding='utf-8') as src:
+            content = src.read()
         
         # Remove version header
         content = re.sub(r'^<!-- Version.*? -->\n', '', content)
-        with open(current_md, 'w') as f:
-            f.write(content)
+        with open(current_md, 'w', encoding='utf-8') as dest:
+            dest.write(content)
         
         # Stage current.md
         stage_files([str(current_md)])
