@@ -91,14 +91,15 @@ def test_prompts_dir():
     """Fixture providing path to test prompts directory."""
     return TEST_PROMPTS_DIR
 
-@pytest.fixture
-def sample_prompts_data(test_prompts_dir):
-    """Fixture providing sample prompt data for testing (legacy compatibility)."""
-    # For backward compatibility with tests expecting the old structure
-    # This converts folder structure to the old nested dict format
+def _load_prompts_from_directory(prompts_dir: Path) -> Dict[str, Any]:
+    """Helper function to load prompts from a directory structure.
+    
+    This shared implementation is used by both sample_prompts_data fixture
+    and MockPromptLoader to ensure consistency.
+    """
     prompts_data = {}
     
-    for prompt_dir in test_prompts_dir.iterdir():
+    for prompt_dir in prompts_dir.iterdir():
         if not prompt_dir.is_dir():
             continue
         prompt_name = prompt_dir.name
@@ -152,6 +153,13 @@ def sample_prompts_data(test_prompts_dir):
     
     return prompts_data
 
+
+@pytest.fixture
+def sample_prompts_data(test_prompts_dir):
+    """Fixture providing sample prompt data for testing (legacy compatibility)."""
+    # Use the shared helper function
+    return _load_prompts_from_directory(test_prompts_dir)
+
 @pytest.fixture
 def edge_case_data():
     """Fixture providing edge case prompt data for testing."""
@@ -167,10 +175,13 @@ def all_test_data(sample_prompts_data, edge_case_data):
     return combined
 
 @pytest.fixture
-def temp_prompts_file(test_prompts_dir):
-    """Provide path to test prompts directory (folder-based structure)."""
-    # For tests that expect a file path, we return the directory
-    # This maintains compatibility while using the new structure
+def temp_prompts_dir_compat(test_prompts_dir):
+    """Provide path to test prompts directory for compatibility.
+    
+    NOTE: Despite the historical name, this returns a DIRECTORY path (not a file path).
+    This fixture exists for backward compatibility with tests that were written
+    before the workspace-based structure was introduced.
+    """
     yield str(test_prompts_dir)
 
 @pytest.fixture
@@ -336,62 +347,8 @@ class MockPromptLoader:
         """Mock loading prompts from folder structure."""
         self._loaded = True
         
-        # Load prompts from folder structure
-        for prompt_name in TEST_PROMPT_NAMES:
-            prompt_dir = self.prompts_dir / prompt_name
-        for prompt_dir in self.prompts_dir.iterdir():
-            if not prompt_dir.is_dir():
-                continue
-            prompt_name = prompt_dir.name
-            if not prompt_dir.exists():
-                continue
-                
-            config_file = prompt_dir / "config.yaml"
-            if not config_file.exists():
-                continue
-                
-            with open(config_file, 'r') as f:
-                config = yaml.safe_load(f)
-            
-            # Read current template
-            current_file = prompt_dir / "current.md"
-            current_template = ""
-            if current_file.exists():
-                with open(current_file, 'r') as f:
-                    current_template = f.read()
-            
-            # Read versioned templates
-            versions = {}
-            versions_dir = prompt_dir / "versions"
-            if versions_dir.exists():
-                for version_file in versions_dir.glob("*.md"):
-                    version_name = version_file.stem
-                    with open(version_file, 'r') as f:
-                        template = f.read()
-                    
-                    versions[version_name] = {
-                        "is_live": version_name == "v1",  # Assume v1 is live for testing
-                        "config": {
-                            "system_instruction": template,
-                            "model": config.get("config", {}).get("model", "gpt-3.5-turbo"),
-                            "temperature": config.get("config", {}).get("temperature", 0.7)
-                        },
-                        "schema": config.get("schema", {})
-                    }
-            
-            # Add current as live version if no versions found
-            if not versions:
-                versions["v1"] = {
-                    "is_live": True,
-                    "config": {
-                        "system_instruction": current_template,
-                        "model": config.get("config", {}).get("model", "gpt-3.5-turbo"),
-                        "temperature": config.get("config", {}).get("temperature", 0.7)
-                    },
-                    "schema": config.get("schema", {})
-                }
-            
-            self.prompts_data[prompt_name] = {"versions": versions}
+        # Use the shared helper function
+        self.prompts_data = _load_prompts_from_directory(self.prompts_dir)
         
         return self.prompts_data
     

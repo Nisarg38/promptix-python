@@ -25,12 +25,10 @@ from promptix.core.exceptions import (
     VariableValidationError,
     RequiredVariableError,
     ConfigurationError,
-    UnsupportedClientError,
     InvalidMemoryFormatError
 )
-from promptix.core.container import Container, get_container, reset_container
+from promptix.core.container import Container, reset_container
 from promptix.core.base import Promptix  # Use current implementation
-from promptix.core.builder import PromptixBuilder  # Use current implementation
 
 
 class TestExceptions:
@@ -85,33 +83,50 @@ class TestPromptLoader:
         assert not loader.is_loaded()
 
     @patch('promptix.core.components.prompt_loader.config')
-    def test_load_prompts_success(self, mock_config):
-        """Test successful prompt loading."""
-        # Setup mocks for workspace-based loading
-        mock_config.get_prompts_workspace_path.return_value = Path("/test/prompts")
-        mock_config.has_prompts_workspace.return_value = True
-        mock_config.create_default_workspace.return_value = Path("/test/prompts")
+    def test_load_prompts_success(self, mock_config, tmp_path, test_prompts_dir):
+        """Test successful prompt loading with real fixture directory."""
+        import shutil
         
-        # Test - since we're mocking the config, the loader will try to load from workspace
-        # but won't find actual files, so we expect it to return empty dict
+        # Create a temporary workspace with real test prompts
+        workspace_path = tmp_path / "prompts"
+        shutil.copytree(test_prompts_dir, workspace_path)
+        
+        # Setup mocks to use our temp workspace
+        mock_config.get_prompts_workspace_path.return_value = workspace_path
+        mock_config.has_prompts_workspace.return_value = True
+        mock_config.create_default_workspace.return_value = workspace_path
+        
+        # Test - loader should load from the real fixtures
         loader = PromptLoader()
         prompts = loader.load_prompts()
         
-        # Should return a dict (might be empty due to mocked workspace)
+        # Verify the loaded prompts
         assert isinstance(prompts, dict)
         assert loader.is_loaded()
+        
+        # Should have at least 3 agents from test fixtures
+        assert len(prompts) >= 3
+        
+        # Check for expected agent names
+        assert "CodeReviewer" in prompts or "SimpleChat" in prompts or "TemplateDemo" in prompts
+        
+        # Validate at least one agent has expected structure
+        if "SimpleChat" in prompts:
+            simple_chat = prompts["SimpleChat"]
+            assert "versions" in simple_chat
+            # Check that it has parsed YAML/markdown content
+            assert isinstance(simple_chat["versions"], dict)
 
     @patch('promptix.core.components.prompt_loader.config')
-    def test_load_prompts_json_error(self, mock_config):
-        """Test that loader works even when JSON files exist (current behavior)."""
-        # Current implementation uses workspace approach and doesn't check for JSON files
-        # It will just load from workspace regardless of legacy JSON files
+    def test_load_prompts_uses_workspace(self, mock_config):
+        """Test that the PromptLoader loads from workspace and returns a dict."""
+        # PromptLoader uses workspace-based loading
         mock_config.get_prompts_workspace_path.return_value = Path("/test/prompts")
         mock_config.has_prompts_workspace.return_value = True
         mock_config.create_default_workspace.return_value = Path("/test/prompts")
         
         loader = PromptLoader()
-        prompts = loader.load_prompts()  # Should succeed, not raise exception
+        prompts = loader.load_prompts()  # Should succeed
         
         # Should return a dict and be loaded
         assert isinstance(prompts, dict)
@@ -479,7 +494,7 @@ class TestRefactoredIntegration:
             assert isinstance(result, str)
             assert "TestUser" in result
             assert "TestBot" in result
-        except Exception:
+        except (FileNotFoundError, KeyError, LookupError):
             # If no workspace prompts available, just test that the class exists and is callable
             assert callable(getattr(Promptix, 'get_prompt', None))
 
@@ -494,14 +509,14 @@ class TestRefactoredIntegration:
             
             # Try to build a basic config
             config = (builder
-                     .with_user_name("TestUser")
-                     .with_assistant_name("TestBot")
-                     .build())
+                      .with_user_name("TestUser")
+                      .with_assistant_name("TestBot")
+                      .build())
             
             # Should return a dictionary with expected structure
             assert isinstance(config, dict)
             assert "messages" in config or "prompt" in config
-        except Exception:
+        except (FileNotFoundError, LookupError):
             # If no workspace prompts available, just test that the builder method exists
             assert callable(getattr(Promptix, 'builder', None))
 

@@ -301,18 +301,6 @@ ghi9012 Improved error handling instructions  # Feature addition
 
 ## 🧪 Testing & Demo
 
-### Run the Demo
-```bash
-# From project root
-python demo_versioning_workflow.py
-
-# This creates a complete demo workspace showing:
-# 1. Auto-versioning on edits
-# 2. Version switching via config
-# 3. Available CLI commands
-# 4. Complete workflow examples
-```
-
 ### Manual Testing
 ```bash
 # 1. Install hook

@@ -56,28 +56,70 @@ class VersionManager:
         Returns:
             True if path is safe, False otherwise
         """
+        # First ensure both paths exist
+        if not base_dir.exists():
+            self.print_status(f"Base directory does not exist: {base_dir}", "error")
+            return False
+        
+        if not candidate_path.exists():
+            self.print_status(f"{path_type.capitalize()} does not exist: {candidate_path}", "error")
+            return False
+        
         try:
-            # Resolve both paths to handle symbolic links and relative components
-            resolved_base = base_dir.resolve()
-            resolved_candidate = candidate_path.resolve()
-            
-            # Check if the candidate path is within the base directory
-            # Using commonpath to ensure proper containment check
-            try:
-                common_path = Path(os.path.commonpath([resolved_base, resolved_candidate]))
-                is_contained = common_path == resolved_base
-            except ValueError:
-                # commonpath raises ValueError if paths are on different drives (Windows)
-                is_contained = False
-            
-            if not is_contained:
-                self.print_status(f"Invalid {path_type}: path traversal detected", "error")
-                return False
+            # Resolve base directory with strict=True to get canonical base
+            resolved_base = base_dir.resolve(strict=True)
+        except (OSError, RuntimeError) as e:
+            self.print_status(f"Failed to resolve base directory {base_dir}: {e}", "error")
+            return False
+        
+        try:
+            # Handle symlinks explicitly
+            if candidate_path.is_symlink():
+                # Resolve the symlink target
+                resolved_candidate = candidate_path.resolve(strict=True)
                 
-            return True
+                # Check if symlink target is outside the base directory
+                try:
+                    resolved_candidate.relative_to(resolved_base)
+                except ValueError:
+                    self.print_status(
+                        f"Invalid {path_type}: symlink target {resolved_candidate} is outside base directory",
+                        "error"
+                    )
+                    return False
+            else:
+                # Resolve non-symlink paths normally
+                resolved_candidate = candidate_path.resolve(strict=True)
             
+            # Verify containment using relative_to
+            try:
+                resolved_candidate.relative_to(resolved_base)
+                return True
+            except ValueError as e:
+                # Check if it's a different drive issue (Windows)
+                try:
+                    common_path = Path(os.path.commonpath([resolved_base, resolved_candidate]))
+                    is_contained = common_path == resolved_base
+                except ValueError:
+                    # Paths are on different drives (Windows)
+                    self.print_status(
+                        f"Invalid {path_type}: path is on a different drive than base directory",
+                        "error"
+                    )
+                    return False
+                
+                if not is_contained:
+                    self.print_status(f"Invalid {path_type}: path traversal detected", "error")
+                    return False
+                    
+                return True
+                
+        except (OSError, RuntimeError) as e:
+            self.print_status(f"Failed to resolve {path_type} {candidate_path}: {e}", "error")
+            return False
         except Exception as e:
-            self.print_status(f"Path validation error for {path_type}: {e}", "error")
+            # Log unexpected errors before returning False
+            self.print_status(f"Unexpected path validation error for {path_type}: {e}", "error")
             return False
     
     def find_agent_dirs(self) -> List[Path]:
@@ -93,8 +135,14 @@ class VersionManager:
         try:
             with open(config_path, 'r') as f:
                 return yaml.safe_load(f)
-        except Exception as e:
-            self.print_status(f"Failed to load {config_path}: {e}", "error")
+        except FileNotFoundError as e:
+            self.print_status(f"Config file not found {config_path}: {e}", "error")
+            return None
+        except PermissionError as e:
+            self.print_status(f"Permission denied reading {config_path}: {e}", "error")
+            return None
+        except yaml.YAMLError as e:
+            self.print_status(f"YAML parsing error in {config_path}: {e}", "error")
             return None
     
     def save_config(self, config_path: Path, config: Dict[str, Any]) -> bool:
@@ -103,8 +151,11 @@ class VersionManager:
             with open(config_path, 'w') as f:
                 yaml.dump(config, f, default_flow_style=False, sort_keys=False)
             return True
-        except Exception as e:
-            self.print_status(f"Failed to save {config_path}: {e}", "error")
+        except PermissionError as e:
+            self.print_status(f"Permission denied writing to {config_path}: {e}", "error")
+            return False
+        except OSError as e:
+            self.print_status(f"IO error saving {config_path}: {e}", "error")
             return False
     
     def list_agents(self):
@@ -219,8 +270,12 @@ class VersionManager:
             print(content)
             print("-" * 50)
             
-        except Exception as e:
-            self.print_status(f"Failed to read version {version_name}: {e}", "error")
+        except FileNotFoundError as e:
+            self.print_status(f"Version file not found {version_name}: {e}", "error")
+        except PermissionError as e:
+            self.print_status(f"Permission denied reading version {version_name}: {e}", "error")
+        except OSError as e:
+            self.print_status(f"IO error reading version {version_name}: {e}", "error")
     
     def switch_version(self, agent_name: str, version_name: str):
         """Switch an agent to a specific version"""
@@ -279,8 +334,12 @@ class VersionManager:
             self.print_status(f"Switched {agent_name} to {version_name}", "success")
             self.print_status(f"Updated current.md and config.yaml", "info")
             
-        except Exception as e:
-            self.print_status(f"Failed to switch version: {e}", "error")
+        except FileNotFoundError as e:
+            self.print_status(f"File not found during version switch: {e}", "error")
+        except PermissionError as e:
+            self.print_status(f"Permission denied during version switch: {e}", "error")
+        except OSError as e:
+            self.print_status(f"IO error during version switch: {e}", "error")
     
     def create_version(self, agent_name: str, version_name: Optional[str] = None, notes: str = "Manually created"):
         """Create a new version from current.md"""
@@ -369,8 +428,12 @@ class VersionManager:
             if self.save_config(config_path, config):
                 self.print_status(f"Created version {version_name} for {agent_name}", "success")
             
-        except Exception as e:
-            self.print_status(f"Failed to create version: {e}", "error")
+        except FileNotFoundError as e:
+            self.print_status(f"File not found during version creation: {e}", "error")
+        except PermissionError as e:
+            self.print_status(f"Permission denied during version creation: {e}", "error")
+        except OSError as e:
+            self.print_status(f"IO error during version creation: {e}", "error")
 
 
 def main():

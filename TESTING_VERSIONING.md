@@ -35,30 +35,30 @@ tests/
 ### 1. Install Test Dependencies
 
 ```bash
-pip install -r requirements-versioning-tests.txt
+pip install -r requirements-test.txt
 ```
 
 ### 2. Run All Tests
 
 ```bash
-# Run all versioning tests with summary
-python run_versioning_tests.py
+# Run all versioning-related tests
+pytest tests/unit/test_precommit_hook.py tests/integration/test_versioning_integration.py tests/functional/test_versioning_edge_cases.py -v
 
-# Or use the test runner directly
-python run_versioning_tests.py --verbose
+# Or run all tests
+pytest -v
 ```
 
 ### 3. Run Specific Test Categories
 
 ```bash
 # Unit tests only
-python run_versioning_tests.py --unit
+pytest tests/unit/ -v
 
 # Integration tests only  
-python run_versioning_tests.py --integration
+pytest tests/integration/ -v
 
 # Edge cases only
-python run_versioning_tests.py --edge-cases
+pytest tests/functional/test_versioning_edge_cases.py -v
 ```
 
 ## 📊 Test Categories
@@ -125,24 +125,24 @@ python run_versioning_tests.py --edge-cases
 
 ```bash
 # Run with coverage analysis
-python run_versioning_tests.py --coverage
+pytest --cov=promptix --cov-report=html tests/
 
-# Generate HTML coverage report
-python run_versioning_tests.py --coverage --html-report
+# View coverage report
+open htmlcov/index.html
 ```
 
 ### Performance Testing
 
 ```bash
-# Test version creation performance
-python run_versioning_tests.py --performance
+# Test with performance profiling
+pytest tests/quality/test_performance.py -v
 ```
 
 ### Hook Validation
 
 ```bash
 # Validate hook installation process
-python run_versioning_tests.py --validate
+pytest tests/unit/test_hook_manager.py -v
 ```
 
 ### Parallel Execution
@@ -232,12 +232,12 @@ Tests create temporary directories for isolation. If tests fail, you can inspect
 
 ## 📈 Test Metrics
 
-The test suite includes approximately:
+Target metrics for the test suite:
 
-- **300+ test cases** across all categories
-- **90%+ code coverage** for versioning components
-- **< 30 seconds** total execution time
-- **100% compatibility** with existing Promptix API
+- **Target: 300+ test cases** across all categories
+- **Target: 90%+ code coverage** for versioning components
+- **Target: < 30 seconds** total execution time
+- **Target: 100% compatibility** with existing Promptix API
 
 ## 🎯 Test Goals
 

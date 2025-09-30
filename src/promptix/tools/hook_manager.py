@@ -305,8 +305,8 @@ def main():
     
     # Install command
     install_cmd = subparsers.add_parser('install', help='Install pre-commit hook')
-    install_cmd.add_argument('--force', action='store_true', 
-                           help='Overwrite existing hook')
+    install_cmd.add_argument('--force', action='store_true',
+                             help='Overwrite existing hook')
     
     # Uninstall command
     uninstall_cmd = subparsers.add_parser('uninstall', help='Uninstall pre-commit hook')
