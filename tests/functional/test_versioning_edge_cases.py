@@ -328,8 +328,16 @@ class TestVersioningErrorConditions:
         
         tester = PreCommitHookTester(error_workspace)
         
-        # Mock file operations to raise OSError (disk full)
-        with patch('shutil.copy2', side_effect=OSError("No space left on device")):
+        # Mock file write operations to raise OSError (disk full)
+        original_open = open
+        def mock_open(path, mode='r', *args, **kwargs):
+            path_str = str(path)
+            # Raise error only when writing to version files
+            if ('w' in mode or 'a' in mode) and 'versions' in path_str and path_str.endswith('.md'):
+                raise OSError("No space left on device")
+            return original_open(path, mode, *args, **kwargs)
+        
+        with patch('builtins.open', side_effect=mock_open):
             version_name = tester.create_version_snapshot("prompts/disk_full_agent/current.md")
         
         # Should fail gracefully
@@ -352,8 +360,16 @@ class TestVersioningErrorConditions:
         
         tester = PreCommitHookTester(error_workspace)
 
-        # Simulate permission denied when copying into versions directory
-        with patch('shutil.copy2', side_effect=PermissionError("Permission denied")):
+        # Simulate permission denied when writing to versions directory
+        original_open = open
+        def mock_open(path, mode='r', *args, **kwargs):
+            path_str = str(path)
+            # Raise error only when writing to version files
+            if ('w' in mode or 'a' in mode) and 'versions' in path_str and path_str.endswith('.md'):
+                raise PermissionError("Permission denied")
+            return original_open(path, mode, *args, **kwargs)
+        
+        with patch('builtins.open', side_effect=mock_open):
             version_name = tester.create_version_snapshot("prompts/permission_agent/current.md")
 
         # Should fail gracefully
