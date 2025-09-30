@@ -457,10 +457,17 @@ def main():
     """
     try:
         # Handle the case where user runs OpenAI commands directly
-        if len(sys.argv) > 1 and sys.argv[1] not in ['studio', 'agent', 'openai', '--help', '--version']:
-            # This looks like an OpenAI command, redirect
-            Config.validate()
-            sys.exit(openai_main())
+        # Check if first arg is a flag (starts with '-') or a recognized top-level command
+        if len(sys.argv) > 1:
+            first_arg = sys.argv[1]
+            # List of recognized top-level commands
+            top_level_commands = ['studio', 'agent', 'openai', 'version', 'hooks']
+            
+            # Don't redirect if it's a flag or a recognized command
+            if not first_arg.startswith('-') and first_arg not in top_level_commands:
+                # This looks like an OpenAI command, redirect
+                Config.validate()
+                sys.exit(openai_main())
         
         cli()
         

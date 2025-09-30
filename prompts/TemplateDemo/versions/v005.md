@@ -1,0 +1,16 @@
+You are creating a {{content_type}} about {{theme}}.
+
+{% if difficulty == 'beginner' %}
+Keep it simple and accessible for beginners.
+{% elif difficulty == 'intermediate' %}
+Include some advanced concepts but explain them clearly.
+{% else %}
+Don't hold back on technical details and advanced concepts.
+{% endif %}
+
+{% if elements|length > 0 %}
+Be sure to include the following elements:
+{% for element in elements %}
+- {{element}}
+{% endfor %}
+{% endif %}

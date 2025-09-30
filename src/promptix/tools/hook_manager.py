@@ -309,17 +309,17 @@ def main():
                              help='Overwrite existing hook')
     
     # Uninstall command
-    uninstall_cmd = subparsers.add_parser('uninstall', help='Uninstall pre-commit hook')
+    subparsers.add_parser('uninstall', help='Uninstall pre-commit hook')
     
     # Enable/disable commands
-    enable_cmd = subparsers.add_parser('enable', help='Enable disabled hook')
-    disable_cmd = subparsers.add_parser('disable', help='Disable hook temporarily')
+    subparsers.add_parser('enable', help='Enable disabled hook')
+    subparsers.add_parser('disable', help='Disable hook temporarily')
     
     # Status command
-    status_cmd = subparsers.add_parser('status', help='Show hook status')
+    subparsers.add_parser('status', help='Show hook status')
     
     # Test command
-    test_cmd = subparsers.add_parser('test', help='Test hook without committing')
+    subparsers.add_parser('test', help='Test hook without committing')
     
     args = parser.parse_args()
     

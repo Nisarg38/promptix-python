@@ -11,12 +11,20 @@ from typing import Dict, List
 
 
 def get_file_hash(file_path: Path) -> str:
-    """Calculate MD5 hash of a file."""
-    md5_hash = hashlib.md5()
-    with open(file_path, 'rb') as f:
-        for chunk in iter(lambda: f.read(4096), b''):
-            md5_hash.update(chunk)
-    return md5_hash.hexdigest()
+    """Calculate MD5 hash of a file.
+    
+    Returns:
+        Hash string on success, None on failure (logs error)
+    """
+    try:
+        md5_hash = hashlib.md5()
+        with open(file_path, 'rb') as f:
+            for chunk in iter(lambda: f.read(4096), b''):
+                md5_hash.update(chunk)
+        return md5_hash.hexdigest()
+    except (OSError, IOError) as e:
+        print(f"⚠️  Error reading file {file_path}: {e}")
+        return None
 
 
 def find_duplicate_versions(prompts_dir: Path) -> Dict[str, Dict[str, List[str]]]:
@@ -43,7 +51,9 @@ def find_duplicate_versions(prompts_dir: Path) -> Dict[str, Dict[str, List[str]]
         
         for version_file in version_files:
             file_hash = get_file_hash(version_file)
-            hash_map[file_hash].append(version_file.name)
+            # Skip files that couldn't be read
+            if file_hash is not None:
+                hash_map[file_hash].append(version_file.name)
         
         # Only include agents with duplicates
         duplicates = {h: files for h, files in hash_map.items() if len(files) > 1}
@@ -79,9 +89,9 @@ def print_report(duplicates: Dict[str, Dict[str, List[str]]]):
 
 def main():
     """Main entry point."""
-    # Find prompts directory
-    script_dir = Path(__file__).parent
-    prompts_dir = script_dir / "prompts"
+    # Find prompts directory (at repository root)
+    repo_root = Path(__file__).parent
+    prompts_dir = repo_root / "prompts"
     
     if not prompts_dir.exists():
         print(f"❌ Error: Prompts directory not found at {prompts_dir}")
