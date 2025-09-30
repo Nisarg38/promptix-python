@@ -9,7 +9,10 @@ import pytest
 from unittest.mock import Mock, MagicMock, patch
 import tempfile
 import os
+import sys
+import stat
 import yaml
+import shutil
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 
@@ -19,6 +22,40 @@ TEST_PROMPTS_DIR = Path(__file__).parent / "fixtures" / "test_prompts"
 
 # Available test prompt names (matching the folder structure)
 TEST_PROMPT_NAMES = ["SimpleChat", "CodeReviewer", "TemplateDemo"]
+
+
+# Windows-compatible cleanup utilities
+def remove_readonly(func, path, excinfo):
+    """
+    Error handler for Windows read-only file removal.
+    
+    This is needed because Git creates read-only files in .git/objects/
+    that can't be deleted on Windows without changing permissions first.
+    """
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
+def safe_rmtree(path):
+    """
+    Safely remove a directory tree, handling Windows permission issues.
+    
+    On Windows, Git repositories contain read-only files that need
+    special handling to delete.
+    """
+    try:
+        if sys.platform == 'win32':
+            # On Windows, use onerror callback to handle read-only files
+            shutil.rmtree(path, onerror=remove_readonly)
+        else:
+            shutil.rmtree(path)
+    except Exception:
+        # If all else fails, try one more time with ignore_errors
+        try:
+            shutil.rmtree(path, ignore_errors=True)
+        except:
+            # Last resort: just pass and let the OS clean up temp files
+            pass
 
 # Edge case test data
 EDGE_CASE_DATA = {
@@ -196,7 +233,6 @@ def temp_prompts_file(test_prompts_dir):
 @pytest.fixture
 def temp_prompts_dir(test_prompts_dir):
     """Create a temporary copy of the test prompts directory structure."""
-    import shutil
     temp_dir = tempfile.mkdtemp()
     prompts_dir = Path(temp_dir) / "prompts"
     
@@ -205,11 +241,8 @@ def temp_prompts_dir(test_prompts_dir):
     
     yield prompts_dir
     
-    # Cleanup
-    try:
-        shutil.rmtree(temp_dir)
-    except OSError:
-        pass
+    # Cleanup - use safe_rmtree for Windows compatibility
+    safe_rmtree(temp_dir)
 
 
 @pytest.fixture

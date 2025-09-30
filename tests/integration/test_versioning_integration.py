@@ -11,6 +11,7 @@ import subprocess
 import yaml
 import os
 import sys
+import stat
 from pathlib import Path
 from unittest.mock import patch
 
@@ -24,6 +25,39 @@ from promptix.core.components.prompt_loader import PromptLoader
 from promptix.tools.version_manager import VersionManager
 from promptix.tools.hook_manager import HookManager
 from precommit_helper import PreCommitHookTester
+
+
+def remove_readonly(func, path, excinfo):
+    """
+    Error handler for Windows read-only file removal.
+    
+    This is needed because Git creates read-only files in .git/objects/
+    that can't be deleted on Windows without changing permissions first.
+    """
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
+def safe_rmtree(path):
+    """
+    Safely remove a directory tree, handling Windows permission issues.
+    
+    On Windows, Git repositories contain read-only files that need
+    special handling to delete.
+    """
+    try:
+        if sys.platform == 'win32':
+            # On Windows, use onerror callback to handle read-only files
+            shutil.rmtree(path, onerror=remove_readonly)
+        else:
+            shutil.rmtree(path)
+    except Exception as e:
+        # If all else fails, try one more time with ignore_errors
+        try:
+            shutil.rmtree(path, ignore_errors=True)
+        except:
+            # Last resort: just pass and let the OS clean up temp files
+            pass
 
 
 class TestVersioningIntegration:
@@ -94,7 +128,7 @@ class TestVersioningIntegration:
         
         # Cleanup
         os.chdir(prev_cwd)
-        shutil.rmtree(temp_dir)
+        safe_rmtree(temp_dir)
     
     def test_complete_development_workflow(self, git_workspace):
         """Test complete development workflow: edit → commit → version → API"""
@@ -427,7 +461,7 @@ class TestVersioningBackwardsCompatibility:
         
         yield temp_dir
         
-        shutil.rmtree(temp_dir)
+        safe_rmtree(temp_dir)
     
     def test_legacy_prompt_api_compatibility(self, legacy_workspace):
         """Test that legacy prompts still work with the API"""

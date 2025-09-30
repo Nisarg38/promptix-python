@@ -10,11 +10,46 @@ import tempfile
 import shutil
 import yaml
 import os
+import sys
+import stat
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 from promptix.core.components.prompt_loader import PromptLoader
 from promptix.core.exceptions import StorageError
+
+
+def remove_readonly(func, path, excinfo):
+    """
+    Error handler for Windows read-only file removal.
+    
+    This is needed because Git creates read-only files in .git/objects/
+    that can't be deleted on Windows without changing permissions first.
+    """
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
+def safe_rmtree(path):
+    """
+    Safely remove a directory tree, handling Windows permission issues.
+    
+    On Windows, Git repositories contain read-only files that need
+    special handling to delete.
+    """
+    try:
+        if sys.platform == 'win32':
+            # On Windows, use onerror callback to handle read-only files
+            shutil.rmtree(path, onerror=remove_readonly)
+        else:
+            shutil.rmtree(path)
+    except Exception:
+        # If all else fails, try one more time with ignore_errors
+        try:
+            shutil.rmtree(path, ignore_errors=True)
+        except:
+            # Last resort: just pass and let the OS clean up temp files
+            pass
 
 
 class TestEnhancedPromptLoader:
@@ -95,7 +130,7 @@ class TestEnhancedPromptLoader:
         yield temp_dir
         
         # Cleanup
-        shutil.rmtree(temp_dir)
+        safe_rmtree(temp_dir)
     
     @pytest.fixture
     def legacy_workspace(self):

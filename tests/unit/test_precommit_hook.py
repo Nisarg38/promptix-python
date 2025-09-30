@@ -10,6 +10,7 @@ import shutil
 import yaml
 import os
 import sys
+import stat
 from pathlib import Path
 from unittest.mock import patch, MagicMock, call
 
@@ -22,6 +23,39 @@ sys.path.insert(0, str(tests_dir))
 
 # Import the pre-commit hook functions (we'll need to modify the hook to make functions importable)
 from test_helpers.precommit_helper import PreCommitHookTester
+
+
+def remove_readonly(func, path, excinfo):
+    """
+    Error handler for Windows read-only file removal.
+    
+    This is needed because Git creates read-only files in .git/objects/
+    that can't be deleted on Windows without changing permissions first.
+    """
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
+def safe_rmtree(path):
+    """
+    Safely remove a directory tree, handling Windows permission issues.
+    
+    On Windows, Git repositories contain read-only files that need
+    special handling to delete.
+    """
+    try:
+        if sys.platform == 'win32':
+            # On Windows, use onerror callback to handle read-only files
+            shutil.rmtree(path, onerror=remove_readonly)
+        else:
+            shutil.rmtree(path)
+    except Exception:
+        # If all else fails, try one more time with ignore_errors
+        try:
+            shutil.rmtree(path, ignore_errors=True)
+        except:
+            # Last resort: just pass and let the OS clean up temp files
+            pass
 
 
 class TestPreCommitHookCore:
@@ -67,7 +101,7 @@ class TestPreCommitHookCore:
         yield temp_dir
         
         # Cleanup
-        shutil.rmtree(temp_dir)
+        safe_rmtree(temp_dir)
     
     def test_find_promptix_changes_current_md(self, temp_workspace):
         """Test finding changes to current.md files"""
@@ -281,8 +315,13 @@ class TestPreCommitHookIntegration:
         yield temp_dir
         
         # Cleanup
-        os.chdir("/")
-        shutil.rmtree(temp_dir)
+        prev_cwd = Path.cwd()
+        if prev_cwd != temp_dir:
+            os.chdir(prev_cwd)
+        else:
+            # If still in temp_dir, go to parent
+            os.chdir(temp_dir.parent)
+        safe_rmtree(temp_dir)
     
     def test_multiple_agents_same_commit(self, git_workspace):
         """Test handling multiple agent changes in same commit"""
