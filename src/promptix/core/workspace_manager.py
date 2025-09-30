@@ -166,6 +166,16 @@ How can I help you today?"""
         hook_content = '''#!/bin/sh
 # Promptix pre-commit hook for automatic versioning
 
+# Detect available comparison tool
+if command -v cmp >/dev/null 2>&1; then
+    compare_cmd='cmp -s'
+elif command -v diff >/dev/null 2>&1; then
+    compare_cmd='diff -q'
+else
+    echo "Error: Neither cmp nor diff found. Cannot compare files." >&2
+    exit 1
+fi
+
 # Function to create version snapshots
 create_version_snapshot() {
     local agent_dir="$1"
@@ -198,7 +208,7 @@ create_version_snapshot() {
     else
         # Compare against the latest existing snapshot
         local latest_snapshot="$versions_dir/$(printf "v%03d.md" "$max_version")"
-        if [ ! -f "$latest_snapshot" ] || ! cmp -s "$current_file" "$latest_snapshot" 2>/dev/null; then
+        if [ ! -f "$latest_snapshot" ] || ! $compare_cmd "$current_file" "$latest_snapshot" 2>/dev/null; then
             should_create_version=true
         fi
     fi

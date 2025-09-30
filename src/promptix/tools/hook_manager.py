@@ -255,9 +255,25 @@ class HookManager:
         self.print_status("Running hook test...", "info")
         
         try:
-            # Run the hook directly
-            result = subprocess.run([str(self.pre_commit_hook)], 
-                                  capture_output=True, text=True)
+            # Resolve and validate hook path to prevent symlink attacks
+            try:
+                resolved_hook = self.pre_commit_hook.resolve(strict=True)
+            except (OSError, RuntimeError) as e:
+                self.print_status(f"Failed to resolve hook path: {e}", "error")
+                return
+            
+            # Verify the resolved hook is inside the expected hooks directory
+            expected_hooks_dir = self.hooks_dir.resolve(strict=True)
+            if resolved_hook.parent != expected_hooks_dir:
+                self.print_status(
+                    f"Security error: Hook path resolves outside hooks directory ({resolved_hook})",
+                    "error"
+                )
+                return
+            
+            # Run the validated hook directly
+            result = subprocess.run([str(resolved_hook)],
+                                    capture_output=True, text=True)
             
             if result.returncode == 0:
                 self.print_status("Hook test completed successfully", "success")

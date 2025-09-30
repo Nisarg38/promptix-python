@@ -203,6 +203,7 @@ How can I help you today?"""
             Dictionary mapping agent names to their complete data structure
         """
         agents = {}
+        skipped_count = 0
         
         if not workspace_path.exists():
             return agents
@@ -212,10 +213,14 @@ How can I help you today?"""
                 try:
                     agent_data = self._load_agent(agent_dir)
                     agents[agent_dir.name] = agent_data
-                except Exception as e:
+                except StorageError as e:
                     if self._logger:
                         self._logger.warning(f"Failed to load agent {agent_dir.name}: {e}")
+                    skipped_count += 1
                     continue
+        
+        if skipped_count > 0 and self._logger:
+            self._logger.info(f"Skipped {skipped_count} agent(s) due to storage errors")
                     
         return agents
     
@@ -247,7 +252,7 @@ How can I help you today?"""
                 raise StorageError(
                     f"Failed to load config for agent {agent_dir.name}",
                     {"config_path": str(config_path), "error": str(e)}
-                )
+                ) from e
         
         # Load current prompt
         current_prompt = ""
@@ -321,7 +326,7 @@ How can I help you today?"""
             'metadata': config_data.get('metadata', {})
         }
     
-    def _load_versions(self, versions_dir: Path, base_config: Dict[str, Any] = None) -> Dict[str, Any]:
+    def _load_versions(self, versions_dir: Path, base_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Load version history from versions/ directory.
         

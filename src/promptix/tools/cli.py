@@ -7,6 +7,7 @@ import sys
 import os
 import subprocess
 import socket
+import shutil
 from pathlib import Path
 from typing import Optional
 
@@ -59,13 +60,32 @@ def cli():
 )
 def studio(port: int):
     """🎨 Launch Promptix Studio web interface"""
-    app_path = os.path.join(os.path.dirname(__file__), "studio", "app.py")
+    # Resolve and validate streamlit executable
+    streamlit_path = shutil.which("streamlit")
+    if not streamlit_path:
+        error_console.print(
+            "[bold red]❌ Error:[/bold red] Streamlit is not installed.\n"
+            "[yellow]💡 Fix:[/yellow] pip install streamlit"
+        )
+        sys.exit(1)
+    
+    # Convert to absolute path and validate app path
+    app_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "studio", "app.py"))
     
     if not os.path.exists(app_path):
         error_console.print("[bold red]❌ Error:[/bold red] Promptix Studio app not found.")
         sys.exit(1)
     
+    if not os.path.isfile(app_path):
+        error_console.print("[bold red]❌ Error:[/bold red] Promptix Studio app path is not a file.")
+        sys.exit(1)
+    
     try:
+        # Validate and normalize port
+        if not isinstance(port, int) or port < 1 or port > 65535:
+            error_console.print("[bold red]❌ Error:[/bold red] Port must be between 1 and 65535")
+            sys.exit(1)
+        
         # Find an available port if the requested one is in use
         if is_port_in_use(port):
             console.print(f"[yellow]⚠️  Port {port} is in use. Finding available port...[/yellow]")
@@ -100,7 +120,7 @@ def studio(port: int):
         console.print(launch_panel)
         
         subprocess.run(
-            ["streamlit", "run", app_path, "--server.port", str(port)],
+            [streamlit_path, "run", app_path, "--server.port", str(port)],
             check=True
         )
     except FileNotFoundError:
