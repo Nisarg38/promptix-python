@@ -20,6 +20,8 @@ import shutil
 import subprocess
 import yaml
 import re
+import time
+import errno
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Tuple, Dict, Any
@@ -118,10 +120,97 @@ def get_next_version_number(versions_dir: Path) -> int:
     return max(version_numbers) + 1 if version_numbers else 1
 
 
+def atomic_create_version_file(
+    versions_dir: Path,
+    content: str,
+    max_retries: int = 10,
+    initial_backoff: float = 0.01
+) -> Optional[Tuple[Path, str]]:
+    """
+    Atomically create a new version file with retry on collision.
+    
+    Uses os.open with O_CREAT|O_EXCL for atomic file creation.
+    If the file already exists, retries with the next version number
+    with exponential backoff.
+    
+    Args:
+        versions_dir: Directory where version files are stored
+        content: Content to write to the version file
+        max_retries: Maximum number of retry attempts (default: 10)
+        initial_backoff: Initial backoff time in seconds (default: 0.01)
+    
+    Returns:
+        Tuple of (version_file_path, version_name) if successful, None otherwise
+    """
+    backoff = initial_backoff
+    
+    for attempt in range(max_retries):
+        try:
+            # Compute the next version number
+            version_num = get_next_version_number(versions_dir)
+            version_name = f'v{version_num:03d}'
+            version_file = versions_dir / f'{version_name}.md'
+            
+            # Attempt atomic file creation using O_CREAT|O_EXCL
+            # This will fail if the file already exists
+            try:
+                fd = os.open(
+                    version_file,
+                    os.O_CREAT | os.O_EXCL | os.O_WRONLY,
+                    0o644
+                )
+            except OSError as e:
+                if e.errno == errno.EEXIST:
+                    # File was created by another process, retry with backoff
+                    print_status(
+                        f"Version {version_name} collision (attempt {attempt + 1}/{max_retries}), retrying...",
+                        "warning"
+                    )
+                    time.sleep(backoff)
+                    backoff *= 2  # Exponential backoff
+                    continue
+                else:
+                    # Other OS error, re-raise
+                    raise
+            
+            # Successfully created file, now write content
+            try:
+                with os.fdopen(fd, 'w') as f:
+                    f.write(content)
+                
+                print_status(f"Created version file {version_name} atomically", "success")
+                return (version_file, version_name)
+                
+            except Exception as e:
+                # If writing fails, try to clean up the file
+                try:
+                    version_file.unlink()
+                except Exception:
+                    pass
+                print_status(f"Failed to write version file {version_name}: {e}", "error")
+                raise
+                
+        except Exception as e:
+            print_status(
+                f"Error during atomic version creation (attempt {attempt + 1}/{max_retries}): {e}",
+                "error"
+            )
+            if attempt == max_retries - 1:
+                # Last attempt failed
+                print_status(f"Failed to create version file after {max_retries} attempts", "error")
+                return None
+            time.sleep(backoff)
+            backoff *= 2
+    
+    print_status(f"Failed to create version file after {max_retries} attempts", "error")
+    return None
+
+
 def create_version_snapshot(current_md_path: str) -> Optional[str]:
     """
-    Create a new version snapshot from current.md
-    Returns the new version name (e.g., 'v005') or None if failed
+    Create a new version snapshot from current.md atomically.
+    Uses atomic file creation with retry on collision to prevent race conditions.
+    Returns the new version name (e.g., 'v005') or None if failed.
     """
     current_path = Path(current_md_path)
     prompt_dir = current_path.parent
@@ -141,20 +230,29 @@ def create_version_snapshot(current_md_path: str) -> Optional[str]:
     # Create versions directory if it doesn't exist
     versions_dir.mkdir(exist_ok=True)
     
-    # Get next version number
-    version_num = get_next_version_number(versions_dir)
-    version_name = f'v{version_num:03d}'
-    version_file = versions_dir / f'{version_name}.md'
-    
     try:
-        # Copy current.md to new version file
-        shutil.copy2(current_path, version_file)
+        # Read current.md content
+        with open(current_path, 'r') as f:
+            current_content = f.read()
+        
+        # Prepare version content with header (will be added with actual version name)
+        # We'll add the header in the atomic creation function
+        
+        # Atomically create the version file
+        result = atomic_create_version_file(versions_dir, current_content)
+        
+        if not result:
+            print_status(f"Failed to create version file atomically for {current_md_path}", "error")
+            return None
+        
+        version_file, version_name = result
         
         # Add version header to the file
         with open(version_file, 'r') as f:
             content = f.read()
         
-        version_header = f"<!-- Version {version_name} - Created {datetime.now().isoformat()} -->\n"
+        created_at = datetime.now().isoformat()
+        version_header = f"<!-- Version {version_name} - Created {created_at} -->\n"
         with open(version_file, 'w') as f:
             f.write(version_header)
             f.write(content)
@@ -170,7 +268,7 @@ def create_version_snapshot(current_md_path: str) -> Optional[str]:
             commit_hash = 'unknown'
         
         config['versions'][version_name] = {
-            'created_at': datetime.now().isoformat(),
+            'created_at': created_at,
             'author': os.getenv('USER', 'unknown'),
             'commit': commit_hash,
             'notes': 'Auto-versioned on commit'
@@ -190,12 +288,13 @@ def create_version_snapshot(current_md_path: str) -> Optional[str]:
             # Stage the new files
             stage_files([str(version_file), str(config_path)])
             return version_name
+        else:
+            print_status(f"Failed to save config for version {version_name}", "error")
+            return None
         
     except Exception as e:
-        print_status(f"Failed to create version {version_name}: {e}", "warning")
+        print_status(f"Failed to create version snapshot: {e}", "error")
         return None
-    
-    return None
 
 
 def handle_version_switch(config_path: str) -> bool:
