@@ -149,6 +149,8 @@ def sample_prompts_data(test_prompts_dir):
             }
         
         prompts_data[prompt_name] = {"versions": versions}
+    
+    return prompts_data
 
 @pytest.fixture
 def edge_case_data():
@@ -390,6 +392,9 @@ class MockPromptLoader:
                 }
             
             self.prompts_data[prompt_name] = {"versions": versions}
+        
+        return self.prompts_data
+    
     def is_loaded(self):
         """Check if prompts are loaded."""
         return self._loaded

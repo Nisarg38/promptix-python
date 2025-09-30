@@ -165,7 +165,7 @@ class TestVersionManager:
         vm = VersionManager(str(temp_workspace))
         
         captured_output = io.StringIO()
-        with patch('sys.stderr', captured_output):
+        with patch('sys.stdout', captured_output):
             vm.list_versions("nonexistent_agent")
         
         output = captured_output.getvalue()
@@ -190,7 +190,7 @@ class TestVersionManager:
         vm = VersionManager(str(temp_workspace))
         
         captured_output = io.StringIO()
-        with patch('sys.stderr', captured_output):
+        with patch('sys.stdout', captured_output):
             vm.get_version("test_agent", "v999")
         
         output = captured_output.getvalue()
@@ -228,7 +228,7 @@ class TestVersionManager:
         vm = VersionManager(str(temp_workspace))
         
         captured_output = io.StringIO()
-        with patch('sys.stderr', captured_output):
+        with patch('sys.stdout', captured_output):
             vm.switch_version("nonexistent_agent", "v001")
         
         output = captured_output.getvalue()
@@ -239,7 +239,7 @@ class TestVersionManager:
         vm = VersionManager(str(temp_workspace))
         
         captured_output = io.StringIO()
-        with patch('sys.stderr', captured_output):
+        with patch('sys.stdout', captured_output):
             vm.switch_version("test_agent", "v999")
         
         output = captured_output.getvalue()
@@ -298,7 +298,7 @@ class TestVersionManager:
         vm = VersionManager(str(temp_workspace))
         
         captured_output = io.StringIO()
-        with patch('sys.stderr', captured_output):
+        with patch('sys.stdout', captured_output):
             vm.create_version("test_agent", "v001", "Duplicate")
         
         output = captured_output.getvalue()
@@ -309,7 +309,7 @@ class TestVersionManager:
         vm = VersionManager(str(temp_workspace))
         
         captured_output = io.StringIO()
-        with patch('sys.stderr', captured_output):
+        with patch('sys.stdout', captured_output):
             vm.create_version("nonexistent_agent", None, "Test")
         
         output = captured_output.getvalue()
@@ -324,7 +324,7 @@ class TestVersionManager:
         current_path.unlink()
         
         captured_output = io.StringIO()
-        with patch('sys.stderr', captured_output):
+        with patch('sys.stdout', captured_output):
             vm.create_version("test_agent", None, "Test")
         
         output = captured_output.getvalue()
@@ -409,7 +409,7 @@ class TestVersionManagerErrorHandling:
         # Mock file operations to raise PermissionError
         with patch('builtins.open', side_effect=PermissionError("Access denied")):
             captured_output = io.StringIO()
-            with patch('sys.stderr', captured_output):
+            with patch('sys.stdout', captured_output):
                 vm.create_version("test_agent", None, "Test")
             
             output = captured_output.getvalue()

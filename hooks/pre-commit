@@ -163,16 +163,22 @@ def create_version_snapshot(current_md_path: str) -> Optional[str]:
         if 'versions' not in config:
             config['versions'] = {}
         
+        # Get commit hash, handle git errors gracefully
+        try:
+            commit_hash = get_current_commit_hash()[:7]
+        except Exception:
+            commit_hash = 'unknown'
+        
         config['versions'][version_name] = {
             'created_at': datetime.now().isoformat(),
             'author': os.getenv('USER', 'unknown'),
-            'commit': get_current_commit_hash()[:7],
+            'commit': commit_hash,
             'notes': 'Auto-versioned on commit'
         }
         
-        # Set as current version if not already set
-        if 'current_version' not in config:
-            config['current_version'] = version_name
+        # Note: Do NOT automatically set current_version here
+        # current_version should only be set when explicitly switching versions
+        # The loader will use current.md when current_version is not set
         
         # Update metadata
         if 'metadata' not in config:

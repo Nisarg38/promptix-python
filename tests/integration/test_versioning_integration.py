@@ -139,7 +139,8 @@ class TestVersioningIntegration:
             config = yaml.safe_load(f)
         
         assert 'versions' in config
-        assert 'current_version' in config
+        # current_version should NOT be set automatically - it's only set when explicitly switching
+        # The API will use current.md when current_version is not set
         
         # Step 3: Test API integration
         with patch('promptix.core.config.config.get_prompts_workspace_path', 
@@ -310,7 +311,7 @@ class TestVersioningIntegration:
         current_md2 = git_workspace / "prompts" / "agent2" / "current.md"
         
         with open(current_md1, "w") as f:
-            f.write("Updated test agent content")
+            f.write("Updated test agent content for {{user_name}} with {{task_type}}")
         
         with open(current_md2, "w") as f:
             f.write("Updated agent2 helps with {{topic}} in detail")
@@ -412,17 +413,17 @@ class TestVersioningBackwardsCompatibility:
             yaml.dump(config_content, f)
         
         with open(agent_dir / "current.md", "w") as f:
-            f.write("Legacy agent prompt")
+            f.write("Legacy agent prompt for {{user}}")
         
         # Legacy versions without headers
         versions_dir = agent_dir / "versions"
         versions_dir.mkdir()
         
         with open(versions_dir / "v1.md", "w") as f:
-            f.write("Legacy version 1")
+            f.write("Legacy version 1 for {{user}}")
         
         with open(versions_dir / "v2.md", "w") as f:
-            f.write("Legacy version 2")
+            f.write("Legacy version 2 for {{user}}")
         
         yield temp_dir
         

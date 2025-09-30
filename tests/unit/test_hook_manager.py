@@ -202,7 +202,7 @@ sys.exit(0)
         hm.promptix_hook.unlink()
         
         captured_output = io.StringIO()
-        with patch('sys.stderr', captured_output):
+        with patch('sys.stdout', captured_output):
             hm.install_hook()
         
         output = captured_output.getvalue()
@@ -418,7 +418,7 @@ sys.exit(0)
             mock_run.return_value.stderr = "Hook test error"
             
             captured_output = io.StringIO()
-            with patch('sys.stderr', captured_output):
+            with patch('sys.stdout', captured_output):
                 hm.test_hook()
         
         output = captured_output.getvalue()
@@ -430,7 +430,7 @@ sys.exit(0)
         hm = HookManager(str(temp_workspace))
         
         captured_output = io.StringIO()
-        with patch('sys.stderr', captured_output):
+        with patch('sys.stdout', captured_output):
             hm.test_hook()
         
         output = captured_output.getvalue()
@@ -466,7 +466,7 @@ class TestHookManagerErrorHandling:
         # Mock permission error
         with patch('shutil.copy2', side_effect=PermissionError("Access denied")):
             captured_output = io.StringIO()
-            with patch('sys.stderr', captured_output):
+            with patch('sys.stdout', captured_output):
                 hm.install_hook()
             output = captured_output.getvalue()
         assert "access denied" in output.lower()
@@ -474,6 +474,9 @@ class TestHookManagerErrorHandling:
     def test_corrupted_hook_file(self, temp_workspace):
         """Test handling corrupted hook files"""
         hm = HookManager(str(temp_workspace))
+        
+        # Create hooks directory if it doesn't exist
+        hm.hooks_dir.mkdir(parents=True, exist_ok=True)
         
         # Create corrupted hook file
         with open(hm.pre_commit_hook, "w") as f:

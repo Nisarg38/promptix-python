@@ -16,7 +16,9 @@ from unittest.mock import patch, MagicMock, call
 # Add the hooks directory to the Python path
 project_root = Path(__file__).parent.parent.parent
 hooks_dir = project_root / "hooks"
+tests_dir = project_root / "tests"
 sys.path.insert(0, str(hooks_dir))
+sys.path.insert(0, str(tests_dir))
 
 # Import the pre-commit hook functions (we'll need to modify the hook to make functions importable)
 from test_helpers.precommit_helper import PreCommitHookTester

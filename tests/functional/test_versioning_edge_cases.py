@@ -350,9 +350,6 @@ class TestVersioningErrorConditions:
         versions_dir = agent_dir / "versions"
         versions_dir.mkdir()
         
-        versions_dir = agent_dir / "versions"
-        versions_dir.mkdir()
-        
         tester = PreCommitHookTester(error_workspace)
 
         # Simulate permission denied when copying into versions directory
