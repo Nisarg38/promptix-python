@@ -185,6 +185,15 @@ def temp_prompts_dir_compat(test_prompts_dir):
     yield str(test_prompts_dir)
 
 @pytest.fixture
+def temp_prompts_file(test_prompts_dir):
+    """Legacy fixture name - returns directory path for backward compatibility.
+    
+    NOTE: Despite the name containing 'file', this returns a DIRECTORY path.
+    This is for backward compatibility with old tests.
+    """
+    yield str(test_prompts_dir)
+
+@pytest.fixture
 def temp_prompts_dir(test_prompts_dir):
     """Create a temporary copy of the test prompts directory structure."""
     import shutil

@@ -43,7 +43,7 @@ class VersionManager:
         }
         print(f"{icons.get(status, '📝')} {message}")
     
-    def _validate_path(self, base_dir: Path, candidate_path: Path, path_type: str = "path") -> bool:
+    def _validate_path(self, base_dir: Path, candidate_path: Path, path_type: str = "path", must_exist: bool = True) -> bool:
         """
         Validate that a candidate path is within the expected base directory.
         Prevents directory traversal attacks.
@@ -52,17 +52,19 @@ class VersionManager:
             base_dir: The expected base directory
             candidate_path: The path to validate
             path_type: Description of the path type for error messages
+            must_exist: Whether the candidate path must already exist (default True)
             
         Returns:
             True if path is safe, False otherwise
         """
-        # First ensure both paths exist
+        # First ensure base directory exists
         if not base_dir.exists():
-            self.print_status(f"Base directory does not exist: {base_dir}", "error")
+            self.print_status(f"Base directory not found: {base_dir}", "error")
             return False
         
-        if not candidate_path.exists():
-            self.print_status(f"{path_type.capitalize()} does not exist: {candidate_path}", "error")
+        # Only check candidate existence if must_exist is True
+        if must_exist and not candidate_path.exists():
+            self.print_status(f"{path_type.capitalize()} not found: {candidate_path}", "error")
             return False
         
         try:
@@ -73,8 +75,8 @@ class VersionManager:
             return False
         
         try:
-            # Handle symlinks explicitly
-            if candidate_path.is_symlink():
+            # Handle symlinks explicitly (only if path exists)
+            if candidate_path.exists() and candidate_path.is_symlink():
                 # Resolve the symlink target
                 resolved_candidate = candidate_path.resolve(strict=True)
                 
@@ -87,9 +89,13 @@ class VersionManager:
                         "error"
                     )
                     return False
-            else:
-                # Resolve non-symlink paths normally
+            elif candidate_path.exists():
+                # Resolve existing non-symlink paths normally
                 resolved_candidate = candidate_path.resolve(strict=True)
+            else:
+                # For non-existent paths, resolve without strict mode
+                # This validates the path structure without requiring existence
+                resolved_candidate = candidate_path.resolve(strict=False)
             
             # Verify containment using relative_to
             try:
@@ -385,12 +391,13 @@ class VersionManager:
         
         version_file = versions_dir / f'{version_name}.md'
         
-        # Validate version file path to prevent directory traversal
-        if not self._validate_path(versions_dir, version_file, "version file path"):
-            return
-        
+        # Check if version already exists before validation
         if version_file.exists():
             self.print_status(f"Version {version_name} already exists", "error")
+            return
+        
+        # Validate version file path to prevent directory traversal (must_exist=False since we're creating it)
+        if not self._validate_path(versions_dir, version_file, "version file path", must_exist=False):
             return
         
         try:
