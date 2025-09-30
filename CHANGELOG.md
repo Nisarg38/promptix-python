@@ -1,5 +1,243 @@
 # Changelog
 
+## [0.2.0] - 2025-09-30
+
+### 🚀 **Major Release: Folder-Based Prompts & Comprehensive Version Management**
+
+This is a **major architectural release** that fundamentally transforms how Promptix manages prompts, introducing a Git-native, folder-based structure and comprehensive version management system. This release enhances developer experience, improves Git integration, and provides professional version control for AI prompts.
+
+### 🎯 Breaking Changes
+
+#### **Folder-Based Prompt Storage**
+- **Migration from `prompts.yaml` to `prompts/` directory structure**
+- Each prompt now lives in its own folder with dedicated configuration and version history
+- **Migration is automatic** - existing `prompts.yaml` files are automatically migrated to the new structure
+- New structure provides:
+  - Better Git diffs (changes to individual files instead of large YAML)
+  - Clearer version history with dedicated version files
+  - Improved readability and organization
+  - Easier collaboration and code review
+
+**New Structure:**
+```
+prompts/
+├── CustomerSupport/
+│   ├── config.yaml          # Prompt metadata and configuration
+│   ├── current.md           # Current active version
+│   └── versions/
+│       ├── v1.md            # Version history
+│       ├── v2.md
+│       └── v3.md
+```
+
+**Old Structure (deprecated):**
+```
+prompts.yaml                 # All prompts in one file
+```
+
+### Added
+
+#### **Comprehensive Version Management System**
+- **Automatic Version Creation**: Pre-commit hooks automatically create new versions when `current.md` changes
+- **Version Switching**: Switch between different prompt versions with CLI or config
+- **Version Tracking**: `current_version` field in `config.yaml` tracks active version
+- **Version Header Removal**: Automatic removal of version metadata from prompt content
+- **Dual Support**: Backward compatibility with legacy `is_live` flags while supporting new `current_version` tracking
+
+#### **Enhanced CLI Tools**
+- **`promptix version` command group**:
+  - `promptix version list <agent>` - List all versions for an agent
+  - `promptix version create <agent>` - Manually create a new version
+  - `promptix version switch <agent> <version>` - Switch to a specific version
+  - `promptix version get <agent>` - Get current active version
+  
+- **`promptix hooks` command group**:
+  - `promptix hooks install` - Install pre-commit hook for automatic versioning
+  - `promptix hooks uninstall` - Remove pre-commit hook
+  - `promptix hooks status` - Check hook installation status
+  - Automatic backup/restore of existing hooks
+  - Safe hook installation with error handling
+
+#### **Git Pre-commit Hook**
+- **Automatic version creation** when `current.md` files are modified
+- **Automatic version deployment** when `current_version` changes in `config.yaml`
+- Intelligent file detection and processing
+- Rich console output with clear status messages
+- Comprehensive error handling and edge case coverage
+- **Hooks directory** at repository root for easy version control
+
+#### **Enhanced Prompt Loader**
+- Automatic version header removal from prompt content
+- Metadata integration from version headers
+- Improved error messages and handling
+- Support for both legacy and new version formats
+- Better caching and performance optimization
+
+#### **Workspace Manager**
+- New `workspace_manager.py` module for prompt workspace operations
+- Handles migration from `prompts.yaml` to folder structure
+- Validates prompt configurations
+- Manages workspace consistency and integrity
+
+#### **Comprehensive Documentation**
+- **VERSIONING_GUIDE.md**: Complete guide to the auto-versioning system
+  - Quick start instructions
+  - Architecture overview
+  - Workflow examples
+  - Git integration details
+  - Troubleshooting guide
+  
+- **TESTING_VERSIONING.md**: Comprehensive testing documentation
+  - Test structure overview
+  - How to run tests
+  - Coverage information
+  - Test categories and examples
+
+#### **Extensive Test Suite**
+- **21 new test files** with over 5,100 lines of test code
+- **Unit tests**:
+  - `test_precommit_hook.py` - Pre-commit hook functionality (439 lines)
+  - `test_enhanced_prompt_loader.py` - Enhanced prompt loader (414 lines)
+  - `test_version_manager.py` - Version manager CLI (421 lines)
+  - `test_hook_manager.py` - Hook manager CLI (508 lines)
+  
+- **Integration tests**:
+  - `test_versioning_integration.py` - Full workflow tests (491 lines)
+  
+- **Functional tests**:
+  - `test_versioning_edge_cases.py` - Edge cases and error conditions (514 lines)
+  
+- **Test helpers**:
+  - `precommit_helper.py` - Testable pre-commit hook wrapper (325 lines)
+
+#### **Cross-Platform Testing Improvements**
+- **Windows CI fixes** for Git repository cleanup
+- Cross-platform directory removal utilities in test suite
+- Safe file handling for read-only files on Windows
+- Improved test reliability across Ubuntu, Windows, and macOS
+
+#### **CI/CD Enhancements**
+- Updated GitHub Actions dependencies:
+  - `actions/checkout` from v3 to v5
+  - `actions/setup-python` from v4 to v6
+  - `codecov/codecov-action` from v4 to v5
+- Improved CI reliability and performance
+- Better dependency management with Dependabot
+
+### Changed
+
+- **Version Update**: Bumped from 0.1.16 to 0.2.0 (major version bump for breaking changes)
+- **CLI Architecture**: Enhanced CLI with command groups for better organization
+- **Prompt Loading**: Improved prompt loader with version management integration
+- **Configuration Management**: Enhanced config handling with version tracking
+- **Error Messages**: More descriptive error messages with actionable guidance
+- **Git Integration**: Better Git workflow with automatic version management
+
+### Improved
+
+- **Developer Experience**:
+  - Clearer prompt organization with folder structure
+  - Better Git diffs for prompt changes
+  - Easier code review process
+  - Automated version management
+  - Rich console output with formatting
+  
+- **Version Control**:
+  - Professional version management for prompts
+  - Automatic version creation on changes
+  - Easy switching between versions
+  - Full version history tracking
+  
+- **Documentation**:
+  - Comprehensive guides for new features
+  - Clear migration instructions
+  - Extensive testing documentation
+  - Better README with updated examples
+
+- **Testing**:
+  - Extensive test coverage for new features
+  - Cross-platform test reliability
+  - Comprehensive edge case coverage
+  - Better test organization and helpers
+
+- **Code Quality**:
+  - Enhanced error handling throughout
+  - Better logging and debugging support
+  - Improved code organization
+  - More maintainable architecture
+
+### Fixed
+
+- **Windows Testing Issues**: Fixed `PermissionError` when cleaning up Git repositories in tests
+- **File Handling**: Improved cross-platform file operations
+- **Version Migration**: Smooth migration from legacy to new version system
+- **Git Integration**: Better Git hook handling and installation
+- **Error Recovery**: Improved error recovery in version management operations
+
+### Migration Guide
+
+**From `prompts.yaml` to Folder Structure:**
+
+The migration is **automatic** when you first run Promptix after upgrading:
+
+1. **Upgrade Promptix**:
+   ```bash
+   pip install --upgrade promptix
+   ```
+
+2. **Run any Promptix command**:
+   ```bash
+   promptix studio  # or any other command
+   ```
+   
+3. **Your prompts are automatically migrated**:
+   - `prompts.yaml` → `prompts/` directory structure
+   - All existing prompts preserved
+   - Version history maintained
+
+4. **Install automatic versioning** (optional but recommended):
+   ```bash
+   promptix hooks install
+   ```
+
+5. **Commit changes**:
+   ```bash
+   git add prompts/
+   git commit -m "Migrate to folder-based prompt structure"
+   ```
+
+**The old `prompts.yaml` file is preserved** for reference but no longer used.
+
+### Technical Improvements
+
+- **Modular Architecture**: Better separation of concerns with dedicated managers
+- **Type Safety**: Enhanced type annotations throughout new code
+- **Performance**: Improved caching and file handling
+- **Reliability**: Comprehensive error handling and edge case coverage
+- **Maintainability**: Cleaner code structure and better documentation
+
+### Developer Experience Enhancements
+
+- **Automated Workflows**: Pre-commit hooks handle version management automatically
+- **Clear Console Output**: Rich formatting for CLI commands
+- **Better Error Messages**: Actionable error messages with clear guidance
+- **Comprehensive Documentation**: Guides for all new features
+- **Extensive Examples**: Real-world usage examples in documentation
+
+### Backward Compatibility
+
+- **Legacy support** for `is_live` flags in configurations
+- **Automatic migration** from old to new structure
+- **Dual format support** during transition period
+- **No breaking changes** to existing API methods
+- **Existing code continues to work** without modifications
+
+### Acknowledgments
+
+This release represents a significant evolution of Promptix, bringing professional version control practices to AI prompt management. Special thanks to all contributors and users who provided feedback and testing assistance.
+
+---
+
 ## [0.1.16] - 2025-09-21
 
 ### 🚀 **Major Development Infrastructure & Documentation Overhaul**

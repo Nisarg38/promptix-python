@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "promptix"
-version = "0.1.16"
-description = "A simple library for managing and using prompts locally with Promptix Studio"
+version = "0.2.0"
+description = "Professional prompt management with Git-native version control, dynamic templating, and visual Studio UI for production LLM applications"
 readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
