@@ -1,0 +1,109 @@
+# Agent configuration
+metadata:
+  name: "ComplexCodeReviewer"
+  description: "A prompt for reviewing complex code and providing feedback"
+  author: "Promptix Team"
+  version: "1.0.0"
+  created_at: "2024-03-01"
+  last_modified: "2025-03-08T03:54:10.136947"
+  last_modified_by: "Promptix Team"
+
+# Schema for variables
+schema:
+  type: "object"
+  required:
+    - programming_language
+    - review_focus
+    - severity
+  optional:
+    - use_complexity_analyzer
+    - use_security_scanner
+    - use_style_checker
+    - use_test_coverage
+  properties:
+    code_snippet:
+      type: string
+    programming_language:
+      type: string
+    review_focus:
+      type: string
+    severity:
+      type: string
+      enum:
+        - low
+        - medium
+        - high
+    use_complexity_analyzer:
+      type: boolean
+      default: true
+    use_security_scanner:
+      type: boolean
+      default: true
+    use_style_checker:
+      type: boolean
+      default: true
+    use_test_coverage:
+      type: boolean
+      default: true
+  additionalProperties: false
+
+# Configuration for the prompt
+config:
+  model: "gpt-4o"
+  provider: "openai"
+  temperature: 0.7
+  max_tokens: 1024
+  top_p: 1.0
+  frequency_penalty: 0.0
+
+# Tools configuration
+tools_config:
+  tools_template: >-
+    {% set tool_names = [] %}
+    {% if use_complexity_analyzer %}
+      {% set tool_names = tool_names + ["complexity_analyzer"] %}
+    {% endif %}
+    {% if use_security_scanner %}
+      {% set tool_names = tool_names + ["security_scanner"] %}
+    {% endif %}
+    {% if use_style_checker and programming_language in ["Python", "Java"] %}
+      {% set tool_names = tool_names + ["style_checker"] %}
+    {% endif %}
+    {% if use_test_coverage %}
+      {% set tool_names = tool_names + ["test_coverage"] %}
+    {% endif %}
+    {{ tool_names | tojson }}
+    
+  tools:
+    complexity_analyzer:
+      description: "Analyzes code complexity metrics (cyclomatic, cognitive)"
+      parameters:
+        thresholds:
+          type: object
+          default:
+            cyclomatic: 10
+            cognitive: 7
+    security_scanner:
+      description: "Checks for common vulnerabilities and exposure points"
+      parameters:
+        cwe_list:
+          type: array
+          default:
+            - CWE-78
+            - CWE-89
+    style_checker:
+      description: "Enforces coding style guidelines"
+      parameters:
+        standard:
+          type: string
+          enum:
+            - pep8
+            - google
+            - pylint
+          default: pep8
+    test_coverage:
+      description: "Analyzes test coverage and quality"
+      parameters:
+        coverage_threshold:
+          type: number
+          default: 80

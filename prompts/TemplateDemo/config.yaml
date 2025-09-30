@@ -1,0 +1,41 @@
+# Agent configuration
+metadata:
+  name: "TemplateDemo"
+  description: "A prompt demonstrating conditional logic and template features"
+  author: "Promptix Team"
+  version: "1.0.0"
+  created_at: "2024-03-01"
+  last_modified: "2024-03-01"
+  last_modified_by: "Promptix Team"
+
+# Schema for variables
+schema:
+  type: "object"
+  required:
+    - content_type
+    - theme
+    - difficulty
+  optional:
+    - elements
+  properties:
+    content_type:
+      type: string
+    theme:
+      type: string
+    difficulty:
+      type: string
+      enum:
+        - beginner
+        - intermediate
+        - advanced
+    elements:
+      type: array
+  additionalProperties: false
+
+# Configuration for the prompt
+config:
+  model: "gpt-4o"
+  provider: "openai"
+  temperature: 0.7
+  max_tokens: 1500
+  top_p: 1

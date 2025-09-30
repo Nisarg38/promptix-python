@@ -1,0 +1,32 @@
+# Agent configuration
+metadata:
+  name: "SimpleChat"
+  description: "A basic chat prompt demonstrating essential Promptix functionality"
+  author: "Promptix Team"
+  version: "1.0.0"
+  created_at: "2024-03-01"
+  last_modified: "2024-03-01"
+  last_modified_by: "Promptix Team"
+
+# Schema for variables
+schema:
+  type: "object"
+  required:
+    - user_name
+    - assistant_name
+  properties:
+    user_name:
+      type: string
+    assistant_name:
+      type: string
+  additionalProperties: false
+
+# Configuration for the prompt
+config:
+  model: "gpt-4o"
+  provider: "openai"
+  temperature: 0.7
+  max_tokens: 1000
+  top_p: 1
+  frequency_penalty: 0
+  presence_penalty: 0

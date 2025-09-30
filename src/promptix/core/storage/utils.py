@@ -8,6 +8,119 @@ from promptix.enhancements.logging import setup_logging
 logger = setup_logging()
 
 from .loaders import PromptLoaderFactory
+import yaml
+
+def create_default_prompts_folder(prompts_dir: Path) -> Dict[str, Any]:
+    """
+    Create a default prompts folder structure with a sample prompt.
+    
+    Args:
+        prompts_dir: Directory where the prompts folder structure should be created
+        
+    Returns:
+        Dict containing the default prompts data
+    """
+    prompts_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Get current timestamp
+    current_time = datetime.now().isoformat()
+    
+    # Create welcome_prompt folder
+    welcome_dir = prompts_dir / "welcome_prompt"
+    welcome_dir.mkdir(exist_ok=True)
+    (welcome_dir / "versions").mkdir(exist_ok=True)
+    
+    # Create config.yaml
+    config_data = {
+        "metadata": {
+            "name": "Welcome to Promptix",
+            "description": "A sample prompt to help you get started with Promptix",
+            "author": "Promptix",
+            "version": "1.0.0",
+            "created_at": current_time,
+            "last_modified": current_time,
+            "last_modified_by": "Promptix"
+        },
+        "schema": {
+            "type": "object",
+            "required": ["query"],
+            "optional": ["context"],
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "The user's question or request"
+                },
+                "context": {
+                    "type": "string",
+                    "description": "Optional additional context for the query"
+                }
+            },
+            "additionalProperties": False
+        },
+        "config": {
+            "model": "gpt-4o",
+            "provider": "openai",
+            "temperature": 0.7,
+            "max_tokens": 1024,
+            "top_p": 1.0
+        }
+    }
+    
+    # Write config.yaml if it doesn't already exist
+    config_path = welcome_dir / "config.yaml"
+    try:
+        with config_path.open("x", encoding="utf-8") as f:
+            yaml.dump(config_data, f, sort_keys=False, allow_unicode=True)
+    except FileExistsError:
+        logger.warning("config.yaml already exists in %s; skipping scaffold write", welcome_dir)
+    
+    # Create current.md
+    template_content = "You are a helpful AI assistant that provides clear and concise responses to {{query}}."
+    if 'context' in template_content:
+        template_content += " Use the following context if provided: {{context}}"
+    
+    current_path = welcome_dir / "current.md"
+    try:
+        with current_path.open("x", encoding="utf-8") as f:
+            f.write(template_content)
+    except FileExistsError:
+        logger.warning("current.md already exists in %s; skipping scaffold write", welcome_dir)
+    
+    # Create v1.md
+    version_path = welcome_dir / "versions" / "v1.md"
+    try:
+        with version_path.open("x", encoding="utf-8") as f:
+            f.write(template_content)
+    except FileExistsError:
+        logger.warning("versions/v1.md already exists in %s; skipping scaffold write", welcome_dir)
+    logger.info(f"Created new prompts folder structure at {prompts_dir} with a sample prompt")
+    
+    # Return equivalent structure for backward compatibility
+    return {
+        "schema": 1.0,
+        "welcome_prompt": {
+            "name": "Welcome to Promptix",
+            "description": "A sample prompt to help you get started with Promptix",
+            "versions": {
+                "v1": {
+                    "is_live": True,
+                    "config": {
+                        "system_instruction": template_content,
+                        "model": "gpt-4o",
+                        "provider": "openai",
+                        "temperature": 0.7,
+                        "max_tokens": 1024,
+                        "top_p": 1.0
+                    },
+                    "created_at": current_time,
+                    "metadata": config_data["metadata"],
+                    "schema": config_data["schema"]
+                }
+            },
+            "created_at": current_time,
+            "last_modified": current_time
+        }
+    }
 
 def create_default_prompts_file(file_path: Path) -> Dict[str, Any]:
     """

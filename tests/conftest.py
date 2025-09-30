@@ -9,128 +9,53 @@ import pytest
 from unittest.mock import Mock, MagicMock, patch
 import tempfile
 import os
+import sys
+import stat
 import yaml
+import shutil
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 
 
-# Sample test data for prompts
-SAMPLE_PROMPTS_DATA = {
-    "SimpleChat": {
-        "versions": {
-            "v1": {
-                "is_live": True,
-                "config": {
-                    "system_instruction": "You are {{assistant_name}}, a helpful assistant for {{user_name}}.",
-                    "model": "gpt-3.5-turbo",
-                    "temperature": 0.7
-                },
-                "schema": {
-                    "required": ["user_name", "assistant_name"],
-                    "types": {
-                        "user_name": "string",
-                        "assistant_name": "string"
-                    }
-                }
-            },
-            "v2": {
-                "is_live": False,
-                "config": {
-                    "system_instruction": "You are {{assistant_name}} with personality {{personality_type}}. Help {{user_name}}.",
-                    "model": "claude-3-sonnet-20240229",
-                    "temperature": 0.5
-                },
-                "schema": {
-                    "required": ["user_name", "assistant_name", "personality_type"],
-                    "types": {
-                        "user_name": "string",
-                        "assistant_name": "string",
-                        "personality_type": ["friendly", "professional", "creative"]
-                    }
-                }
-            }
-        }
-    },
-    "CodeReviewer": {
-        "versions": {
-            "v1": {
-                "is_live": True,
-                "config": {
-                    "system_instruction": "Review this {{programming_language}} code for {{review_focus}}:\n\n{{code_snippet}}",
-                    "model": "gpt-4",
-                    "temperature": 0.2
-                },
-                "schema": {
-                    "required": ["code_snippet", "programming_language", "review_focus"],
-                    "types": {
-                        "code_snippet": "string",
-                        "programming_language": "string",
-                        "review_focus": "string"
-                    }
-                }
-            },
-            "v2": {
-                "is_live": False,
-                "config": {
-                    "system_instruction": "Review this {{programming_language}} code for {{review_focus}} with severity {{severity}}:\n\n{{code_snippet}}",
-                    "model": "claude-3-opus-20240229",
-                    "temperature": 0.1
-                },
-                "schema": {
-                    "required": ["code_snippet", "programming_language", "review_focus", "severity"],
-                    "types": {
-                        "code_snippet": "string",
-                        "programming_language": "string",
-                        "review_focus": "string",
-                        "severity": ["low", "medium", "high", "critical"]
-                    }
-                }
-            }
-        }
-    },
-    "TemplateDemo": {
-        "versions": {
-            "v1": {
-                "is_live": True,
-                "config": {
-                    "system_instruction": "Create {{content_type}} about {{theme}} for {{difficulty}} level{% if elements %} covering: {{ elements | join(', ') }}{% endif %}.",
-                    "model": "gpt-3.5-turbo"
-                },
-                "schema": {
-                    "required": ["content_type", "theme", "difficulty"],
-                    "types": {
-                        "content_type": ["tutorial", "article", "guide"],
-                        "theme": "string",
-                        "difficulty": ["beginner", "intermediate", "advanced"],
-                        "elements": "array"
-                    }
-                }
-            }
-        }
-    },
-    "ComplexCodeReviewer": {
-        "versions": {
-            "v1": {
-                "is_live": True,
-                "config": {
-                    "system_instruction": "Review {{programming_language}} code for {{review_focus}} (severity: {{severity}}):\n\n{{code_snippet}}\n\nActive tools: {{active_tools}}",
-                    "model": "gpt-4",
-                    "tools": ["complexity_analyzer", "security_scanner", "style_checker"]
-                },
-                "schema": {
-                    "required": ["code_snippet", "programming_language", "review_focus", "severity"],
-                    "types": {
-                        "code_snippet": "string",
-                        "programming_language": "string",
-                        "review_focus": "string",
-                        "severity": ["low", "medium", "high", "critical"],
-                        "active_tools": "string"
-                    }
-                }
-            }
-        }
-    }
-}
+# Path to test prompts fixtures
+TEST_PROMPTS_DIR = Path(__file__).parent / "fixtures" / "test_prompts"
+
+# Available test prompt names (matching the folder structure)
+TEST_PROMPT_NAMES = ["SimpleChat", "CodeReviewer", "TemplateDemo"]
+
+
+# Windows-compatible cleanup utilities
+def remove_readonly(func, path, excinfo):
+    """
+    Error handler for Windows read-only file removal.
+    
+    This is needed because Git creates read-only files in .git/objects/
+    that can't be deleted on Windows without changing permissions first.
+    """
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
+def safe_rmtree(path):
+    """
+    Safely remove a directory tree, handling Windows permission issues.
+    
+    On Windows, Git repositories contain read-only files that need
+    special handling to delete.
+    """
+    try:
+        if sys.platform == 'win32':
+            # On Windows, use onerror callback to handle read-only files
+            shutil.rmtree(path, onerror=remove_readonly)
+        else:
+            shutil.rmtree(path)
+    except Exception:
+        # If all else fails, try one more time with ignore_errors
+        try:
+            shutil.rmtree(path, ignore_errors=True)
+        except:
+            # Last resort: just pass and let the OS clean up temp files
+            pass
 
 # Edge case test data
 EDGE_CASE_DATA = {
@@ -199,10 +124,78 @@ EDGE_CASE_DATA = {
 
 
 @pytest.fixture
-def sample_prompts_data():
-    """Fixture providing sample prompt data for testing."""
-    import copy
-    return copy.deepcopy(SAMPLE_PROMPTS_DATA)
+def test_prompts_dir():
+    """Fixture providing path to test prompts directory."""
+    return TEST_PROMPTS_DIR
+
+def _load_prompts_from_directory(prompts_dir: Path) -> Dict[str, Any]:
+    """Helper function to load prompts from a directory structure.
+    
+    This shared implementation is used by both sample_prompts_data fixture
+    and MockPromptLoader to ensure consistency.
+    """
+    prompts_data = {}
+    
+    for prompt_dir in prompts_dir.iterdir():
+        if not prompt_dir.is_dir():
+            continue
+        prompt_name = prompt_dir.name
+
+        config_file = prompt_dir / "config.yaml"
+        if not config_file.exists():
+            continue
+            
+        with open(config_file, 'r') as f:
+            config = yaml.safe_load(f)
+            
+        # Read current template
+        current_file = prompt_dir / "current.md"
+        current_template = ""
+        if current_file.exists():
+            with open(current_file, 'r') as f:
+                current_template = f.read()
+        
+        # Read versioned templates
+        versions = {}
+        versions_dir = prompt_dir / "versions"
+        if versions_dir.exists():
+            for version_file in versions_dir.glob("*.md"):
+                version_name = version_file.stem
+                with open(version_file, 'r') as f:
+                    template = f.read()
+                
+                versions[version_name] = {
+                    "is_live": version_name == "v1",  # Assume v1 is live for testing
+                    "config": {
+                        "system_instruction": template,
+                        "model": config.get("config", {}).get("model", "gpt-3.5-turbo"),
+                        "temperature": config.get("config", {}).get("temperature", 0.7)
+                    },
+                    "schema": config.get("schema", {})
+                }
+        
+        # Add current as live version if no versions found
+        if not versions:
+            versions["v1"] = {
+                "is_live": True,
+                "config": {
+                    "system_instruction": current_template,
+                    "model": config.get("config", {}).get("model", "gpt-3.5-turbo"),
+                    "temperature": config.get("config", {}).get("temperature", 0.7)
+                },
+                "schema": config.get("schema", {})
+            }
+        
+        prompts_data[prompt_name] = {"versions": versions}
+    
+    return prompts_data
+
+
+@pytest.fixture
+def sample_prompts_data(test_prompts_dir):
+    """Fixture providing sample prompt data for testing (legacy compatibility)."""
+    # Use the shared helper function
+    return _load_prompts_from_directory(test_prompts_dir)
 
 @pytest.fixture
 def edge_case_data():
@@ -219,19 +212,37 @@ def all_test_data(sample_prompts_data, edge_case_data):
     return combined
 
 @pytest.fixture
-def temp_prompts_file(sample_prompts_data):
-    """Create a temporary YAML file with sample prompt data."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-        yaml.dump(sample_prompts_data, f)
-        temp_file_path = f.name
+def temp_prompts_dir_compat(test_prompts_dir):
+    """Provide path to test prompts directory for compatibility.
     
-    yield temp_file_path
+    NOTE: Despite the historical name, this returns a DIRECTORY path (not a file path).
+    This fixture exists for backward compatibility with tests that were written
+    before the workspace-based structure was introduced.
+    """
+    yield str(test_prompts_dir)
+
+@pytest.fixture
+def temp_prompts_file(test_prompts_dir):
+    """Legacy fixture name - returns directory path for backward compatibility.
     
-    # Cleanup
-    try:
-        os.unlink(temp_file_path)
-    except OSError:
-        pass
+    NOTE: Despite the name containing 'file', this returns a DIRECTORY path.
+    This is for backward compatibility with old tests.
+    """
+    yield str(test_prompts_dir)
+
+@pytest.fixture
+def temp_prompts_dir(test_prompts_dir):
+    """Create a temporary copy of the test prompts directory structure."""
+    temp_dir = tempfile.mkdtemp()
+    prompts_dir = Path(temp_dir) / "prompts"
+    
+    # Copy test fixtures to temp directory
+    shutil.copytree(test_prompts_dir, prompts_dir)
+    
+    yield prompts_dir
+    
+    # Cleanup - use safe_rmtree for Windows compatibility
+    safe_rmtree(temp_dir)
 
 
 @pytest.fixture
@@ -282,10 +293,11 @@ def mock_anthropic_client():
 
 
 @pytest.fixture
-def mock_config():
+def mock_config(test_prompts_dir):
     """Mock configuration object for testing."""
     mock = MagicMock()
-    mock.get_prompt_file_path.return_value = "/test/path/prompts.yaml"
+    mock.get_prompts_dir.return_value = str(test_prompts_dir)
+    mock.get_prompt_file_path.return_value = str(test_prompts_dir)  # Backward compatibility
     mock.check_for_unsupported_files.return_value = []
     return mock
 
@@ -368,13 +380,18 @@ def complex_template_variables():
 class MockPromptLoader:
     """Mock prompt loader for consistent testing."""
     
-    def __init__(self, prompts_data=None):
-        self.prompts_data = prompts_data or SAMPLE_PROMPTS_DATA
+    def __init__(self, prompts_dir=None):
+        self.prompts_dir = Path(prompts_dir) if prompts_dir else TEST_PROMPTS_DIR
         self._loaded = False
+        self.prompts_data = {}
     
     def load_prompts(self):
-        """Mock loading prompts."""
+        """Mock loading prompts from folder structure."""
         self._loaded = True
+        
+        # Use the shared helper function
+        self.prompts_data = _load_prompts_from_directory(self.prompts_dir)
+        
         return self.prompts_data
     
     def is_loaded(self):
@@ -393,15 +410,20 @@ class MockPromptLoader:
 
 
 @pytest.fixture
-def mock_prompt_loader():
+def mock_prompt_loader(test_prompts_dir):
     """Fixture providing mock prompt loader."""
-    return MockPromptLoader()
+    return MockPromptLoader(test_prompts_dir)
 
 
 @pytest.fixture
 def mock_prompt_loader_with_edge_cases():
     """Mock prompt loader with edge case data."""
-    return MockPromptLoader(EDGE_CASE_DATA)
+    # For edge cases, we'll use the hardcoded data since these are
+    # special test cases that don't exist as real prompt folders
+    loader = MockPromptLoader()
+    loader.prompts_data = EDGE_CASE_DATA
+    loader._loaded = True
+    return loader
 
 
 @pytest.fixture(autouse=True)

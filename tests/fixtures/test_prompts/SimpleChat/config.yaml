@@ -1,0 +1,39 @@
+# Test Agent configuration
+metadata:
+  name: "SimpleChat"
+  description: "A basic chat prompt for testing"
+  author: "Test Suite"
+  version: "1.0.0"
+  created_at: "2024-03-01"
+  last_modified: "2024-03-01"
+  last_modified_by: "Test Suite"
+
+# Schema for variables
+schema:
+  type: "object"
+  required:
+    - user_name
+    - assistant_name
+  optional:
+    - personality_type
+  properties:
+    user_name:
+      type: string
+    assistant_name:
+      type: string
+    personality_type:
+      type: string
+      enum:
+        - friendly
+        - professional
+        - creative
+      default: friendly
+  additionalProperties: false
+
+# Configuration for the prompt
+config:
+  model: "gpt-3.5-turbo"
+  provider: "openai"
+  temperature: 0.7
+  max_tokens: 1000
+  top_p: 1
