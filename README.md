@@ -20,6 +20,33 @@
 
 Stop hardcoding prompts in your Python code. **Promptix** is a powerful prompt management system that gives you **version control**, **dynamic templating**, and a **beautiful UI** for managing LLM prompts—all stored locally in your repository.
 
+### 💡 Prompts Are Code
+
+In modern LLM applications, **your prompts are just as critical as your code**. A prompt change can alter your application's behavior, break functionality, or introduce bugs—just like a code change.
+
+**Think about it:**
+- Your app's business logic lives in BOTH your Python code AND your prompts
+- A poorly tested prompt in production can cause customer-facing issues
+- You need to test the **combination** of code + prompts together
+- Rollback capabilities are essential when a prompt change goes wrong
+
+Yet most teams treat prompts as "just text"—no versioning, no testing, no staging environment.
+
+**Promptix brings software engineering rigor to prompts:**
+
+| Traditional Code | Prompts with Promptix |
+|------------------|----------------------|
+| ✅ Version control (Git) | ✅ Version control (built-in) |
+| ✅ Testing before deploy | ✅ Draft/Live states for testing |
+| ✅ Staging environment | ✅ Test versions in dev, promote to prod |
+| ✅ Rollback on issues | ✅ Revert to previous versions instantly |
+| ✅ Code review process | ✅ Visual diff and review in Studio |
+| ✅ CI/CD integration | ✅ File-based storage works with CI/CD |
+
+**Your prompts deserve the same engineering practices as your code.**
+
+> **Real-World Scenario:** Your customer support chatbot starts giving incorrect refund information. Was it a code bug or a prompt change? With prompts scattered in code, you can't easily tell. With Promptix, you see exactly which prompt version was live, can diff changes, and rollback instantly—just like you would with code.
+
 ### The Problem
 
 ```python
@@ -222,6 +249,46 @@ config = (
 )
 ```
 
+### Example 6: Testing Prompts Before Production
+```python
+# ❌ Don't do this: Change live prompts without testing
+live_config = Promptix.builder("CustomerSupport").build()  # Risky!
+
+# ✅ Do this: Test new prompt versions in staging
+class SupportAgent:
+    def __init__(self, environment='production'):
+        self.env = environment
+    
+    def get_response(self, customer_data, issue):
+        # Use draft version in development/staging
+        version = "v2" if self.env == "staging" else None
+        
+        config = (
+            Promptix.builder("CustomerSupport", version=version)
+            .with_customer_name(customer_data['name'])
+            .with_issue_type(issue)
+            .for_client("openai")
+            .build()
+        )
+        
+        return client.chat.completions.create(**config)
+
+# In your tests
+def test_new_prompt_version():
+    """Test new prompt version before promoting to live"""
+    agent = SupportAgent(environment='staging')
+    
+    response = agent.get_response(
+        customer_data={'name': 'Test User'},
+        issue='billing'
+    )
+    
+    assert response.choices[0].message.content  # Validate response
+    # Add more assertions based on expected behavior
+    
+# After tests pass, promote v2 to live in Promptix Studio
+```
+
 ---
 
 ## 🎨 Promptix Studio
@@ -246,14 +313,20 @@ promptix studio
 
 ## 🏗️ Why Promptix?
 
-| Challenge | Promptix Solution |
-|-----------|-------------------|
-| 🍝 Prompts scattered across codebase | Centralized prompt library |
-| 🔧 Hard to update prompts in production | Version control with live/draft states |
-| 🎭 Static prompts for dynamic scenarios | Context-aware templating |
-| 🔄 Switching between AI providers | Unified API for all providers |
-| 🧪 Testing prompt variations | Visual editor with instant preview |
-| 👥 Team collaboration on prompts | File-based storage with Git integration |
+### The Engineering Problem
+
+In production LLM applications, your application logic is split between **code** and **prompts**. Both need professional engineering practices.
+
+| Challenge | Without Promptix | With Promptix |
+|-----------|------------------|---------------|
+| 🧪 **Testing Changes** | Hope for the best in production | Test draft versions in staging, promote when ready |
+| 🔧 **Updating Prompts** | Redeploy entire app for prompt tweaks | Update prompts independently, instant rollback |
+| 🍝 **Code Organization** | Prompts scattered across files | Centralized, versioned prompt library |
+| 🎭 **Dynamic Behavior** | Hardcoded if/else in strings | Context-aware templating with variables |
+| 🔄 **Multi-Provider** | Rewrite prompts for each API | One prompt, multiple providers |
+| 👥 **Collaboration** | Edit strings in code PRs | Visual Studio UI for non-technical edits |
+| 🐛 **Debugging Issues** | Which version was live? | Full version history and diff |
+| 🚀 **CI/CD Integration** | Manual prompt management | File-based, works with existing pipelines |
 
 ---
 
