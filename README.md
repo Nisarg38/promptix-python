@@ -82,7 +82,14 @@ response = client.chat.completions.create(**config)
 pip install promptix
 ```
 
-### 2. Create Your First Prompt
+### 2. (Optional but Recommended) Enable Automatic Versioning
+```bash
+promptix hooks install
+```
+
+This installs Git hooks to automatically track and version your prompt changes — keeping your prompt history clean and consistent.
+
+### 3. Create Your First Prompt
 ```bash
 promptix studio  # Opens web UI at http://localhost:8501
 ```
@@ -107,7 +114,7 @@ prompts/
 
 **That's it!** Your prompts live in your repo, version-controlled with Git, just like your code.
 
-### 3. Use It in Your Code
+### 4. Use It in Your Code
 ```python
 from promptix import Promptix
 
@@ -123,8 +130,7 @@ system_instruction = (
 )
 ```
 
-**That's it!** 🎉 You're now managing prompts like a pro.
-
+**You're all set!** 🎉 Start managing prompts like a pro.
 ---
 
 ## ✨ What You Get
