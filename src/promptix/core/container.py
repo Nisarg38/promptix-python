@@ -12,12 +12,14 @@ from .components import (
     VariableValidator,
     TemplateRenderer,
     VersionManager,
-    ModelConfigBuilder
+    ModelConfigBuilder,
+    LayerComposer,
 )
 from .adapters.openai import OpenAIAdapter
 from .adapters.anthropic import AnthropicAdapter
 from .adapters._base import ModelAdapter
 from .exceptions import MissingDependencyError, InvalidDependencyError
+from .config import config
 
 T = TypeVar('T')
 
@@ -57,7 +59,12 @@ class Container:
         self.register_factory("model_config_builder", lambda: ModelConfigBuilder(
             logger=self.get("logger")
         ))
-        
+
+        self.register_factory("layer_composer", lambda: LayerComposer(
+            prompts_dir=config.get_prompts_workspace_path(),
+            logger=self.get("logger")
+        ))
+
         # Register adapters as singletons
         self.register_singleton("openai_adapter", OpenAIAdapter())
         self.register_singleton("anthropic_adapter", AnthropicAdapter())

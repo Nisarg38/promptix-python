@@ -1,0 +1,57 @@
+# CustomerSupport configuration with layer composition
+metadata:
+  name: "CustomerSupport"
+  description: "Customer support assistant with multi-dimensional customization"
+  author: "Test Suite"
+  version: "1.0.0"
+
+# Schema for variables
+schema:
+  type: "object"
+  required:
+    - company_name
+  properties:
+    company_name:
+      type: string
+    product_line:
+      type: string
+      enum:
+        - software
+        - hardware
+    region:
+      type: string
+    tier:
+      type: string
+      default: basic
+
+# Layer composition configuration
+composition:
+  # Define available layer axes
+  layers:
+    - name: product_line
+      variable: product_line
+      path: layers/product_line
+      required: false
+
+    - name: region
+      variable: region
+      path: layers/region
+      required: false
+
+    - name: tier
+      variable: tier
+      path: layers/tier
+      required: false
+      default: basic
+
+  # Order matters - later layers override earlier ones
+  merge_order:
+    - product_line
+    - region
+    - tier
+
+# Configuration for the prompt
+config:
+  model: "gpt-4o"
+  provider: "openai"
+  temperature: 0.7

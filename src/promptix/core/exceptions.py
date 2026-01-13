@@ -271,6 +271,57 @@ class ToolProcessingError(ToolError):
         super().__init__(message, details)
 
 
+# === Layer Composition Errors ===
+
+class LayerError(PromptixError):
+    """Base class for layer composition errors."""
+    pass
+
+
+class LayerNotFoundError(LayerError):
+    """Raised when a specified layer variant doesn't exist."""
+
+    def __init__(
+        self,
+        layer_name: str,
+        layer_value: str,
+        prompt_name: str,
+        available_values: Optional[List[str]] = None
+    ):
+        message = (
+            f"Layer '{layer_name}' with value '{layer_value}' "
+            f"not found for prompt '{prompt_name}'"
+        )
+        details = {
+            "layer_name": layer_name,
+            "layer_value": layer_value,
+            "prompt_name": prompt_name,
+            "available_values": available_values or []
+        }
+        super().__init__(message, details)
+
+
+class LayerRequiredError(LayerError):
+    """Raised when a required layer variable is not provided."""
+
+    def __init__(
+        self,
+        layer_name: str,
+        variable_name: str,
+        prompt_name: str
+    ):
+        message = (
+            f"Required layer '{layer_name}' not provided for prompt '{prompt_name}'. "
+            f"Set the '{variable_name}' variable to select a layer value."
+        )
+        details = {
+            "layer_name": layer_name,
+            "variable_name": variable_name,
+            "prompt_name": prompt_name
+        }
+        super().__init__(message, details)
+
+
 # === Dependency Injection Errors ===
 
 class DependencyError(PromptixError):

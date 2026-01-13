@@ -10,11 +10,13 @@ from .variable_validator import VariableValidator
 from .template_renderer import TemplateRenderer
 from .version_manager import VersionManager
 from .model_config_builder import ModelConfigBuilder
+from .layer_composer import LayerComposer
 
 __all__ = [
     "PromptLoader",
-    "VariableValidator", 
+    "VariableValidator",
     "TemplateRenderer",
     "VersionManager",
-    "ModelConfigBuilder"
+    "ModelConfigBuilder",
+    "LayerComposer",
 ]
