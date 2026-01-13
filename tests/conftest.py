@@ -20,6 +20,9 @@ from pathlib import Path
 # Path to test prompts fixtures
 TEST_PROMPTS_DIR = Path(__file__).parent / "fixtures" / "test_prompts"
 
+# Path to layer composition test fixtures
+TEST_PROMPTS_LAYERS_DIR = Path(__file__).parent / "fixtures" / "test_prompts_layers"
+
 # Available test prompt names (matching the folder structure)
 TEST_PROMPT_NAMES = ["SimpleChat", "CodeReviewer", "TemplateDemo"]
 
@@ -127,6 +130,12 @@ EDGE_CASE_DATA = {
 def test_prompts_dir():
     """Fixture providing path to test prompts directory."""
     return TEST_PROMPTS_DIR
+
+
+@pytest.fixture
+def test_prompts_layers_dir():
+    """Fixture providing path to layer composition test fixtures."""
+    return TEST_PROMPTS_LAYERS_DIR
 
 def _load_prompts_from_directory(prompts_dir: Path) -> Dict[str, Any]:
     """Helper function to load prompts from a directory structure.

@@ -5,14 +5,15 @@ This module provides the main Promptix class that has been refactored to use
 focused components and dependency injection for better testability and modularity.
 """
 
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, List, Optional, Tuple, Union
 from .container import get_container
 from .components import (
     PromptLoader,
     VariableValidator,
     TemplateRenderer,
     VersionManager,
-    ModelConfigBuilder
+    ModelConfigBuilder,
+    LayerComposer,
 )
 from .exceptions import PromptNotFoundError, ConfigurationError, StorageError
 
@@ -38,16 +39,16 @@ class Promptix:
     @classmethod
     def get_prompt(cls, prompt_template: str, version: Optional[str] = None, **variables) -> str:
         """Get a prompt by name and fill in the variables.
-        
+
         Args:
             prompt_template (str): The name of the prompt template to use
-            version (Optional[str]): Specific version to use (e.g. "v1"). 
+            version (Optional[str]): Specific version to use (e.g. "v1").
                                      If None, uses the latest live version.
             **variables: Variable key-value pairs to fill in the prompt template
-            
+
         Returns:
             str: The rendered prompt
-            
+
         Raises:
             PromptNotFoundError: If the prompt template is not found
             RequiredVariableError: If required variables are missing
@@ -56,7 +57,118 @@ class Promptix:
         """
         instance = cls()
         return instance.render_prompt(prompt_template, version, **variables)
-    
+
+    @classmethod
+    def get_composed_prompt(
+        cls,
+        prompt_template: str,
+        version: Optional[str] = None,
+        layer_versions: Optional[Dict[str, str]] = None,
+        skip_layers: Optional[List[str]] = None,
+        _debug: bool = False,
+        **variables
+    ) -> Union[str, Tuple[str, Any]]:
+        """Get a prompt with layer composition.
+
+        Layers are automatically selected based on variables that match
+        layer configuration in config.yaml. For example, if config defines
+        a layer with variable='oem', passing oem='honda' will apply the
+        honda layer.
+
+        Args:
+            prompt_template: Name of the prompt template.
+            version: Base template version (None = current).
+            layer_versions: Override versions for specific layers.
+            skip_layers: Layer names to skip.
+            _debug: If True, returns tuple of (prompt, debug_info).
+            **variables: Template variables (also used for layer selection).
+
+        Returns:
+            Fully composed and rendered prompt string.
+            If _debug is True, returns tuple of (prompt, CompositionDebugInfo).
+
+        Raises:
+            PromptNotFoundError: If the prompt template is not found.
+            LayerRequiredError: If a required layer variable is not provided.
+            TemplateRenderError: If template rendering fails.
+            ConfigurationError: If configuration is invalid.
+
+        Example:
+            prompt = Promptix.get_composed_prompt(
+                prompt_template="ServiceAgent",
+                store_name="Honda World",
+                store_type="automotive",  # Selects automotive layer
+                oem="honda",              # Selects honda layer
+                locale="es-MX"            # Selects Spanish locale layer
+            )
+        """
+        instance = cls()
+        return instance.compose_prompt(
+            prompt_template=prompt_template,
+            version=version,
+            layer_versions=layer_versions,
+            skip_layers=skip_layers,
+            _debug=_debug,
+            **variables
+        )
+
+    def compose_prompt(
+        self,
+        prompt_template: str,
+        version: Optional[str] = None,
+        layer_versions: Optional[Dict[str, str]] = None,
+        skip_layers: Optional[List[str]] = None,
+        _debug: bool = False,
+        **variables
+    ) -> Union[str, Tuple[str, Any]]:
+        """Compose a prompt with layer overrides.
+
+        Args:
+            prompt_template: Name of the prompt template.
+            version: Base template version (None = current).
+            layer_versions: Override versions for specific layers.
+            skip_layers: Layer names to skip.
+            _debug: If True, returns tuple of (prompt, debug_info).
+            **variables: Template variables (also used for layer selection).
+
+        Returns:
+            Fully composed and rendered prompt string.
+            If _debug is True, returns tuple of (prompt, CompositionDebugInfo).
+        """
+        layer_composer = self._container.get_typed("layer_composer", LayerComposer)
+
+        return layer_composer.compose(
+            prompt_name=prompt_template,
+            variables=variables,
+            base_version=version,
+            layer_versions=layer_versions,
+            skip_layers=skip_layers,
+            _debug=_debug
+        )
+
+    @classmethod
+    def list_layers(cls, prompt_template: str) -> Dict[str, List[str]]:
+        """List available layers and their values for a prompt.
+
+        Args:
+            prompt_template: Name of the prompt template.
+
+        Returns:
+            Dict mapping layer names to lists of available values.
+
+        Example:
+            layers = Promptix.list_layers("ServiceAgent")
+            # Returns:
+            # {
+            #     "store_type": ["automotive", "powersports", "marine"],
+            #     "oem": ["honda", "toyota", "harley"],
+            #     "locale": ["en-US", "es-MX", "fr-CA"]
+            # }
+        """
+        instance = cls()
+        layer_composer = instance._container.get_typed("layer_composer", LayerComposer)
+        return layer_composer.list_layers(prompt_template)
+
     def render_prompt(self, prompt_template: str, version: Optional[str] = None, **variables) -> str:
         """Render a prompt with the provided variables.
         
