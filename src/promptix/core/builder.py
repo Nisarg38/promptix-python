@@ -5,27 +5,27 @@ This module provides the PromptixBuilder class that has been refactored to use
 focused components and dependency injection for better testability and modularity.
 """
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 from .container import get_container
 from .components import (
     PromptLoader,
     VariableValidator,
     TemplateRenderer,
     VersionManager,
-    ModelConfigBuilder
+    ModelConfigBuilder,
+    LayerComposer,
 )
 from .adapters._base import ModelAdapter
 from .exceptions import (
     PromptNotFoundError,
     VersionNotFoundError,
     UnsupportedClientError,
-    ToolNotFoundError,
-    ToolProcessingError,
     ValidationError,
     StorageError,
     RequiredVariableError,
     VariableValidationError,
-    TemplateRenderError
+    TemplateRenderError,
+    LayerRequiredError,
 )
 
 
@@ -58,7 +58,14 @@ class PromptixBuilder:
         self._model_config_builder = self._container.get_typed("model_config_builder", ModelConfigBuilder)
         self._logger = self._container.get("logger")
         self._adapters = self._container.get("adapters")
-        
+
+        # Layer composition support
+        self._use_layers = False
+        self._explicit_layers: Dict[str, Tuple[str, Optional[str]]] = {}
+        self._skip_layers: List[str] = []
+        self._layer_versions: Dict[str, str] = {}
+        self._layer_composer = self._container.get_typed("layer_composer", LayerComposer)
+
         # Initialize prompt data
         self._initialize_prompt_data()
 
@@ -200,7 +207,58 @@ class PromptixBuilder:
         """
         self._model_params.update(extra_params)
         return self
-    
+
+    def with_layers(self, enabled: bool = True) -> "PromptixBuilder":
+        """Enable layer composition for this build.
+
+        When enabled, layers are auto-selected based on variables that match
+        layer configuration in config.yaml.
+
+        Args:
+            enabled: Whether to enable layer composition. Defaults to True.
+
+        Returns:
+            Self for method chaining.
+        """
+        self._use_layers = enabled
+        return self
+
+    def with_layer(
+        self,
+        layer_name: str,
+        value: str,
+        version: Optional[str] = None
+    ) -> "PromptixBuilder":
+        """Explicitly set a layer value.
+
+        Calling this method automatically enables layer composition.
+
+        Args:
+            layer_name: Name of the layer (e.g., 'product_line', 'tier')
+            value: Layer variant to use (e.g., 'software', 'premium')
+            version: Optional version of this layer
+
+        Returns:
+            Self for method chaining.
+        """
+        self._use_layers = True
+        self._explicit_layers[layer_name] = (value, version)
+        if version:
+            self._layer_versions[layer_name] = version
+        return self
+
+    def skip_layer(self, *layer_names: str) -> "PromptixBuilder":
+        """Skip specified layers during composition.
+
+        Args:
+            *layer_names: Names of layers to skip
+
+        Returns:
+            Self for method chaining.
+        """
+        self._skip_layers.extend(layer_names)
+        return self
+
     def with_memory(self, memory: List[Dict[str, str]]):
         """Set the conversation memory.
         
@@ -302,7 +360,7 @@ class PromptixBuilder:
         
         return self
     
-    def with_tool(self, tool_name: str, *args, **kwargs) -> "PromptixBuilder":
+    def with_tool(self, tool_name: str, *args) -> "PromptixBuilder":
         """Activate a tool by name.
         
         Args:
@@ -523,11 +581,27 @@ class PromptixBuilder:
                     self._logger.warning(f"Required field '{field}' is missing from prompt parameters")
 
         try:
-            # Generate the system message using the template renderer
-            from .base import Promptix  # Import here to avoid circular dependency
-            promptix_instance = Promptix(self._container)
-            system_message = promptix_instance.render_prompt(self.prompt_template, self.custom_version, **self._data)
-        except (ValueError, ImportError, RuntimeError, RequiredVariableError, VariableValidationError) as e:
+            # Check if layer composition is enabled
+            if self._use_layers:
+                # Merge explicit layers into variables
+                for layer_name, (value, _) in self._explicit_layers.items():
+                    self._data[layer_name] = value
+
+                system_message = self._layer_composer.compose(
+                    prompt_name=self.prompt_template,
+                    variables=self._data,
+                    base_version=self.custom_version,
+                    layer_versions=self._layer_versions,
+                    skip_layers=self._skip_layers
+                )
+            else:
+                # Generate the system message using the template renderer
+                from .base import Promptix  # Import here to avoid circular dependency
+                promptix_instance = Promptix(self._container)
+                system_message = promptix_instance.render_prompt(
+                    self.prompt_template, self.custom_version, **self._data
+                )
+        except (ValueError, ImportError, RuntimeError, RequiredVariableError, VariableValidationError, LayerRequiredError) as e:
             if self._logger:
                 self._logger.warning(f"Error generating system message: {e!s}")
             # Provide a fallback basic message when template rendering fails

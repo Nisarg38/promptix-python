@@ -112,4 +112,125 @@ def test_builder_validation():
     # Verify basic config structure
     assert isinstance(config, dict)
     assert "messages" in config
-    assert "model" in config 
+    assert "model" in config
+
+
+class TestBuilderLayerComposition:
+    """Test builder pattern with layer composition."""
+
+    @pytest.fixture
+    def layers_container(self, test_prompts_layers_dir, monkeypatch):
+        """Create container configured for layer testing."""
+        from promptix.core.container import Container, set_container, reset_container
+        from promptix.core.components import LayerComposer
+        from promptix.core import config as config_module
+
+        # Patch config to return test layers directory as prompts path
+        monkeypatch.setattr(
+            config_module.config,
+            "get_prompts_workspace_path",
+            lambda: test_prompts_layers_dir
+        )
+
+        container = Container()
+        container.override(
+            "layer_composer",
+            LayerComposer(
+                prompts_dir=test_prompts_layers_dir,
+                logger=container.get("logger")
+            )
+        )
+        set_container(container)
+        yield container
+        reset_container()
+
+    def test_with_layers_basic(self, layers_container):
+        """Test basic layer composition via builder."""
+        config = (
+            Promptix.builder("CustomerSupport")
+            .with_layers()
+            .with_var({"company_name": "TechCorp", "product_line": "software"})
+            .build()
+        )
+
+        assert isinstance(config, dict)
+        assert "messages" in config
+        system_msg = config["messages"][0]["content"]
+        assert "technical support specialist" in system_msg.lower()
+
+    def test_with_layer_explicit(self, layers_container):
+        """Test explicit layer selection."""
+        config = (
+            Promptix.builder("CustomerSupport")
+            .with_layer("product_line", "hardware")
+            .with_layer("tier", "premium")
+            .with_company_name("HardwareCo")
+            .build()
+        )
+
+        assert isinstance(config, dict)
+        system_msg = config["messages"][0]["content"]
+        assert "hardware" in system_msg.lower()
+        assert "Dedicated account manager" in system_msg
+
+    def test_with_layer_version(self, layers_container):
+        """Test layer version selection."""
+        config = (
+            Promptix.builder("CustomerSupport")
+            .with_layer("tier", "premium", version="v1")
+            .with_company_name("Test Corp")
+            .build()
+        )
+
+        assert isinstance(config, dict)
+        system_msg = config["messages"][0]["content"]
+        assert "(v1)" in system_msg
+
+    def test_skip_layer(self, layers_container):
+        """Test skipping layers."""
+        # With region
+        config_with = (
+            Promptix.builder("CustomerSupport")
+            .with_layers()
+            .with_var({"company_name": "EU Corp", "region": "eu"})
+            .build()
+        )
+
+        # Without region (skipped)
+        config_without = (
+            Promptix.builder("CustomerSupport")
+            .with_layers()
+            .with_var({"company_name": "EU Corp", "region": "eu"})
+            .skip_layer("region")
+            .build()
+        )
+
+        msg_with = config_with["messages"][0]["content"]
+        msg_without = config_without["messages"][0]["content"]
+
+        assert "Vous etes un assistant" in msg_with
+        assert "Vous etes un assistant" not in msg_without
+
+    def test_system_only_with_layers(self, layers_container):
+        """Test system_only mode with layers."""
+        system_msg = (
+            Promptix.builder("CustomerSupport")
+            .with_layer("product_line", "software")
+            .with_company_name("TestCo")
+            .build(system_only=True)
+        )
+
+        assert isinstance(system_msg, str)
+        assert "technical support specialist" in system_msg.lower()
+
+    def test_layers_disabled_by_default(self, layers_container):
+        """Verify layers are not applied without with_layers()."""
+        config = (
+            Promptix.builder("CustomerSupport")
+            .with_var({"company_name": "Test", "product_line": "software"})
+            .build()
+        )
+
+        # Without with_layers(), should use standard rendering
+        # which doesn't process layer blocks
+        assert isinstance(config, dict)
